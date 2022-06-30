@@ -65,7 +65,7 @@ def plot(fiber_xycordinate, cell_centers, Spins, spin_loc_key, spin_trajectory, 
 
     color = ['aqua', 'orange', 'purple']
     for i in range(Spins.shape[0]):
-        if  spin_loc_key[i] == 0:
+        if  spin_loc_key[i] >= 1:
             ax.scatter3D(spin_trajectory[i,:,0], spin_trajectory[i,:,1], spin_trajectory[i,:,2], s = 1, color = 'black')
        
 
@@ -77,6 +77,6 @@ def plot(fiber_xycordinate, cell_centers, Spins, spin_loc_key, spin_trajectory, 
     ax.set_ylim(0,200)
     ax.set_xlim(0,200)
 
-    ax.view_init(0,180)
+    #ax.view_init(0,180)
     plt.show()
     #plt.savefig(r"C:\temp\MCSIM_geometry_45.png")

@@ -11,7 +11,7 @@ def Parallel(args):
     cell_centers, TE, dt = args[6], args[7], args[8] 
     sys.stdout.write('\r spin = {:08d}'.format(i+1))
     spin_trajectory = np.zeros((int(TE/dt) + 1,3))
-    if spin_loc_key[i] == 1 or spin_loc_key[i] == 2:
+    if spin_loc_key[i] == 1 or spin_loc_key[i] == 2 or spin_loc_key[i] == 4:
             spin_trajectory[:,:] = walkInFiber.walk_in_fiber(spins[i,:], spin_in_fiber_info[i,:], TE, dt, spin_loc_key[i])
     if spin_loc_key[i] == 3:
             spin_trajectory[:,:] = walkInCell.walk_in_cell(spins[i,:], spin_in_cell_info[i,:], fiber_xycordinate, TE, dt, spin_loc_key[i])

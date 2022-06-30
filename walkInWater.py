@@ -3,10 +3,9 @@ import numpy as np
 
 def walk_in_water(spin, fiber_xycordinate, cell_centers, TE, dt, spin_loc):
     spin_trajectory = np.zeros((int(TE/dt),3))
-    D = 5.0
+    D = 3.0
     step = np.sqrt(6*D*dt)
     spin_trajectory[0,:] = spin
-
     fibers_xy = fiber_xycordinate[fiber_xycordinate[:,3] == 0]
     fibers_yz = fiber_xycordinate[fiber_xycordinate[:,3] == 1]
 

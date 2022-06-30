@@ -19,8 +19,12 @@ def in_fiber(spin, fiber_xycordinate,nbhd, Crossing):
     fiber_in_yz = fibers_yz[np.where(np.array([np.linalg.norm(spin[1:3]- yz_dist_vec[i,:], ord = 2) < fibers_yz[i,5] for i in range(fibers_yz.shape[0])]) == True)]
 
     if fiber_in_xy.shape[0] > 0:
-        output_arg = 1
         fiber_info = fiber_in_xy
+        for i in range(fiber_info.shape[0]):
+            if fiber_info[i,0] < 100:
+                output_arg = 4
+            elif fiber_info[i,0] >= 100:
+                output_arg = 1
     
     if fiber_in_yz.shape[0] > 0:
         output_arg = 2

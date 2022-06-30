@@ -1,6 +1,7 @@
 import numpy as np 
 import inCell
 import inFiber
+from tqdm import tqdm
 
 def where_spin(fiber_xycordinate, cell_centers, spins, Crossing):
     b = 0
@@ -15,7 +16,7 @@ def where_spin(fiber_xycordinate, cell_centers, spins, Crossing):
         nbhd_fiber = np.amax(fiber_xycordinate[:,5])
     if cell_centers.shape[0] > 0:
         nbhd_cell = np.amax(cell_centers[:,3])
-    for i in range(len(spins[:,0])):
+    for i in tqdm(range(len(spins[:,0])), desc = 'finding spins'):
         in_fiber_num, fiber_info = (inFiber.in_fiber(spins[i,:],fiber_xycordinate, nbhd_fiber, Crossing)) # 1 = in vertical fiber, 2 = in horizontal fiber
         in_cell_num, cell_info = inCell.in_cell(spins[i,:], cell_centers, nbhd_cell) # 3 = in a cell
 
