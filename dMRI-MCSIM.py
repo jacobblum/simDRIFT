@@ -31,7 +31,7 @@ def Generate_Fibers(fiber_number, fiber_radius, voxel_dims, Crossing):
     fiber_xycordinate[:,0] = fib_xs.flatten()
     fiber_xycordinate[:,1] = fib_ys.flatten()
     fiber_zcordiate[:,2] = np.ones(len(fib_xs.flatten()))
-    fiber_radii = np.array([fiber_radius*1.20, fiber_radius*1.10, fiber_radius])
+    fiber_radii = np.array([fiber_radius*1.10, fiber_radius*1.20, fiber_radius])
     fiber_diffusions = np.array([1.0, 1.5, 2.0])
    
 
@@ -56,24 +56,26 @@ def Generate_Cells(cell_number, voxel_dims, cell_radii, vspacing):
     cell_centers[:,3] =cell_radii[0] * np.ones(len(cell_xs.flatten()))
     return cell_centers
 
-def Place_Spins(num_spins, voxel_dims, fiber_xycordinate):
-    #spins = np.zeros((num_spins,3))
-    #for j in tqdm(range(num_spins), desc = 'placing spins'):
-    #    fiber_idx = np.random.randint(0,fiber_xycordinate.shape[0])
-    #    fiber = fiber_xycordinate[fiber_idx,:]
-    #    if fiber[3] == 0:
-    #        spins[j,0:2] = fiber[0:2]
-    #        spins[j,2] = np.random.uniform(low = 0, high = 200)
-    #    else:
-    #        spins[j,1] = fiber[1]
-    #        spins[j,2] = fiber[0]
-    #        spins[j,0] = np.random.uniform(low = 0, high = 200)   
-    return np.random.uniform(0,200, (num_spins,3))
+def Place_Spins(num_spins, voxel_dims, fiber_xycordinate, cell_centers):
+    spins = np.zeros((num_spins,3))
+    
+    for j in range(spins.shape[0]):
+        fiber_idx = np.random.randint(0,fiber_xycordinate.shape[0])
+        fiber = fiber_xycordinate[fiber_idx,:]
+        if fiber[3] == 0:
+            spins[j,0:2] = 0.5 * (fiber[0:2] + fiber_xycordinate[fiber_idx+1,0:2] ) 
+            spins[j,2] = np.random.uniform(0,200)
+        else:
+            spins[j,1] = fiber[1]
+            spins[j,2] = fiber[0]
+            spins[j,0] = np.random.uniform(low = 0, high = 200)
+    return np.random.uniform(low = 0, high = 200, size = (num_spins, 3))
+    
+ 
 
 def main():
-    num_fibers = 50
-    num_cells = 4
-    num_spins = 25000
+    num_fibers = 65 # FF = 33.183 %
+    num_spins = 100
     TE = 27 #ms
     dt = .005 #ms
     voxel_dims = np.array([0,200])
@@ -83,25 +85,31 @@ def main():
     t2_n = 20
     t2_p = 26
 
+    Crossing = False  
+
     spin_trajectory = np.zeros((num_spins,int(TE/dt),3))
-    fiber_xycordinate = Generate_Fibers(num_fibers, 1.0, voxel_dims = voxel_dims, Crossing=True)
-    cell_centers_Q1 = Generate_Cells(2, np.array([0,100,0,100,0,200]), np.array([20]), 3)
-    cell_centers_Q2 = Generate_Cells(9,np.array([100,200,0,100,0,200]), np.array([5.0]), 10)
-    cell_centers_Q3 = Generate_Cells(9, np.array([0,100,100,200, 0,200]), np.array([5.0]),10)
-    cell_centers_Q4 = Generate_Cells(2,np.array([100,200, 100,200,0,200]), np.array([20]),3)
+    fiber_xycordinate = Generate_Fibers(num_fibers, 1.0, voxel_dims = voxel_dims, Crossing=Crossing)
+
+    cell_centers_Q1 = Generate_Cells(2, np.array([0,100,0,100,0,200]), np.array([20]), 2)
+    cell_centers_Q2 = Generate_Cells(2,np.array([100,200,0,100,0,200]), np.array([20]), 2) # 8 x 8 x 8
+    cell_centers_Q3 = Generate_Cells(2, np.array([0,100,100,200, 0,200]), np.array([20]),2) 
+    cell_centers_Q4 = Generate_Cells(2,np.array([100,200, 100,200,0,200]), np.array([20]), 2) # 2 x 2 x 2 
     cell_centers = np.vstack((cell_centers_Q1, cell_centers_Q2, cell_centers_Q3, cell_centers_Q4))
-    spins = Place_Spins(num_spins, voxel_dims, fiber_xycordinate)
+    spins = Place_Spins(num_spins, voxel_dims, fiber_xycordinate, cell_centers)
+
+
 
     #fiber_xycordinate = np.array([[1.0, 1.0, 0, 1, 1.0, 2.0, 1]])
     #cell_centers = np.array([[1.0,1.0,1.0,0.0]])
     #spins = np.array([[4.0, 0.0, 3.0]])
-    spin_loc_key, spin_in_fiber_info, spin_in_cell_info = whereSpin.where_spin(fiber_xycordinate, cell_centers, spins, Crossing = True)
+    spin_loc_key, spin_in_fiber_info, spin_in_cell_info = whereSpin.where_spin(fiber_xycordinate, cell_centers, spins, Crossing = Crossing)
 
     print('water: %s' %len(spin_loc_key[spin_loc_key == 0]))
     print('vfib: %s' %str(len(spin_loc_key[(spin_loc_key == 1) | (spin_loc_key == 4)])))
     print('hfib: %s' %str(len(spin_loc_key[spin_loc_key == 2])))
     print('cell: %s' %str(len(spin_loc_key[spin_loc_key == 3])))
- 
+
+
     # Parallelize Code
     cpu_count = int(.80 *np.floor(multiprocessing.cpu_count())+1)
     
@@ -126,9 +134,9 @@ def main():
     spin_trajectory_1 = spin_trajectory[:,t1_start:t1_end,:]
     spin_trajectory_2 = spin_trajectory[:, t2_start:t2_end, :]
 
-    np.save(r"D:\MCSIM-Jacob\CrossingFibers\Data\22_0624\taj1_10%25k.npy", spin_trajectory_1)
-    np.save(r"D:\MCSIM-Jacob\CrossingFibers\Data\22_0624\traj2_10%25k.npy", spin_trajectory_2)
-    np.save(r"D:\MCSIM-Jacob\CrossingFibers\Data\22_0624\spin_positions_10%25k.npy", spin_positions)
+    #np.save(r"/bmr207/nmrgrp/nmr107/MC-SIM/simulation_data/from_117/220708/taj1_3_fibers_50k_no_crossing_fixed.npy", spin_trajectory_1)
+    #np.save(r"/bmr207/nmrgrp/nmr107/MC-SIM/simulation_data/from_117/220708/traj2_3_fibers_50k_no_crossing_fixed.npy", spin_trajectory_2)
+    #np.save(r"/bmr207/nmrgrp/nmr107/MC-SIM/simulation_data/from_117/220708/spin_positions_3_fibers_50k_no_crossing_fixed.npy", spin_positions)
     
     #fig, ax = plt.subplots(figsize = (10,3))
     #MCSIMplots.plot(fiber_xycordinate, cell_centers, spins, spin_loc_key, spin_trajectory, voxel_dims)
@@ -137,6 +145,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-
-# 49204

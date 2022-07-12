@@ -37,13 +37,12 @@ def plot(fiber_xycordinate, cell_centers, Spins, spin_loc_key, spin_trajectory, 
    
         for i in range(len(fiber_xycordinate[:,0])):
             xs, ys, zs = plot_axon(fiber_xycordinate[i,:], fiber_xycordinate[i,5], voxel_dims)
-
             if(fiber_xycordinate[i,6] != 0):
                 if(fiber_xycordinate[i,3]) == 0:
-                    ax.plot_surface(xs, ys, zs, color = colors[int(fiber_xycordinate[i,6])-1], alpha = .25)
+                    ax.plot_surface(xs, ys, zs, color = colors[int(fiber_xycordinate[i,6])-1], alpha = .01)
                     z = 0
                 elif (fiber_xycordinate[i,3]) == 1:
-                    ax.plot_surface(zs, ys, xs, color = colors[int(fiber_xycordinate[i,6])-1], alpha = .25)
+                    ax.plot_surface(zs, ys, xs, color = colors[int(fiber_xycordinate[i,6])-1], alpha = .01)
                     z = 0
 
     else:
@@ -65,7 +64,7 @@ def plot(fiber_xycordinate, cell_centers, Spins, spin_loc_key, spin_trajectory, 
 
     color = ['aqua', 'orange', 'purple']
     for i in range(Spins.shape[0]):
-        if  spin_loc_key[i] >= 1:
+        if  spin_loc_key[i] == 0:
             ax.scatter3D(spin_trajectory[i,:,0], spin_trajectory[i,:,1], spin_trajectory[i,:,2], s = 1, color = 'black')
        
 

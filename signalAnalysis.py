@@ -11,9 +11,11 @@ data = pd.Series(['dti_adc_map.nii', 'dti_axial_map.nii', 'dti_fa_map.nii', 'dti
                 index = ['DTI-ADC', 'DTI-AD', 'DTI-FA', 'DTI-RD', 'FF', 'F1-FF', 'F1-AD', 'F1-FA', 'F1-RD', 'F2-FF'   ,'F2-AD','F2-FA', 'F2-RD', 'HF', 'RF', 'WF' ])
 
 
-directories = pd.Series([r'/Volumes/LaCie/MCSIM-Jacob/CrossingFibers/DBSI-99/DHI_results_0.3_0.3_3_3', 
-                            r'/Volumes/LaCie/MCSIM-Jacob/CrossingFibers/ABCD/DHI_results_0.3_0.3_3_3'],
-                            index = [0,1])
+directories = pd.Series([r'//Volumes/LaCie/MCSIM-Jacob/CrossingFibers/ABCD/DHI_results_0.3_0.3_3_3_total_signal_0705_mouse', 
+                            r'/Volumes/LaCie/MCSIM-Jacob/CrossingFibers/NODDI/DHI_results_0.3_0.3_3_3_all_signal_0705_mouse',
+                            r'/Volumes/LaCie/MCSIM-Jacob/CrossingFibers/DBSI-99/DHI_results_0.3_0.3_3_3_total_signal_0705_mouse',
+                            r'/Volumes/LaCie/MCSIM-Jacob/CrossingFibers/DBSI-26/DHI_results_0.3_0.3_3_3_all_signal_0705_mouse'],
+                            index = [0,1,2,3])
 
 
 data_matrix = np.zeros((len(directories.index), len(data.index)))
@@ -28,8 +30,8 @@ for i in range(len(directories.index)):
 fig, ax = plt.subplots(figsize = (10,5))
 
 ax.imshow(data_matrix, cmap = 'Dark2')
-ax.set_yticks([0,1])
-ax.set_yticklabels(['99-Dir', 'ABCD'])
+ax.set_yticks([0,1,2,3])
+ax.set_yticklabels(['ABCD', 'NODDI', 'DBSI-99', 'DBSI-26'])
 ax.set_xticks(np.arange(0,len(data.index), 1))
 ax.set_xticklabels(data.index)
 
@@ -41,5 +43,5 @@ for i in range(len(directories.index)):
     for j in range(len(data.index)):
         text = ax.text(j, i, round(data_matrix[i, j], 3),
                        ha="center", va="center", color="black")
-ax.set_title('Comparison of ABCD-DBSI Diffusion Scheme :no extra Signals')
+ax.set_title('Comparison of ABCD-DBSI Diffusion Scheme : Total Signals; Mouse Config')
 plt.show()
