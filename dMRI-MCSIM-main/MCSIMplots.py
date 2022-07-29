@@ -15,7 +15,19 @@ def plot_axon(Data, fiber_radius, voxel_dims):
     return xs, ys, zs
 
 
- 
+def plot_ellipsoid(Vector):
+    xd, yd, zd = Vector[0], Vector[1], Vector[2] 
+    phi = np.linspace(0,2*np.pi, 256).reshape(256, 1) # the angle of the projection in the xy-plane
+    theta = np.linspace(0, np.pi, 256).reshape(-1, 256) # the angle from the polar axis, ie the polar angle
+    # Transformation formulae for a spherical coordinate system.
+    x = xd*np.sin(theta)*np.cos(phi)
+    y = yd*np.sin(theta)*np.sin(phi)
+    z = zd*np.cos(theta)
+    fig = plt.figure(figsize=plt.figaspect(1))  # Square figure
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_surface(x, y, z, color='b')
+
+
 def plot_cell(center):
     xc = center[0]
     yc = center[1]

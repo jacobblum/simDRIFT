@@ -12,15 +12,13 @@ import nnlsq_model
 
 def cleanSpins(trajectory_1, trajectory_2, spin_positions, spin_key):
 
-    print(trajectory_1.shape)
-    print(trajectory_2.shape)
-    
+ 
     traj_1_in_voxel = []
     traj_2_in_voxel = []
     idxs = []
 
-    trajectory_1 = trajectory_1[(spin_positions != 3) | (spin_positions == 3), :, :]
-    trajectory_2 = trajectory_2[(spin_positions !=3 ) | (spin_positions == 3), :, :]
+    trajectory_1 = trajectory_1[(spin_positions != 3) & (spin_positions != 0), :, :]
+    trajectory_2 = trajectory_2[(spin_positions !=3 ) & (spin_positions != 0), :, :]
 
     for j in range(trajectory_1.shape[0]):
         t1j_min_pos, t1j_max_pos = np.amin(trajectory_1[j,:,:]), np.amax(trajectory_1[j,:,:])
@@ -42,7 +40,7 @@ def cleanSpins(trajectory_1, trajectory_2, spin_positions, spin_key):
     # 3913 cells 
     # 12122 water
 
-    return trajectory_1, trajectory_2
+    return outputarg1, outputarg2
 
 def signal(trajectory_1, trajectory_2, bmax, num_bvals, spin_positions, xyz):
     gamma = 42.58
@@ -60,8 +58,8 @@ def signal(trajectory_1, trajectory_2, bmax, num_bvals, spin_positions, xyz):
         for i in range(3):
             unit_gradients[i*num_bvals: (i+1)*num_bvals,i] = Gx 
     else:
-        unit_gradients = np.loadtxt(r"Z:\Jacob_Blum\MCSIM-Jacob\signals\CrossingFibers\ABCD\sub-NDARDD890AYU_ses-01_dwi_sub-NDARDD890AYU_ses-01_dwi (1).bvec").T
-        b_vals = np.loadtxt(r"Z:\Jacob_Blum\MCSIM-Jacob\signals\CrossingFibers\ABCD\sub-NDARDD890AYU_ses-01_dwi_sub-NDARDD890AYU_ses-01_dwi (3).bval")
+        unit_gradients = np.loadtxt(r"/Users/jacobblum/Desktop/MCSIM-Jacob/CrossingFibers/ABCD/sub-NDARDD890AYU_ses-01_dwi_sub-NDARDD890AYU_ses-01_dwi (1).bvec").T
+        b_vals = np.loadtxt(r"/Users/jacobblum/Desktop/MCSIM-Jacob/CrossingFibers/ABCD/sub-NDARDD890AYU_ses-01_dwi_sub-NDARDD890AYU_ses-01_dwi (3).bval")
     all_signal = np.zeros(unit_gradients.shape[0])
     traj1_vox, traj2_vox = cleanSpins(trajectory_1, trajectory_2, spin_positions, spin_loc_key)
     
@@ -85,19 +83,33 @@ def signal(trajectory_1, trajectory_2, bmax, num_bvals, spin_positions, xyz):
     dwi_img[0,0,0,:] = all_signal
 
     nifti_dwi = nb.Nifti1Image(dwi_img, affine = np.eye(4))
-    nb.save(nifti_dwi, r"/Users/jacobblum/Desktop/MCSIM-Jacob/CrossingFibers/xyz/3fibers_2crossing_all" + ".nii")
+    nb.save(nifti_dwi, r"/Volumes/LaCie/MCSIM-Jacob/CrossingFibers/Data/from117/22_0714/pure_fiber_signal" + ".nii")
     return all_signal, b_vals, traj1_vox.shape[0]
 
 def plot():
     
-    xyz = True 
+    xyz = False 
     
   
 
-    traj1 = np.load(r"/Users/jacobblum/Desktop/MCSIM-Jacob/CrossingFibers/Data/22_0713/taj1_3_fibers_50k_no_crossing_fixed_old.npy")
-    traj2 = np.load(r"/Users/jacobblum/Desktop/MCSIM-Jacob/CrossingFibers/Data/22_0713/traj2_3_fibers_50k_no_crossing_fixed_old.npy")
-    positions = np.load(r"/Users/jacobblum/Desktop/MCSIM-Jacob/CrossingFibers/Data/22_0713/spin_positions_3_fibers_50k_no_crossing_fixed_old.npy")
+    traj11 = np.load(r"/Volumes/LaCie/MCSIM-Jacob/CrossingFibers/Data/from117/22_0714/taj1_3_fibers_50k_no_crossing_fixed_old.npy")
+    traj21 = np.load(r"/Volumes/LaCie/MCSIM-Jacob/CrossingFibers/Data/from117/22_0714/traj2_3_fibers_50k_no_crossing_fixed_old.npy")
+    positions1 = np.load(r"/Volumes/LaCie/MCSIM-Jacob/CrossingFibers/Data/from117/22_0714/spin_positions_3_fibers_50k_no_crossing_fixed_old.npy")
+
+    traj12 = np.load(r"//Volumes/LaCie/MCSIM-Jacob/CrossingFibers/Data/from116/22_0714/taj1_3_fibers_50k_no_crossing_fixed_old.npy")
+    traj22 = np.load(r"/Volumes/LaCie/MCSIM-Jacob/CrossingFibers/Data/from116/22_0714/traj2_3_fibers_50k_no_crossing_fixed_old.npy")
+    positions2 = np.load(r"/Volumes/LaCie/MCSIM-Jacob/CrossingFibers/Data/from116/22_0714/spin_positions_3_fibers_50k_no_crossing_fixed_old.npy")
+
+
+    positions = np.hstack((positions1, positions2))
+
     
+    traj1 = np.vstack((traj11, traj12))
+    traj2 = np.vstack((traj21, traj22))
+
+    print(traj1.shape )
+    print(traj2.shape)
+
     
     all_signal, b_vals, num_spins = signal(traj1, traj2, 1500, 20, positions, xyz)
 
