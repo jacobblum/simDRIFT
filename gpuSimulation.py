@@ -1,6 +1,3 @@
-from concurrent.futures import thread
-from re import L
-from turtle import distance
 from matplotlib import projections
 import numpy as np 
 import numba 
@@ -30,8 +27,8 @@ class dmri_simulation:
         cellFraction = 0.0
         cellRadius = 0.0 #um
         spinPositionsT1m = 0
-        spinLocation = 0
-
+        spinInFiber_i = 0
+        spinInCell_i = 0
         return
     
     def set_parameters(self, numSpins, fiberFraction, fiberRadius, cellFraction, cellRadius, TE, dt, voxelDim):
@@ -49,7 +46,8 @@ class dmri_simulation:
         self.fiberCenters = self.place_fiber_grid()
         self.cellCenters = self.place_cell_grid()
         self.spinPotionsT1m = np.random.uniform(low = 0, high = 200, size = (int(self.numSpins),3))
-        self.spinLocation = np.zeros(self.numSpins)
+        self.spinInFiber_i = np.zeros(self.numSpins)
+        self.spinInCell_i = np.zeros(self.numSpins)
         self.get_spin_locations()
 
 
@@ -87,28 +85,63 @@ class dmri_simulation:
         return cellCenters
     
     def get_spin_locations(self):
-        spinLocations_GPU = cuda.to_device(self.spinLocation.astype(np.float32))
+        spinInFiber_i_GPU = cuda.to_device(self.spinInFiber_i.astype(np.float32))
+        spinInCell_i_GPU = cuda.to_device(self.spinInCell_i.astype(np.float32))
         spinInitialPositions_GPU = cuda.to_device(self.spinPotionsT1m.astype(np.float32))
         fiberCenters_GPU = cuda.to_device(self.fiberCenters.astype(np.float32))
         cellCenters_GPU = cuda.to_device(self.cellCenters.astype(np.float32))
         Start = time.time()
-        self.find_spin_locations.forall(self.numSpins)(spinLocations_GPU, spinInitialPositions_GPU, fiberCenters_GPU, cellCenters_GPU)
+        self.find_spin_locations.forall(self.numSpins)(spinInFiber_i_GPU, spinInCell_i_GPU, spinInitialPositions_GPU, fiberCenters_GPU, cellCenters_GPU)
         End = time.time()
         print('Finding {} spins - task completed in {} sec'.format(self.numSpins, End-Start))
-        self.spinLocation = spinLocations_GPU.copy_to_host()
+        self.spinInFiber_i = spinInFiber_i_GPU.copy_to_host()
+        self.spinInCell_i = spinInCell_i_GPU.copy_to_host()
 
-        print(self.spinLocation[self.spinLocation == 1].shape)
+
+    def simulate(self):
+        """
+
+
+        """
+        fiberSpins_GPU = cuda.to_device(self.spinPotionsT1m[self.spinInFiber_i != 0].astype(np.float32))
+        fiberAtSpin_i = self.spinInFiber_i[self.spinInFiber_i != 0].astype(np.float32)
+        rng_states_fibers = create_xoroshiro128p_states(len(self.spinInFiber_i[self.spinInFiber_i != 0]), seed = 42)
+        fiberCenters_GPU = cuda.to_device(self.fiberCenters.astype(np.float32))
+        self.diffusion_in_fiber(rng_states_fibers,
+                                fiberSpins_GPU,
+                                fiberAtSpin_i,
+                                int(self.TE/self.dt),
+                                fiberCenters_GPU,
+                                self.dt
+        )
+
+      
+
+   
+    
+
+    
+
+
+
+
+
+
+
+        return
+
 
     @cuda.jit 
-    def find_spin_locations(spinLocations, initialSpinPositions, fiberCenters, cellCenters):
+    def find_spin_locations(spinInFiber_i, spinInCell_i, initialSpinPositions, fiberCenters, cellCenters):
         i = cuda.grid(1)
-        if i > len(spinLocations):
+        if i > initialSpinPositions.shape[0]:
             return 
         
         """
         Global Variables
 
-        spinLocations - (numSpins,) array containing the spin location key: 0 = in free water, 1 = in fiber, 2 = in cell [Write]
+        spinInFiber_i - (numSpins,) array to be filled with the index of the fiber that the i-th spin is within (0 o.w.)
+        spinInCell_i - (numSpins,) array to be filled with the index of the cell that the i-th spin is within (0 o.w.)
         initialSpinPositions - (numSpins,3) array with initial spin positions [READ ONLY]
         fiberCenters - (numFibers**2, 4) array with fiber locations and radii [READ ONLY]
         cellCenters - (numCells**3, 4) array with fiber locations and radii [READ ONLY]
@@ -132,36 +165,26 @@ class dmri_simulation:
         for j in range(fiberCenters.shape[0]): 
             fiberDistance = jp.euclidean_distance(spinPosition, fiberCenters[j,0:3], 'xy')
             if fiberDistance < fiberCenters[j,3]: 
-                KeyFiber = 1
+                KeyFiber = j
                 break
         
         for j in range(cellCenters.shape[0]):
             cellDistance = jp.euclidean_distance(spinPosition, cellCenters[j,0:3], 'xyz')
             if cellDistance < cellCenters[j,3]:
-                KeyCell = 2
+                KeyCell = j
                 break
-
         
-        if (KeyFiber == 1) & (KeyCell == 2):
-            Key = KeyFiber
-        elif (KeyFiber == 1) & (KeyCell == 0):
-            Key = KeyFiber
-        elif (KeyFiber == 0) & (KeyCell == 2):
-            Key = KeyCell
-        else:
-            Key = 0
         
         cuda.syncthreads()
-        spinLocations[i] = Key
+        spinInCell_i[i] = KeyCell
+        spinInFiber_i[i] = KeyFiber
         cuda.syncthreads()
         return
             
 
 
-
-
     @cuda.jit
-    def diffusion_in_fiber(rng_states, spinTrajectories, numSteps, fiberCenter, dt):
+    def diffusion_in_fiber(rng_states, spinTrajectories, fiberIndexAt_i, numSteps, fiberCenters, dt):
         i = cuda.grid(1)
         if i > spinTrajectories.shape[0]:
             return
@@ -179,7 +202,7 @@ class dmri_simulation:
         Step - Step size = Sqrt(6*D*dt)
         distanceFiber - (float32) distance between proposed new position and fibers intersecting the cell
         """
-        
+        inx = int32(fiberIndexAt_i[i])
         D = float32(2.0)
         Step = float32(math.sqrt(6*D*dt))
         prevPosition = cuda.local.array(shape = 3, dtype= float32)
@@ -191,8 +214,8 @@ class dmri_simulation:
             for k in range(newPosition.shape[0]): 
                 prevPosition[k] = spinTrajectories[i,k] 
                 newPosition[k] = prevPosition[k] + (Step * newPosition[k])
-            distanceFiber = jp.euclidean_distance(newPosition,fiberCenter[0:3], 'xy')
-            if distanceFiber > fiberCenter[3]:
+            distanceFiber = jp.euclidean_distance(newPosition,fiberCenters[inx,0:3], 'xy')
+            if distanceFiber > fiberCenters[inx,3]:
                 for k in range(newPosition.shape[0]): newPosition[k] = prevPosition[k]
             cuda.syncthreads()
             for k in range(newPosition.shape[0]): spinTrajectories[i,k] = newPosition[k]
@@ -328,7 +351,7 @@ def main():
     
     sim = dmri_simulation()
     sim.set_parameters(
-        numSpins=100*10**3,
+        numSpins=100 *10**3,
         fiberFraction= .35,
         fiberRadius= 1.0,
         cellFraction= .10,
@@ -337,6 +360,8 @@ def main():
         dt = .005,
         voxelDim=200
         )
+
+    sim.simulate()
 
     exit()
 
