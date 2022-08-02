@@ -1,3 +1,3 @@
 # dMRI-MCSIM
 
-Working code in gpuSimulation.py; all others are from CPU version, which isn't fast enough. 
+__gpuSimulation.py__ allows users to take advatnage of massivly parallel GPU computation to simulate diffusion of spins in 2 fibers. 
