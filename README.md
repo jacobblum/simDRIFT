@@ -67,12 +67,19 @@ Interestingly, fitting 2-DT's with NEO to the extra-cellular and extra-fiber env
     RD = 1.28,
     Loss = 2.51e-6 
     However, with fitting 2 tensors to the data, we estimate the following : 
+    
     AD1 = 3.10, 
+    
     AD2 = 2.90, 
+    
     RD1 = 1.15,  
+    
     RD2 = 1.15, 
+    
     ff1 = .561, 
+    
     ff2 = .438, 
+    
     Loss = 5.60e-7 
 
 
