@@ -55,5 +55,8 @@ $$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 90^{\circ} $
 </p>
 
 
+__Extra-Environment Signal at various resolutions:__
+
+
 
 
