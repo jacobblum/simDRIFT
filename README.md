@@ -29,10 +29,7 @@ The tissue configuration is set in the following way:
 ```
 Here are some examples of the possible fiber configurations:
 
-<p align="center">
- Penetrating Fibers, $\theta_{1} = 0^{\circ}, \theta_{2} = 0^{\circ}$
-</p>
-
+$$\theta_{1} = 0, \theta_{2} = 0 $$
 
 ![0,0P](figures_for_mcsim/Penetrating_(0,0).png)
 
