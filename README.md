@@ -37,7 +37,9 @@ $$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 0^{\circ} $$
 
 $$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 30^{\circ} $$
 
-![0,0P](figures_for_mcsim/Penetrating_(0,30).png)
+<p align="center">
+  <img width="460" height="300" src="https://github.com/jacobblum/dMRI-MCSIM/blob/main/figures_for_mcsim/Penetrating_(0%2C30).png">
+</p>
 
 
 $$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 60^{\circ} $$
