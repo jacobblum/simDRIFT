@@ -8,8 +8,8 @@ gpuSimulation.py is a high preformance diffusion MRI Monte Carlo Simulation liba
 __Example Configurations__
 
 Configurations are set in the following manner:
-```
- sim = dmri_simulation()
+```Python
+    sim = dmri_simulation()
     Start = time.time()
     sim.set_parameters(
         numSpins= 100*10**3,
