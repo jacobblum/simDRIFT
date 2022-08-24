@@ -28,5 +28,5 @@ The tissue configuration is set in the following way:
         )   
 ```
 Here are some examples of the possible fiber configurations:
-![0,0P](figures_for_mcsim/diff_sequence.png)
+![0,0P](figures_for_mcsim/Penetrating_(0,0).png)
 
