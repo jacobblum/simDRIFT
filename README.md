@@ -60,8 +60,7 @@ Interestingly, fitting 2-DT's with NEO to the extra-cellular and extra-fiber env
 
 __dt = 0.01:__
 
-dt = .01 ms: With $N_{\text{Aniso}} = 1$, we estimate the following tensor: $\lambda_{||} = 2.511, \lambda_{\perp} = 1.20, \ell = 4.646e-6 $; however,
-with $N_{\text{Aniso}} = 2$, we estimate the following 2 tensors: $\lambda_{||}^{1} = 2.96, \lambda_{||}^{2} = 2.73, \lambda_{\perp}^{1} = 0.91,  \lambda_{\perp}^{2} = 1.15, f^{1} = .342, f^{2} = .657, \ell = 4.800-7 $
+With dt = .01 ms: With $ N_{\text{Aniso}} = 1 $, we estimate the following tensor: $ \lambda_{||} = 2.511, \lambda_{\perp} = 1.20, \ell = 4.646e-6 $; however, with $ N_{\text{Aniso}} = 2 $, we estimate the following 2 tensors: $ \lambda_{||}^{1} = 2.96, \lambda_{||}^{2} = 2.73, \lambda_{\perp}^{1} = 0.91,  \lambda_{\perp}^{2} = 1.15, f^{1} = .342, f^{2} = .657, \ell = 4.800-7 $
 
 
 2. dt = .001 ms: With $N_{\text{Aniso}} = 1$, we estimate the following tensor: $\lambda_{||} = 2.721, \lambda_{\perp} = 1.28, \ell = 2.51e-6 $; however,
