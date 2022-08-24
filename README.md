@@ -27,4 +27,6 @@ The tissue configuration is set in the following way:
         path_to_bvecs= r"C:\Users\Administrator\Desktop\dMRI-MCSIM-main\Gradients\DBSI99\bvec"
         )   
 ```
+Here are some examples of the possible fiber configurations:
+![0,0P](figures_for_mcsim/diff_sequence.png)
 
