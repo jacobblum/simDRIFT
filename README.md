@@ -2,5 +2,5 @@
 
 __gpuSimulation.py__
 
-gpuSimulation.py is a high preformance diffusion MRI Monte Carlo Simulation libarary with allows users to simulate molecular diffusion in a $[0,200]^{3} \quad \mu m $ imaging voxel. 
+gpuSimulation.py is a high preformance diffusion MRI Monte Carlo Simulation libarary with allows users to simulate molecular diffusion in a $ [0, 200]^{3} \mu m $ imaging voxel. 
 ![My Image](figures_for_mcsim/diff_sequence.png)
