@@ -32,7 +32,7 @@ Here are some examples of the possible fiber configurations:
 $$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 0^{\circ} $$
 
 <p align="center">
-  <img width="460" height="300" src="[http://www.fillmurray.com/460/300](https://github.com/jacobblum/dMRI-MCSIM/blob/main/figures_for_mcsim/Penetrating_(0%2C30).png)">
+  <img width="460" height="300" src="https://github.com/jacobblum/dMRI-MCSIM/blob/main/figures_for_mcsim/Penetrating_(0%2C0).png">
 </p>
 
 $$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 30^{\circ} $$
