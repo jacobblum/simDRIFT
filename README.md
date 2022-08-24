@@ -30,7 +30,7 @@ The tissue configuration is set in the following way:
 Here are some examples of the possible fiber configurations:
 
 <p align="center">
- Test>
+ Penetrating Fibers, $\theta_{1} = 0^{\circ}, \theta_{2} = 0^{\circ}$
 </p>
 
 
