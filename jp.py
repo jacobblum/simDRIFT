@@ -7,12 +7,6 @@ from numba.cuda import random
 from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128p_states
 import math
 
-from torch import device
-
-
-
-
-
 @cuda.jit(device = True)
 def randomDirection(rng_states, an_array, thread_id):
     sum = 0
