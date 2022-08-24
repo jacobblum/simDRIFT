@@ -44,11 +44,15 @@ $$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 30^{\circ} $
 
 $$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 60^{\circ} $$
 
-![0,0P](figures_for_mcsim/Penetrating_(0,60).png)
+<p align="center">
+  <img width="460" height="300" src="https://github.com/jacobblum/dMRI-MCSIM/blob/main/figures_for_mcsim/Penetrating_(0%2C60).png">
+</p>
 
 $$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 90^{\circ} $$
 
-![0,0P](figures_for_mcsim/Penetrating_(0,90).png)
+<p align="center">
+  <img width="460" height="300" src="https://github.com/jacobblum/dMRI-MCSIM/blob/main/figures_for_mcsim/Penetrating_(0%2C90).png">
+</p>
 
 
 
