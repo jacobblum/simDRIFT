@@ -58,8 +58,9 @@ $$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 90^{\circ} $
 __Extra-Environment Signal at various resolutions:__
 Interestingly, fitting 2-DT's with NEO to the extra-cellular and extra-fiber environment results in a substantially more realistic description of the diffusion environment than fitting just 1-DT.
 
+__dt = 0.01:__
 
-1. dt = .01 ms: With $N_{\text{Aniso}} = 1$, we estimate the following tensor: $\lambda_{||} = 2.511, \lambda_{\perp} = 1.20, \ell = 4.646e-6 $; however,
+dt = .01 ms: With $N_{\text{Aniso}} = 1$, we estimate the following tensor: $\lambda_{||} = 2.511, \lambda_{\perp} = 1.20, \ell = 4.646e-6 $; however,
 with $N_{\text{Aniso}} = 2$, we estimate the following 2 tensors: $\lambda_{||}^{1} = 2.96, \lambda_{||}^{2} = 2.73, \lambda_{\perp}^{1} = 0.91,  \lambda_{\perp}^{2} = 1.15, f^{1} = .342, f^{2} = .657, \ell = 4.800-7 $
 
 
