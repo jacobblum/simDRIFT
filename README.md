@@ -59,13 +59,39 @@ __Extra-Environment Signal at various resolutions:__
 Interestingly, fitting 2-DT's with NEO to the extra-cellular and extra-fiber environment results in a substantially more realistic description of the diffusion environment than fitting just 1-DT.
 
 
-1. dt = .01 ms: Fitting 1 tensor to the data, we estimate the following : AD = 2.511, RD = 1.20, Loss = 4.646e-6 $; however, with fitting 2 tensors to the data, we estimate the following : AD1 = 2.96, AD2 = 2.73, RD1 = 0.91,  RD2 = 1.15, ff1 = .342, ff2 = .657, Loss = 4.800e-7 
+1. dt = .01 ms: Fitting 1 tensor to the data, we estimate the following : 
+    
+    AD = 2.511,
+    
+    RD = 1.20,
+    
+    Loss = 4.646e-6 
+    
+    however, with fitting 2 tensors to the data, we estimate the following : 
+    
+    AD1 = 2.96,
+    
+    AD2 = 2.73, 
+    
+    RD1 = 0.91,  
+    
+    RD2 = 1.15, 
+    
+    ff1 = .342, 
+    
+    ff2 = .657,
+    
+    Loss = 4.800e-7 
 
 
 2. dt = .001 ms: Fitting 1 tensor to the data, we estimate the following : 
+    
     AD = 2.721, 
+    
     RD = 1.28,
+    
     Loss = 2.51e-6 
+    
     However, with fitting 2 tensors to the data, we estimate the following : 
     
     AD1 = 3.10, 
@@ -84,16 +110,27 @@ Interestingly, fitting 2-DT's with NEO to the extra-cellular and extra-fiber env
 
 
 3. dt = .0005 ms: Fitting 1 tensor to the data, we estimate the following : 
+    
     AD = 3.05, 
+    
     RD = 1.82,
+    
     Loss = 8.23e-4 
+    
     However, with fitting 2 tensors to the data, we estimate the following : 
+    
     AD1 = 2.78, 
+    
     AD2 = 2.97, 
+    
     RD1 = 1.34,  
+    
     RD2 = 2.86, 
+    
     ff1 = .500, 
+    
     ff2 = .500, 
+    
     Loss = 5.74e-7 
 
 
