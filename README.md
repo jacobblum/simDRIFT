@@ -10,7 +10,6 @@ __Setting the intra-voxel tissue configuration__
 The tissue configuration is set in the following way:
 ```Python
     sim = dmri_simulation()
-    Start = time.time()
     sim.set_parameters(
         numSpins= 100*10**3,
         fiberFraction= (.10, .10),   # Fraction in each Half/Quadrant Depending on 'P'/'NP'
