@@ -38,3 +38,14 @@ $$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 30^{\circ} $
 ![0,0P](figures_for_mcsim/Penetrating_(0,30).png)
 
 
+$$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 60^{\circ} $$
+
+![0,0P](figures_for_mcsim/Penetrating_(0,60).png)
+
+$$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 90^{\circ} $$
+
+![0,0P](figures_for_mcsim/Penetrating_(0,90).png)
+
+
+
+
