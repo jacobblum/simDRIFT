@@ -8,5 +8,9 @@ gpuSimulation.py is a high preformance diffusion MRI Monte Carlo Simulation liba
 __Example Configurations__
 
 Configurations are set in the following manner:
-![My Image](figures_for_mcsim/setting_parameters-2.PNG)
+```
+function test() {
+  console.log("notice the blank line before this function?");
+}
+```
 
