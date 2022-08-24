@@ -9,8 +9,23 @@ __Example Configurations__
 
 Configurations are set in the following manner:
 ```
-function test() {
-  console.log("notice the blank line before this function?");
-}
+ sim = dmri_simulation()
+    Start = time.time()
+    sim.set_parameters(
+        numSpins= 100*10**3,
+        fiberFraction= (.10, .10),   # Fraction in each Half/Quadrant Depending on 'P'/'NP'
+        fiberRadius= 5.0,            # um
+        Thetas = (0,0),              # degrees
+        fiberDiffusions= (2.0, 1.0), #um^2/mm
+        cellFraction= .0,            # Fraction in each Half/Quadrant Depending on 'P'/'NP'
+        cellRadii= (5,10),           # um
+        penetrating = 'P',           # 'P' = Penetrating Cells; 'NP = Non-Penetrating Cells 
+        Delta = 10,                  # ms 
+        dt = .010,                   # ms 
+        voxelDim= 200,               # um
+        buffer = 100,                # um
+        path_to_bvals= r"C:\Users\Administrator\Desktop\dMRI-MCSIM-main\Gradients\DBSI99\bval",
+        path_to_bvecs= r"C:\Users\Administrator\Desktop\dMRI-MCSIM-main\Gradients\DBSI99\bvec"
+        )   
 ```
 
