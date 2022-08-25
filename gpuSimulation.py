@@ -48,7 +48,7 @@ class dmri_simulation:
         return
     
     def set_parameters(self, numSpins, fiberFraction, fiberRadius, Thetas, fiberDiffusions, cellFraction, cellRadii, penetrating, Delta, dt, voxelDim, buffer, path_to_bvals, path_to_bvecs):
-        self.bvals = np.loadtxt(path_to_bvals)
+        self.bvals = np.loadtxt(path_to_bvals) 
         self.bvecs = np.loadtxt(path_to_bvecs)
         self.voxelDims = voxelDim
         self.buffer = buffer 
@@ -82,14 +82,13 @@ class dmri_simulation:
         fiberRadius = self.fiberRadius
         numFibers = []
         for i in range(len(fiberFraction)):
-            numFiber = int(np.sqrt((fiberFraction[i] * (300)*(150))/(np.pi*fiberRadius**2)))
+            numFiber = int(np.sqrt((fiberFraction[i] * (300)**2)/(np.pi*fiberRadius**2)))
             numFibers.append(numFiber)    
         print('FIBER GRIDS {}'.format(numFibers))
         return numFibers
     
     def set_num_cells(self):
         cellFraction = self.cellFraction 
-        ## Convert from cell fraction in entire voxel to cell fraction in reduced voxel
         numCells = []
         for i in range(len(self.cellRadii)):
             cellRadius = self.cellRadii[i]
@@ -106,20 +105,23 @@ class dmri_simulation:
             if self.penetrating:
                 fiberXs, fiberYs = np.meshgrid(np.linspace(start = 0+self.fiberRadius, stop = self.voxelDims+self.buffer-self.fiberRadius, num = self.numFibers[i]), 
                                                np.linspace(start = (i*(self.voxelDims+self.buffer)*.50)+self.fiberRadius, stop = (i+1)*(self.voxelDims+self.buffer)*.50-self.fiberRadius, num = self.numFibers[i]))
+
             
+            fiberXs, fiberYs = np.meshgrid(np.linspace(0,300, self.numFibers[0]), np.linspace(0,300, self.numFibers[0]))
+        
             fiberCordinates[:,0] = fiberXs.flatten()
             fiberCordinates[:,1] = fiberYs.flatten()
             fiberCordinates[:,2] = 1.0
             fiberCordinates[:,3] = self.fiberRadius
             fiberCordinates[fiberCordinates[:,1] < (self.voxelDims+self.buffer)/2, 4] = 1 # Assigns the rotation refernce index; 0 is for [0,0,1], 1 would correspond to Ry.dot([0,0,1])
-            fiberCordinates[fiberCordinates[:,1] >= (self.voxelDims+self.buffer)/2, 5] = self.fiberDiffusions[0]
+            fiberCordinates[fiberCordinates[:,1] >= (self.voxelDims+self.buffer)/2, 5] = self.fiberDiffusions[0] #Store Diffusivity of the fibers in the 6-th dimension of the vector
             fiberCordinates[fiberCordinates[:,1] < (self.voxelDims+self.buffer)/2, 5] = self.fiberDiffusions[1]
             fiberCordinates_pre_rotation = fiberCordinates[fiberCordinates[:,1] <(self.voxelDims+self.buffer)/2, 0:3]
             rotatedCords = (self.rotMat.dot(fiberCordinates_pre_rotation.T)).T
             if rotatedCords.shape[0] > 0:
-                z_correct = np.amin(rotatedCords[:,2])
+                z_correct = np.amin(rotatedCords[:,2]) # Want the grid to be placed at z = 0
                 rotatedFibers = rotatedCords 
-                rotatedFibers[:,2] = rotatedFibers[:,2] + np.abs( z_correct )
+                rotatedFibers[:,2] = rotatedFibers[:,2] + np.abs(z_correct )
                 fiberCordinates[fiberCordinates[:,1] < (self.voxelDims+self.buffer)/2, 0:3] = rotatedFibers   
             outputCords.append(fiberCordinates)
         outArg =  np.vstack([outputCords[0], outputCords[1]])
@@ -130,9 +132,12 @@ class dmri_simulation:
         numCells = self.numCells
         cellCentersTotal = []
         if not self.penetrating:
-            regions = np.array([[0,self.voxelDims+self.buffer,0,0.5*(self.voxelDims+self.buffer),0.5*(self.voxelDims+self.buffer), self.voxelDims+self.buffer], [0,0.5*(self.voxelDims+self.buffer),0.5*(self.voxelDims+self.buffer),self.voxelDims+self.buffer,0,self.voxelDims+self.buffer]])
+            regions = np.array([[0,self.voxelDims+self.buffer,0,0.5*(self.voxelDims+self.buffer),0.5*(self.voxelDims+self.buffer), self.voxelDims+self.buffer], 
+                                [0,0.5*(self.voxelDims+self.buffer),0.5*(self.voxelDims+self.buffer), self.voxelDims+self.buffer,0,self.voxelDims+self.buffer]])
         else: 
-            regions = np.array([[0,self.voxelDims+self.buffer,0,0.5*(self.voxelDims+self.buffer),0,self.voxelDims+self.buffer], [0,self.voxelDims+self.buffer,0.5*(self.voxelDims+self.buffer),self.voxelDims+self.buffer,0,self.voxelDims+self.buffer]])
+            regions = np.array([[0,self.voxelDims+self.buffer,0,0.5*(self.voxelDims+self.buffer), 0,self.voxelDims+self.buffer],
+                                [0,self.voxelDims+self.buffer,0.5*(self.voxelDims+self.buffer),self.voxelDims+self.buffer,0,self.voxelDims+self.buffer]])
+        
         for i in range(len(numCells)):
             print('{} / {}'.format(i+1, len(numCells)))
             cellCenters = np.zeros((numCells[i]**3, 4))
@@ -145,6 +150,8 @@ class dmri_simulation:
                 cell_y = np.random.uniform(yllim + radius, yulim - radius)
                 cell_z = np.random.uniform(zllim + radius, zulim - radius)
                 cell_j = np.array([cell_x, cell_y, cell_z, radius])
+                
+                ## Ensures that the randomly placed cells are non-overlapping 
                 ctr = 0
                 if j > 0:
                     for k in range(j):
@@ -158,11 +165,12 @@ class dmri_simulation:
         return np.vstack([cellCentersTotal[0], cellCentersTotal[1]])
     
     def get_spin_locations(self):
-        spinInFiber_i_GPU = (self.spinInFiber_i.astype(np.float32))
-        spinInCell_i_GPU  = (self.spinInCell_i.astype(np.float32))
-        spinInitialPositions_GPU = (self.spinPotionsT1m.astype(np.float32))
-        fiberCenters_GPU = (self.fiberCenters.astype(np.float32))
-        cellCenters_GPU = (self.cellCenters.astype(np.float32))
+        print('Getting location of {} spins'.format(self.numSpins))
+        spinInFiber_i_GPU = self.spinInFiber_i.astype(np.float32)
+        spinInCell_i_GPU  = self.spinInCell_i.astype(np.float32)
+        spinInitialPositions_GPU = self.spinPotionsT1m.astype(np.float32)
+        fiberCenters_GPU = self.fiberCenters.astype(np.float32)
+        cellCenters_GPU = self.cellCenters.astype(np.float32)
         Start = time.time()
         self.find_spin_locations.forall(self.numSpins)(spinInFiber_i_GPU, spinInCell_i_GPU, spinInitialPositions_GPU, fiberCenters_GPU, cellCenters_GPU, self.fiberRotationReference)
         End = time.time()
@@ -179,25 +187,25 @@ class dmri_simulation:
             self.rotMat = Ry
             z = np.array([0,0,1])
             rotationReferences[i,:] = Ry.dot(z)
-        print(rotationReferences)
-
+        print('Fiber Rotation Matrix: {}'.format(rotationReferences))
         return rotationReferences
 
-    
-    def simulate(self, simulateFibers, simulateCells, simulateExtraEnvironment):
-        
+
+    def simulate(self, simulateFibers, simulateCells, simulateExtraEnvironment):        
         self.simulateFibers = simulateFibers
         self.simulateCells = simulateCells
         self.simulateExtra = simulateExtraEnvironment
-        fiberCenters_GPU = cuda.to_device(self.fiberCenters.astype(np.float32))
         
+
+
         """
         Simulate Fiber Diffusion: 
             Each Spin Must Know what Fiber it is in before distributing computation to the GPU. Thus, we pass an array containing the fiber index of spin the i-th spin to diffusion_in_fiber via the (numSpinInFiber, ) array
             fiberAtSpin_i.
         """
         if simulateFibers:
-            fiberSpins, self.fiberPositionsT1m = cuda.to_device(self.spinPotionsT1m[self.spinInFiber_i != -1].astype(np.float32)), self.spinPotionsT1m[self.spinInFiber_i != -1].astype(np.float32)
+            self.fiberPositionsT1m = self.spinPotionsT1m[self.spinInFiber_i != -1].astype(np.float32)
+            fiberSpins = cuda.to_device(self.spinPotionsT1m[self.spinInFiber_i != -1].astype(np.float32))
             fiberAtSpin_i = self.spinInFiber_i[self.spinInFiber_i != -1].astype(np.float32)
             rng_states_fibers = create_xoroshiro128p_states(len(self.spinInFiber_i[self.spinInFiber_i != -1]), seed = 42)
             print('STARTING FIBER SIMULATION')
@@ -206,7 +214,7 @@ class dmri_simulation:
                                     fiberSpins,
                                     fiberAtSpin_i,
                                     int(self.Delta/self.dt),
-                                    fiberCenters_GPU,
+                                    self.fiberCenters.astype(np.float32),
                                     self.fiberRotationReference,
                                     self.dt)
             End = time.time()
@@ -235,7 +243,7 @@ class dmri_simulation:
                                     cellAtSpin_i_GPU,
                                     int(self.Delta/self.dt),
                                     self.cellCenters,
-                                    fiberCenters_GPU,
+                                    self.fiberCenters.astype(np.float32),
                                     self.fiberRotationReference,
                                     self.dt
             )
@@ -258,7 +266,7 @@ class dmri_simulation:
                                             extraSpins_GPU,
                                             int(self.Delta/self.dt),
                                             self.cellCenters,
-                                            fiberCenters_GPU,
+                                            self.fiberCenters.astype(np.float32),
                                             self.fiberRotationReference,
                                             self.dt
             )
@@ -479,7 +487,6 @@ class dmri_simulation:
         distanceCell = float32(0.0)
         distanceFiber = float32(0.0)
 
-
         for step in range(numSteps): 
             print(step)
             newPosition = jp.randomDirection(rng_states, newPosition, i)        
@@ -516,7 +523,7 @@ class dmri_simulation:
         dt = self.delta # ms 
         delta = dt #ms
         b_vals = np.linspace(0, 2200, 20)
-        xyz = True
+        xyz = False
         trajectoryT1m, trajectoryT2p = self.spins_in_voxel(trajectoryT1m, trajectoryT2p)
         if xyz:
             Gt = np.sqrt(10**-3 * b_vals/(gamma**2 * delta**2*(Delta-delta/3)))
@@ -613,10 +620,9 @@ class dmri_simulation:
         fig = plt.figure(figsize = (8,8))
         ax = fig.add_subplot(projection = '3d')
 
-        first_half = self.fiberPositionsT2p[np.where(self.fiberPositionsT1m[:,1] < 150)]
-        second_half = self.fiberPositionsT2p[np.where(self.fiberPositionsT1m[:,1] >= 150)]
-
-        ax.scatter(self.fiberCenters[:,0], self.fiberCenters[:,1], self.fiberCenters[:,2])
+        #first_half = self.fiberPositionsT2p[np.where(self.fiberPositionsT1m[:,1] < 150)]
+        #second_half = self.fiberPositionsT2p[np.where(self.fiberPositionsT1m[:,1] >= 150)]
+        #ax.scatter(self.fiberCenters[:,0], self.fiberCenters[:,1], self.fiberCenters[:,2])
 
         #ax.scatter(first_half[:,0], first_half[:,1], first_half[:,2], color = 'red', label = r'$D=1.0$')
         #ax.scatter(second_half[:,0], second_half[:,1], second_half[:,2], color = 'blue', label = r'$D=2.0$')
@@ -635,27 +641,27 @@ def main():
     sim = dmri_simulation()
     Start = time.time()
     sim.set_parameters(
-        numSpins= 100*10**3,
-        fiberFraction= (.10, .10),   # Fraction in each Half/Quadrant Depending on 'P'/'NP'
-        fiberRadius= 5.0,            # um
+        numSpins= 500*10**3,
+        fiberFraction= (0.70, .70),   # Fraction in each Half/Quadrant Depending on 'P'/'NP'
+        fiberRadius= 1.0,            # um
         Thetas = (0,0),              # degrees
         fiberDiffusions= (2.0, 1.0), #um^2/mm
         cellFraction= .0,            # Fraction in each Half/Quadrant Depending on 'P'/'NP'
         cellRadii= (5,10),           # um
         penetrating = 'P',           # 'P' = Penetrating Cells; 'NP = Non-Penetrating Cells 
-        Delta = 10,                  # ms 
-        dt = .010,                   # ms 
+        Delta = 10,                  # ms ; 
+        dt = .0005,                   # ms 
         voxelDim= 200,               # um
         buffer = 100,                # um
         path_to_bvals= r"C:\Users\Administrator\Desktop\dMRI-MCSIM-main\Gradients\DBSI99\bval",
         path_to_bvecs= r"C:\Users\Administrator\Desktop\dMRI-MCSIM-main\Gradients\DBSI99\bvec"
         )   
-    
-   
-    
-    sim.simulate(simulateFibers=True, simulateCells=False, simulateExtraEnvironment=False)
-    sim.plot()
-    #sim.save_data(r"C:\Users\Administrator\Desktop\dMRI-MCSIM-main\gpu_sim_fiber_closeness\Delta=1")
+    grid = sim.fiberCenters
+    plt.scatter(grid[:,0], grid[:,1], s = 1)
+    plt.show()
+    print('Inter Fiber Distance: {}'.format(np.linalg.norm(grid[0,0:2]-grid[1,0:2], ord = 2) - 2*sim.fiberRadius))
+    sim.simulate(simulateFibers=False, simulateCells=False, simulateExtraEnvironment=True)
+    sim.save_data(r"C:\Users\Administrator\Desktop\dMRI-MCSIM-main\gpu_sim_fiber_closeness\Delta=1")
     End = time.time()
     print('Simulation Executed in: {} sec'.format(End-Start))
     return
