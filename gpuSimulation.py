@@ -131,12 +131,9 @@ class dmri_simulation:
             simulateCells=simulateCells,
             simulateExtraEnvironment=simulateExtra
         )
-
         self.save_data('test')
 
        
-
-
        
     def set_num_fibers(self):
         fiberFraction = self.fiberFraction
@@ -160,6 +157,9 @@ class dmri_simulation:
         outputCords = []
         for i in range(len(self.fiberFraction)):
             fiberCordinates = np.zeros(((self.numFibers[i])**2,6))
+            
+            ## IMPLEMENT FIXED MESHGRID!!! 
+            
             if not self.penetrating:
                 fiberXs, fiberYs = np.meshgrid(np.linspace(start = (i*(self.voxelDims+self.buffer)*.50)+self.fiberRadius, stop = (i+1)*(self.voxelDims+self.buffer)*.50-self.fiberRadius, num = self.numFibers[i]), 
                                                np.linspace(start = (i*(self.voxelDims+self.buffer)*.50)+self.fiberRadius, stop = (i+1)*(self.voxelDims+self.buffer)*.50-self.fiberRadius, num = self.numFibers[i]))
@@ -168,6 +168,9 @@ class dmri_simulation:
                                                np.linspace(start = (i*(self.voxelDims+self.buffer)*.50)+self.fiberRadius, stop = (i+1)*(self.voxelDims+self.buffer)*.50-self.fiberRadius, num = self.numFibers[i]))
 
             
+
+
+
             fiberXs, fiberYs = np.meshgrid(np.linspace(0+self.fiberRadius,self.voxelDims+self.buffer-self.fiberRadius, self.numFibers[0]), 
                                            np.linspace(0+self.fiberRadius,self.voxelDims+self.buffer-self.fiberRadius, self.numFibers[0]))
         
@@ -259,11 +262,8 @@ class dmri_simulation:
         self.simulateExtra = simulateExtraEnvironment
         
 
-
         """
         Simulate Fiber Diffusion: 
-            Each Spin Must Know what Fiber it is in before distributing computation to the GPU. Thus, we pass an array containing the fiber index of spin the i-th spin to diffusion_in_fiber via the (numSpinInFiber, ) array
-            fiberAtSpin_i.
         """
         if self.simulateFibers:
             self.fiberPositionsT1m = self.spinPotionsT1m[self.spinInFiber_i != -1].astype(np.float32)
@@ -366,22 +366,41 @@ class dmri_simulation:
         if i > initialSpinPositions.shape[0]:
             return 
         
-        """
-        Global Variables
+        """ Find the position of each of the ensemble's spins within the imaging voxel
 
-        spinInFiber_i - (numSpins,) array to be filled with the index of the fiber that the i-th spin is within (0 o.w.)
-        spinInCell_i - (numSpins,) array to be filled with the index of the cell that the i-th spin is within (0 o.w.)
-        initialSpinPositions - (numSpins,3) array with initial spin positions [READ ONLY]
-        fiberCenters - (numFibers**2, 4) array with fiber locations and radii [READ ONLY]
-        cellCenters - (numCells**3, 4) array with fiber locations and radii [READ ONLY]
+            Parameters
+            ----------
+            spinInFiber_i: 1-d ndarray
+                The index of the fiber a spin is located within; -1 if False, 0... N_fibers if True.
+            spinInCell_i: 1-d ndarray
+                The index of the cell a spin is located within; -1 if False, 0...N_cells if True
+            initialSpinPositions : N_spins x 3 ndarray
+                The initialSpinPositions[i,:] are the 3 spatial positions of the spin at its initial position
+            fiberCenters: N_{fibers} x 6 ndarray
+                The spatial position, rotmat index, intrinsic diffusivity, and radius of the i-th fiber
+            cellCenters: N_{cells} x 4 ndarray
+                The 3-spatial dimensions and radius of the i-th cell
+            fiberRotationReference: 2 x 3 ndarray
+                The Ry(Theta_{i}).dot([0,0,1]) vector  
 
-        Local Variables
+            Returns
+            -------
+            spinInFiber_i : 1-d ndarray
+                See parameters note
+            spinInCell_i: 1-d ndarray
+                See parameters note             
 
-        Key - int() the location of the spin
-        spinPosition - (3,) float(32), the current position of the spin
+            Notes
+            -----
+            None
 
-        RMK - spins in both a cell and a fiber are within the fiber. 
+            References
+            ----------
+            None
 
+            Examples
+            --------
+            >>> self.find_spin_locations.forall(self.numSpins)(spinInFiber_i_GPU, spinInCell_i_GPU, spinInitialPositions_GPU, fiberCenters_GPU, cellCenters_GPU, self.fiberRotationReference)
         """
         KeyFiber = int32(-1)
         KeyCell = int32(-1)
@@ -411,25 +430,49 @@ class dmri_simulation:
         return
             
     @cuda.jit
-    def diffusion_in_fiber(rng_states, spinTrajectories, fiberIndexAt_i, numSteps, fiberCenters, fiberRotationReference, dt):
+    def diffusion_in_fiber(rng_states, spinTrajectories, fiberIndexAt_i, numSteps, fiberCenters, fiberRotationReference, dt):   
         i = cuda.grid(1)
         if i > spinTrajectories.shape[0]:
             return
+        """"
+        Simulate molecular diffusion of spins within the fibers; Dirichlet boundary conditions 
 
-        """ 
-        Global Variables:
+        Parameters
+        ----------
+        rng_states : 1-d ndarray
+            The random states of the spins
+        spinTrajectories :  N_{fiber_spins} x 3 ndarray
+            The spinTrajectories[i,:] sub-array are the spins physical cordinates
+        spinInFiber_i: 1-d ndarray
+            The index of the fiber a spin is located within; -1 if False, 0... N_fibers if True.
+        numSteps: int
+            int(Delta/dt); the number of timesteps
+        fiberCenters: N_{fibers} x 6 ndarray
+            The spatial position, rotmat index, intrinsic diffusivity, and radius of the i-th fiber
+        fiberRotationReference: 2 x 3 ndarray
+            The Ry(Theta_{i}).dot([0,0,1]) vector  
+        dt : float32
+            The time-discretization parameter
+
+        Returns
+        -------
+        spinTrajectories: N_{fiber_spins} x 3 ndarray  
+            for 0 <= step <= numSteps, the spins trajectory is updated until the spin steps within the fiber.           
+
+        Notes
+        -----
+        re-stepping (currently implemented) vs. stepping is an ongoing discussion between me and S.K. Song about what is more reasonable. Tentatively, re-stepping allows for 
+        accurate simulation at lower temporal resolutions, which gives favorable preformance results. 
         
-        fiberCenters - a N x 4 matrix whose i-th row is a 4 vector containing the x,y,z position, and radius, of the fiber [READ ONLY]
-        spinTrajectories - a N_spins x 3 matrix whose i = cuda.grid(1) element is handled by the thread launched from this kernel [READ AND WRITE]
-        dt - time-step parameter (ms)
-        Local Variables:
+        References
+        ----------
+        Discussions with S.K. Song about what physics is reasonable to implement here. 
 
-        D - the intrinsic diffusivity of the water in the cell
-        prevPosition - a 3 vector (float32) containing the x,y,z cordinates of the previous position
-        newPosition - a 3 vector (float32) containing the x,y,z cordinates of the proposed new position
-        Step - Step size = Sqrt(6*D*dt)
-        distanceFiber - (float32) distance between proposed new position and fibers intersecting the cell
         """
+        
+        i = cuda.grid(1)
+        if i > spinTrajectories.shape[0]:
+            return
         inx = int32(fiberIndexAt_i[i])
         D = float32(fiberCenters[inx, 5])
         Step = float32(math.sqrt(6*D*dt))
@@ -459,26 +502,44 @@ class dmri_simulation:
         if i > spinTrajecotires.shape[0]:
             return
         
-        """ 
-        Global Variables:
-        
-        cellCenter - a 4 vector whose first 3 dimensions are the x,y,z cordinate of the cell, and whose last dimension is the cell radius [READ ONLY]
-        fiberCenters - a  N x 4 matrix whose i-th row is a 4 vector containing the x,y,z position, and radius, of the fiber [READ ONLY]
-        spinTrajectories - a N_spins x 3 matrix whose i = cuda.grid(1) element is handled by the thread launched from this kernel [READ AND WRITE]
-        cellAtSpin_i - A (N_spins, ) array containing the index of the cell the spin is in 
-        dt - time-step parameter (ms)
-        
-        Local Variables:
+        """"
+        Simulate molecular diffusion of spins within the cells; dirichelt boundary conditions
 
-        D - the intrinsic diffusivity of the water in the cell
-        prevPosition - a 3 vector (float32) containing the x,y,z cordinates of the previous position
-        newPosition - a 3 vector (float32) containing the x,y,z cordinates of the proposed new position
-        Step - Step size = Sqrt(6*D*dt)
-        distanceCell - (float32) distance between proposed new position and radius of the cell
-        distanceFiber - (float32) distance between proposed new position and fibers intersecting the cell
-        inx2 - the index of the j-th penetrating fiber
+        Parameters
+        ----------
+        rng_states : 1-d ndarray
+            The random states of the spins
+        spinTrajectories :  N_{fiber_spins} x 3 ndarray
+            The spinTrajectories[i,:] sub-array are the spins physical cordinates
+        cellAtSpin_i: 1-d ndarray
+            The index of the cell a spin is located within; -1 if False, 0... N_fibers if True.
+        numSteps: int
+            int(Delta/dt); the number of timesteps
+        cellCenters: N_{cells} x 4 ndarray
+            The 3-spatial dimensions and radius of the i-th cell
+        fiberCenters: N_{fibers} x 6 ndarray
+            The spatial position, rotmat index, intrinsic diffusivity, and radius of the i-th fiber
+        fiberRotationReference: 2 x 3 ndarray
+            The Ry(Theta_{i}).dot([0,0,1]) vector  
+        dt : float32
+            The time-discretization parameter
+
+        Returns
+        -------
+        spinTrajectories: N_{fiber_spins} x 3 ndarray  
+            for 0 <= step <= numSteps, the spins trajectory is continuously updated until the spin steps within the cell but not within the fiber.           
+
+        Notes
+        -----
+        re-stepping (currently implemented) vs. stepping is an ongoing discussion between me and S.K. Song about what is more reasonable. Tentatively, re-stepping allows for 
+        accurate simulation at lower temporal resolutions, which gives favorable preformance results at the cost of some physical realism. 
         
+        References
+        ----------
+        Discussions with S.K. Song about what physics is reasonable to implement here. 
+
         """
+        
         inx = int32(cellAtSpin_i[i])
         D = float32(2.0)
         Step = float32(math.sqrt(6*D*dt))
@@ -524,21 +585,41 @@ class dmri_simulation:
         i = cuda.grid(1)
         if i > spinTrajectories.shape[0]:
             return   
-        """ 
-        Global Variables:
-        
-        cellCenters - a 4 vector whose first 3 dimensions are the x,y,z cordinate of the cell, and whose last dimension is the cell radius [READ ONLY]
-        fiberCenters - a N x 4 matrix whose i-th row is a 4 vector containing the x,y,z position, and radius, of the fiber [READ ONLY]
-        spinTrajectories - a N_spins x 3 matrix whose i = cuda.grid(1) element is handled by the thread launched from this kernel [READ AND WRITE]
-        
-        Local Variables:
+        """"
+        Simulate molecular diffusion of spins within the extra-cellular and extra-axonal environment; dirichelt boundary conditions (i.e., spins in the extra-cellular/fiber environment
+        are not allowed to diffuse into a fiber or into a cell). This step involves significant computation on O(N_{fibers}+N_{cells}). 
 
-        D - the intrinsic diffusivity of the water in the cell
-        prevPosition - a 3 vector (float32) containing the x,y,z cordinates of the previous position
-        newPosition - a 3 vector (float32) containing the x,y,z cordinates of the proposed new position
-        Step - Step size = Sqrt(6*D*dt)
-        distanceCell - (float32) distance between proposed new position and radius of the cell
-        distanceFiber - (float32) distance between proposed new position and fibers intersecting the cell
+        Parameters
+        ----------
+        rng_states : 1-d ndarray
+            The random states of the spins
+        spinTrajectories :  N_{fiber_spins} x 3 ndarray
+            The spinTrajectories[i,:] sub-array are the spins physical cordinates
+        numSteps: int
+            int(Delta/dt); the number of timesteps
+        cellCenters: N_{cells} x 4 ndarray
+            The 3-spatial dimensions and radius of the i-th cell
+        fiberCenters: N_{fibers} x 6 ndarray
+            The spatial position, rotmat index, intrinsic diffusivity, and radius of the i-th fiber
+        fiberRotationReference: 2 x 3 ndarray
+            The Ry(Theta_{i}).dot([0,0,1]) vector  
+        dt : float32
+            The time-discretization parameter
+
+        Returns
+        -------
+        spinTrajectories: N_{fiber_spins} x 3 ndarray  
+            for 0 <= step <= numSteps, the spins trajectory is continuously updated until the spin steps within the extra-cellular/extra-fiber environment.           
+
+        Notes
+        -----
+        re-stepping (currently implemented) vs. stepping is an ongoing discussion between me and S.K. Song about what is more reasonable. Tentatively, re-stepping allows for 
+        accurate simulation at lower temporal resolutions, which gives favorable preformance results at the cost of some physical realism. 
+        
+        References
+        ----------
+        Discussions with S.K. Song about what physics is reasonable to implement here. 
+
         """
         D = float32(3.0)
         Step = float32(math.sqrt(6*D*dt))
@@ -581,6 +662,34 @@ class dmri_simulation:
         return 
     
     def spins_in_voxel(self, trajectoryT1m, trajectoryT2p):
+        """
+         Helper function to ensure that the spins at time T2p are wtihin the self.voxelDims x self.voxelDims x inf imaging voxel
+
+        Parameters
+        ----------
+        trajectoryT1m: N_{spins} x 3 ndarray
+            The initial spin position at time t1m
+        
+        trajectoryT2p: N_{spins} x 3 ndarray
+            The spin position at time t2p
+
+        Returns
+        -------
+        traj1_vox: (N, 3) ndarray
+            Position at T1m of the spins which stay within the voxel
+        traj2_vox: (N, 3) ndarray
+            Position at T2p of the spins which stay within the voxel
+
+        Notes
+        -----
+        None
+        
+        References
+        ----------
+        None
+        
+        """
+    
         traj1_vox = []
         traj2_vox = []
 
@@ -591,6 +700,37 @@ class dmri_simulation:
         return np.array(traj1_vox), np.array(traj2_vox) 
 
     def signal(self, trajectoryT1m, trajectoryT2p, xyz):
+        """
+        Aquire the signal by integrating the ensemble distribution from t1m to t2p; int
+
+        Parameters
+        ----------
+        trajectoryT1m: N_{spins} x 3 ndarray
+            The initial spin position at time t1m
+        
+        trajectoryT2p: N_{spins} x 3 ndarray
+            The spin position at time t2p
+
+        Returns
+        -------
+        allSignal: (N_{bvals}, ) ndarray
+            The signal induced by the k-th diffusion gradient and diffusion weighting factor
+        
+        b_vals: (N_{bvals},) ndarray
+            The b-values used in the diffusion experiment
+
+        Notes
+        -----
+        None
+        
+        References
+        ----------
+        [1] ... Rafael-Patino et. al. (2020)  Robust Monte-Carlo Simulations in Diffusion-MRI: 
+                Effect of the Substrate Complexity and Parameter Choice on the Reproducibility of Results, 
+                Front. Neuroinform., 10 March 2020 
+        
+        """
+        
         gamma = 42.58
         Delta = self.Delta #ms
         dt = self.delta # ms 
