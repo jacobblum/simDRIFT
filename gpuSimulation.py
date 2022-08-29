@@ -12,6 +12,7 @@ import os
 from tqdm import tqdm
 import nibabel as nb
 import glob as glob 
+import configparser
 
 
 class dmri_simulation:
@@ -76,6 +77,65 @@ class dmri_simulation:
         self.spinInFiber_i = -1*np.ones(self.numSpins)
         self.spinInCell_i = -1*np.ones(self.numSpins)
         self.get_spin_locations()
+
+    def from_config(self, path_to_configuration_file):
+        
+        ## Simulation Parameters
+        
+        config = configparser.ConfigParser()
+        config.read(path_to_configuration_file)
+        numSpins = config['Simulation Parameters']['numSpins']
+        fiberFraction = config['Simulation Parameters']['fiberFraction']
+        fiberRadius = config['Simulation Parameters']['fiberRadius']
+        Thetas = config['Simulation Parameters']['Thetas']
+        fiberDiffusions = config['Simulation Parameters']['fiberDiffusions']
+        cellFraction = config['Simulation Parameters']['cellFraction']
+        cellRadii = config['Simulation Parameters']['cellRadii']
+        penetrating = config['Simulation Parameters']['penetrating']
+        simulateFibers = config['Simulation Parameters']['simulateFibers']
+        simulateCells = config['Simulation Parameters']['simulateCells']
+        simulateExtra = config['Simulation Parameters']['simulateExtraEnvironment']
+
+        ## Scanning Parameters
+
+        Delta = config['Scanning Parameters']['Delta']
+        dt = config['Scanning Parameters']['dt']
+        voxelDims = config['Scanning Parameters']['voxelDim']
+        buffer = config['Scanning Parameters']['buffer']
+
+        ## Saving Parameters
+
+
+        path_to_save = config['Saving Parameters']['path_to_save_file_dir']
+
+        ## NEED TO IMPLEMENT FOR BVALS AND BVEC FILES and save files
+
+        self.set_parameters(
+            numSpins=numSpins,
+            fiberFraction= fiberFraction,
+            fiberRadius=fiberRadius,
+            Thetas=Thetas,
+            fiberDiffusions=fiberDiffusions,
+            cellFraction=cellFraction,
+            cellRadii=cellRadii,
+            penetrating=penetrating,
+            Delta=Delta,
+            dt=dt,
+            voxelDim=voxelDims,
+            buffer=buffer,
+            path_to_bvals= 'test' , #NEEDS TO BE IMPLEMENTED #
+            path_to_bvecs= 'test' #NEEDS TO BE IMPLEMENTED #
+        )
+        self.simulate(
+            simulateFibers=simulateFibers,
+            simulateCells=simulateCells,
+            simulateExtraEnvironment=simulateExtra
+        )
+
+        self.save_data('test')
+
+       
+
 
        
     def set_num_fibers(self):
@@ -205,7 +265,7 @@ class dmri_simulation:
             Each Spin Must Know what Fiber it is in before distributing computation to the GPU. Thus, we pass an array containing the fiber index of spin the i-th spin to diffusion_in_fiber via the (numSpinInFiber, ) array
             fiberAtSpin_i.
         """
-        if simulateFibers:
+        if self.simulateFibers:
             self.fiberPositionsT1m = self.spinPotionsT1m[self.spinInFiber_i != -1].astype(np.float32)
             fiberSpins = cuda.to_device(self.spinPotionsT1m[self.spinInFiber_i != -1].astype(np.float32))
             fiberAtSpin_i = self.spinInFiber_i[self.spinInFiber_i != -1].astype(np.float32)
@@ -225,13 +285,12 @@ class dmri_simulation:
             print(fiberSpins.shape)
             print('Fiber Diffusion Compuation Time: {} seconds'.format(End-Start))
             
-        
         """
         Simulate Intra-Cellular Diffusion: 
             Each Spin must know which cell it is in before distributing computation to the GPU. Also, to avoid looping over all of the fibers, we need to also pass an array of penetrating fiber indicies to diffusion_in_cells
         """
         
-        if simulateCells:
+        if self.simulateCells:
             cellSpins = self.spinPotionsT1m[(self.spinInCell_i > -1) & (self.spinInFiber_i < 0)] 
             self.cellPositionsT1m = cellSpins.copy()
             cellSpins_GPU = (cellSpins)
@@ -257,7 +316,7 @@ class dmri_simulation:
         """
         Simulate Extra-Cellular and Extra-Axonal Diffusion
         """
-        if simulateExtraEnvironment:
+        if self.simulateExtra:
             self.extraPositionT1m = (self.spinPotionsT1m[(self.spinInCell_i < 0) & (self.spinInFiber_i < 0)])
             rng_states_Extra = create_xoroshiro128p_states(self.extraPositionT1m.shape[0], seed = 42)
             extraSpins_GPU = cuda.to_device(self.extraPositionT1m.astype(np.float32))
@@ -662,6 +721,11 @@ def main():
     Start = time.time()
     # inter-fiber-distance = 0, .1, .2, .5, 1.0
     # dt = .1, .001
+    
+    sim.from_config(r'/Users/jacobblum/simulation_configuration.ini')
+    
+    
+    exit()
     sim.set_parameters(
         numSpins= 1000*10**3,
         fiberFraction= (0.82, .82),  # Fraction in each Half/Quadrant Depending on 'P'/'NP'
