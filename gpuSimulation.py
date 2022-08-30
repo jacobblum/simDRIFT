@@ -476,7 +476,6 @@ class dmri_simulation:
         rotationIndex = int(fiberCenters[inx, 4])
 
         for step in range(numSteps):
-            print(step)
             distance = fiberCenters[inx, 3] + .10
             while(distance > fiberCenters[inx, 3]):
                 newPosition = jp.randomDirection(rng_states, newPosition, i)
