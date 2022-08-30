@@ -14,7 +14,7 @@ from tqdm import tqdm
 import nibabel as nb
 import glob as glob 
 import configparser
-
+from ast import literal_eval
 
 class dmri_simulation:
     def __init__(self):
@@ -77,36 +77,33 @@ class dmri_simulation:
         self.get_spin_locations()
 
     def from_config(self, path_to_configuration_file):
+
         
         ## Simulation Parameters
-        
         config = configparser.ConfigParser()
         config.read(path_to_configuration_file)
-        numSpins = config['Simulation Parameters']['numSpins']
-        fiberFraction = config['Simulation Parameters']['fiberFraction']
-        fiberRadius = config['Simulation Parameters']['fiberRadius']
-        Thetas = config['Simulation Parameters']['Thetas']
-        fiberDiffusions = config['Simulation Parameters']['fiberDiffusions']
-        cellFraction = config['Simulation Parameters']['cellFraction']
-        cellRadii = config['Simulation Parameters']['cellRadii']
-        penetrating = config['Simulation Parameters']['penetrating']
-        simulateFibers = config['Simulation Parameters']['simulateFibers']
-        simulateCells = config['Simulation Parameters']['simulateCells']
-        simulateExtra = config['Simulation Parameters']['simulateExtraEnvironment']
+        numSpins = literal_eval(config['Simulation Parameters']['numSpins'])
+        fiberFraction = literal_eval(config['Simulation Parameters']['fiberFraction'])
+        fiberRadius = literal_eval(config['Simulation Parameters']['fiberRadius'])
+        Thetas = literal_eval(config['Simulation Parameters']['Thetas'])
+        fiberDiffusions = literal_eval(config['Simulation Parameters']['fiberDiffusions'])
+        cellFraction = literal_eval(config['Simulation Parameters']['cellFraction'])
+        cellRadii = literal_eval(config['Simulation Parameters']['cellRadii'])
+        fiberConfiguration = (config['Simulation Parameters']['fiberConfiguration'])
+        simulateFibers = literal_eval(config['Simulation Parameters']['simulateFibers'])
+        simulateCells = literal_eval(config['Simulation Parameters']['simulateCells'])
+        simulateExtra = literal_eval(config['Simulation Parameters']['simulateExtraEnvironment'])
 
         ## Scanning Parameters
-
-        Delta = config['Scanning Parameters']['Delta']
-        dt = config['Scanning Parameters']['dt']
-        voxelDims = config['Scanning Parameters']['voxelDim']
-        buffer = config['Scanning Parameters']['buffer']
+        Delta = literal_eval(config['Scanning Parameters']['Delta'])
+        dt = literal_eval(config['Scanning Parameters']['dt'])
+        voxelDims = literal_eval(config['Scanning Parameters']['voxelDim'])
+        buffer = literal_eval(config['Scanning Parameters']['buffer'])
+        bvals_path = config['Scanning Parameters']['path_to_bvals']
+        bvecs_path = config['Scanning Parameters']['path_to_bvecs']
 
         ## Saving Parameters
-
-
         path_to_save = config['Saving Parameters']['path_to_save_file_dir']
-
-        ## NEED TO IMPLEMENT FOR BVALS AND BVEC FILES and save files
 
         self.set_parameters(
             numSpins=numSpins,
@@ -116,20 +113,20 @@ class dmri_simulation:
             fiberDiffusions=fiberDiffusions,
             cellFraction=cellFraction,
             cellRadii=cellRadii,
-            penetrating=penetrating,
+            fiberConfiguration=fiberConfiguration,
             Delta=Delta,
             dt=dt,
             voxelDim=voxelDims,
             buffer=buffer,
-            path_to_bvals= 'test' , #NEEDS TO BE IMPLEMENTED #
-            path_to_bvecs= 'test' #NEEDS TO BE IMPLEMENTED #
-        )
+            path_to_bvals= bvals_path, 
+            path_to_bvecs= bvecs_path)
         self.simulate(
             simulateFibers=simulateFibers,
             simulateCells=simulateCells,
-            simulateExtraEnvironment=simulateExtra
-        )
-        self.save_data('test')
+            simulateExtraEnvironment=simulateExtra)
+                
+        self.save_data(path_to_save, plot_xyz=True)
+        return
 
     def set_num_fibers(self):
         fiberFraction = self.fiberFraction
@@ -240,7 +237,7 @@ class dmri_simulation:
         self.spinInFiber_i = spinInFiber_i_GPU
         self.spinInCell_i = spinInCell_i_GPU
     
-    def rotation(self):
+    def rotation(self):        
         rotationReferences = np.zeros((len(self.Thetas),3))
         for i,theta in enumerate(self.Thetas):
             theta = np.radians(theta)
@@ -479,6 +476,7 @@ class dmri_simulation:
         rotationIndex = int(fiberCenters[inx, 4])
 
         for step in range(numSteps):
+            print(step)
             distance = fiberCenters[inx, 3] + .10
             while(distance > fiberCenters[inx, 3]):
                 newPosition = jp.randomDirection(rng_states, newPosition, i)
@@ -625,7 +623,6 @@ class dmri_simulation:
         distanceFiber = float32(0.0)
        
         for step in range(numSteps): 
-            print(step)
             invalidStep = True
             while invalidStep:    
                 inFiber = False
@@ -765,43 +762,44 @@ class dmri_simulation:
         if noise_type == 'Gaussian':
             return signal + real_channel_noise
 
-    def save_data(self, path):
-        
+    def save_data(self, path, plot_xyz):
+
+        data_dir = path + os.sep + "FF={}_Theta={}_Diffusions={}_Simulation".format(self.fiberFraction, self.Thetas, self.fiberDiffusions)
+        if not os.path.exists(data_dir): os.mkdir(data_dir)
         overallData = []
         if self.simulateFibers:
             fiber_trajectories = [self.fiberPositionsT1m, self.fiberPositionsT2p]
             overallData.append(fiber_trajectories)
             print(self.fiberPositionsT1m.shape[0])
-            np.save(path + os.sep + "fiberPositionsT1m_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.fiberPositionsT1m)
-            np.save(path + os.sep + "fiberPositionsT2p_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.fiberPositionsT2p)
-            pureFiberSignal, _ = self.signal(self.fiberPositionsT1m, self.fiberPositionsT2p, xyz = False)
+            np.save(data_dir + os.sep + "fiberPositionsT1m_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.fiberPositionsT1m)
+            np.save(data_dir + os.sep + "fiberPositionsT2p_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.fiberPositionsT2p)
+            pureFiberSignal, b = self.signal(self.fiberPositionsT1m, self.fiberPositionsT2p, xyz = False)
             dwiFiber = nb.Nifti1Image(pureFiberSignal.reshape(1,1,1,-1), affine = np.eye(4))
-            nb.save(dwiFiber, path + os.sep + "pureFiberSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
-
+            nb.save(dwiFiber, data_dir + os.sep + "pureFiberSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
 
         if self.simulateCells:
             cell_trajectories = [self.cellPositionsT1m, self.cellPositionsT2p]
             overallData.append(cell_trajectories)
             print(self.cellPositionsT1m.shape[0])
-            np.save(path + os.sep + "cellPositionsT1m_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.cellPositionsT1m)
-            np.save(path + os.sep + "cellPositionsT2p_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.cellPositionsT2p)
-            pureCellSignal, _ = self.signal(self.cellPositionsT1m, self.cellPositionsT2p, xyz = False)
+            np.save(data_dir + os.sep + "cellPositionsT1m_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.cellPositionsT1m)
+            np.save(data_dir + os.sep + "cellPositionsT2p_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.cellPositionsT2p)
+            pureCellSignal, _ = self.signal(self.cellPositionsT1m, self.cellPositionsT2p, xyz = True)
             dwiCell = nb.Nifti1Image(pureCellSignal.reshape(1,1,1,-1), affine = np.eye(4))
-            nb.save(dwiCell, path + os.sep + "pureCellSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
+            nb.save(dwiCell, data_dir + os.sep + "pureCellSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
         if self.simulateExtra:
             water_trajectories = [self.extraPositionT1m, self.extraPositionT2p]
             overallData.append(water_trajectories)
             print(self.extraPositionT1m.shape[0])
-            np.save(path + os.sep + "waterPositionsT1m_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.extraPositionT1m)
-            np.save(path + os.sep + "waterPositionsT2p_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.extraPositionT2p)
-            pureWaterSignal, _ = self.signal(self.extraPositionT1m, self.extraPositionT2p, xyz = False)
+            np.save(data_dir + os.sep + "waterPositionsT1m_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.extraPositionT1m)
+            np.save(data_dir + os.sep + "waterPositionsT2p_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.extraPositionT2p)
+            pureWaterSignal, _ = self.signal(self.extraPositionT1m, self.extraPositionT2p, xyz = True)
             dwiWater = nb.Nifti1Image(pureWaterSignal.reshape(1,1,1,-1), affine = np.eye(4))
-            nb.save(dwiWater, path + os.sep  + "pureWaterSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
+            nb.save(dwiWater, data_dir + os.sep  + "pureWaterSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
         
         if self.simulateFibers and self.simulateExtra:
-            expSignal, bvals = self.signal(np.vstack([self.fiberPositionsT1m, self.extraPositionT1m]), np.vstack([self.fiberPositionsT2p, self.extraPositionT2p]), xyz = False)
+            expSignal, bvals = self.signal(np.vstack([self.fiberPositionsT1m, self.extraPositionT1m]), np.vstack([self.fiberPositionsT2p, self.extraPositionT2p]), xyz = True)
             dwi = nb.Nifti1Image(expSignal.reshape(1,1,1,-1), affine = np.eye(4))
-            nb.save(dwi,path + os.sep + "totalSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
+            nb.save(dwi,data_dir + os.sep + "totalSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
 
     def plot(self, plotFibers, plotCells, plotExtra):
         def plot_fiber(self, fiberCenter):
@@ -866,10 +864,18 @@ class dmri_simulation:
 
 
 def main():   
-    sim = dmri_simulation()
-    Start = time.time()
-    # inter-fiber-distance = 0, .1, .2, .5, 1.0
-    # dt = .1, .001
+    
+    
+    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\simulation_configuration_Theta=*_Fraction=*.ini")
+    device = cuda.get_current_device()
+    
+    for cfg in configs[0:2]:
+        print(cfg)
+        sim = dmri_simulation()
+        sim.from_config(cfg)
+    exit()
+    
+    
     sim.set_parameters(
         numSpins= 100*10**3,
         fiberFraction= (0.50, .50),  # Fraction in each Half/Quadrant Depending on 'P'/'NP'
