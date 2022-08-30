@@ -43,13 +43,13 @@ class dmri_simulation:
         simulateFibers = 0
         simulateCells = 0
         simulateExtra = 0
-        penetrating = False
+        fiberConfiguration = ''
         buffer = 100
         bvals = 0
         bvecs = 0
         return
     
-    def set_parameters(self, numSpins, fiberFraction, fiberRadius, Thetas, fiberDiffusions, cellFraction, cellRadii, penetrating, Delta, dt, voxelDim, buffer, path_to_bvals, path_to_bvecs):
+    def set_parameters(self, numSpins, fiberFraction, fiberRadius, Thetas, fiberDiffusions, cellFraction, cellRadii, fiberConfiguration, Delta, dt, voxelDim, buffer, path_to_bvals, path_to_bvecs):
         self.bvals = np.loadtxt(path_to_bvals) 
         self.bvecs = np.loadtxt(path_to_bvecs)
         self.voxelDims = voxelDim
@@ -63,10 +63,7 @@ class dmri_simulation:
         self.numFibers = self.set_num_fibers()
         self.cellFraction = cellFraction
         self.cellRadii = cellRadii
-        if penetrating == 'P':
-            self.penetrating = True
-        elif penetrating == 'NP':
-            self.penetrating = False
+        self.fiberCofiguration = fiberConfiguration
         self.numCells = self.set_num_cells()
         self.Delta = Delta
         self.dt = dt
@@ -133,8 +130,6 @@ class dmri_simulation:
         )
         self.save_data('test')
 
-       
-       
     def set_num_fibers(self):
         fiberFraction = self.fiberFraction
         fiberRadius = self.fiberRadius
@@ -157,46 +152,47 @@ class dmri_simulation:
         outputCords = []
         for i in range(len(self.fiberFraction)):
             fiberCordinates = np.zeros(((self.numFibers[i])**2,6))
-            
-            ## IMPLEMENT FIXED MESHGRID!!! 
-            
-            if not self.penetrating:
-                fiberXs, fiberYs = np.meshgrid(np.linspace(start = (i*(self.voxelDims+self.buffer)*.50)+self.fiberRadius, stop = (i+1)*(self.voxelDims+self.buffer)*.50-self.fiberRadius, num = self.numFibers[i]), 
-                                               np.linspace(start = (i*(self.voxelDims+self.buffer)*.50)+self.fiberRadius, stop = (i+1)*(self.voxelDims+self.buffer)*.50-self.fiberRadius, num = self.numFibers[i]))
-            if self.penetrating:
-                fiberXs, fiberYs = np.meshgrid(np.linspace(start = 0+self.fiberRadius, stop = self.voxelDims+self.buffer-self.fiberRadius, num = self.numFibers[i]), 
-                                               np.linspace(start = (i*(self.voxelDims+self.buffer)*.50)+self.fiberRadius, stop = (i+1)*(self.voxelDims+self.buffer)*.50-self.fiberRadius, num = self.numFibers[i]))
-
-            
-
-
-
-            fiberXs, fiberYs = np.meshgrid(np.linspace(0+self.fiberRadius,self.voxelDims+self.buffer-self.fiberRadius, self.numFibers[0]), 
-                                           np.linspace(0+self.fiberRadius,self.voxelDims+self.buffer-self.fiberRadius, self.numFibers[0]))
-        
+            fiberYs, fiberXs = np.meshgrid(np.linspace(0+self.fiberRadius,self.voxelDims+self.buffer-self.fiberRadius, self.numFibers[i]), 
+                                           np.linspace(0+self.fiberRadius,self.voxelDims+self.buffer-self.fiberRadius, self.numFibers[i]))
             fiberCordinates[:,0] = fiberXs.flatten()
             fiberCordinates[:,1] = fiberYs.flatten()
-            fiberCordinates[:,2] = 1.0
             fiberCordinates[:,3] = self.fiberRadius
-            fiberCordinates[fiberCordinates[:,1] < (self.voxelDims+self.buffer)/2, 4] = 1 # Assigns the rotation refernce index; 0 is for [0,0,1], 1 would correspond to Ry.dot([0,0,1])
-            fiberCordinates[fiberCordinates[:,1] >= (self.voxelDims+self.buffer)/2, 5] = self.fiberDiffusions[0] #Store Diffusivity of the fibers in the 6-th dimension of the vector
-            fiberCordinates[fiberCordinates[:,1] < (self.voxelDims+self.buffer)/2, 5] = self.fiberDiffusions[1]
-            fiberCordinates_pre_rotation = fiberCordinates[fiberCordinates[:,1] <(self.voxelDims+self.buffer)/2, 0:3]
-            rotatedCords = (self.rotMat.dot(fiberCordinates_pre_rotation.T)).T
-            if rotatedCords.shape[0] > 0:
-                z_correct = np.amin(rotatedCords[:,2]) # Want the grid to be placed at z = 0
-                rotatedFibers = rotatedCords 
-                rotatedFibers[:,2] = rotatedFibers[:,2] + np.abs(z_correct )
-                fiberCordinates[fiberCordinates[:,1] < (self.voxelDims+self.buffer)/2, 0:3] = rotatedFibers   
-            outputCords.append(fiberCordinates)
-        outArg =  np.vstack([outputCords[0], outputCords[1]])
-        return outArg
+            idx = np.where((fiberCordinates[:,1] >= i*0.5*(self.voxelDims+self.buffer)) & (fiberCordinates[:,1] < (i+1)*0.5*(self.voxelDims+self.buffer)))[0]
+            outputCords.append(fiberCordinates[idx, :])
+        outputArg =  np.vstack([outputCords[0], outputCords[1]])
+
+        if self.fiberCofiguration == 'Inter-Woven':
+            Ys_mod2 = np.unique(outputArg[:,1])[::2]
+            idx = (np.in1d(outputArg[:,1], Ys_mod2))
+            fiberCordinates_pre_rotation = outputArg[idx, 0:3]
+
+        if self.fiberCofiguration == 'Penetrating':
+            idx = np.where(outputArg[:,1] < 0.5*(self.voxelDims+self.buffer))[0]
+            fiberCordinates_pre_rotation = outputArg[idx, 0:3]
+        
+        if self.fiberCofiguration == 'Non-Penetrating':
+            fiber_idx = np.where( (((outputArg[:,0] > 0) & (outputArg[:,0] < (0.5)*(self.voxelDims+self.buffer))) & ((outputArg[:,1] > 0) & (outputArg[:,1] < (0.5)*(self.voxelDims+self.buffer))))
+                          | (((outputArg[:,0] > 0.5*(self.voxelDims+self.buffer)) & (outputArg[:,0] < (self.voxelDims+self.buffer))) & ((outputArg[:,1] > 0.5*(self.voxelDims+self.buffer)) & (outputArg[:,1] < (self.voxelDims+self.buffer))))
+                            )[0]
+            outputArg = outputArg[fiber_idx]  
+            idx = np.where((((outputArg[:,0] > 0) & (outputArg[:,0] < (0.5)*(self.voxelDims+self.buffer))) & ((outputArg[:,1] > 0) & (outputArg[:,1] < (0.5)*(self.voxelDims+self.buffer)))))[0]
+            fiberCordinates_pre_rotation = outputArg[idx, 0:3]
+            
+
+        rotatedCords = (self.rotMat.dot(fiberCordinates_pre_rotation.T)).T
+        if rotatedCords.shape[0] > 0:
+            z_correct = np.amin(rotatedCords[:,2]) # Want the grid to be placed at z = 0
+            rotatedFibers = rotatedCords 
+            rotatedFibers[:,2] = rotatedFibers[:,2] + np.abs(z_correct )
+            outputArg[idx, 0:3], outputArg[idx, 4], outputArg[idx, 5], outputArg[[i for i in range(outputArg.shape[0]) if i not in idx],5] = rotatedFibers, 1, self.fiberDiffusions[0], self.fiberDiffusions[1] 
+        
+        return outputArg
     
     def place_cell_grid(self):
         print('PLACING CELLS')
         numCells = self.numCells
         cellCentersTotal = []
-        if not self.penetrating:
+        if self.fiberCofiguration == 'Non-Penetrating':
             regions = np.array([[0,self.voxelDims+self.buffer,0,0.5*(self.voxelDims+self.buffer),0.5*(self.voxelDims+self.buffer), self.voxelDims+self.buffer], 
                                 [0,0.5*(self.voxelDims+self.buffer),0.5*(self.voxelDims+self.buffer), self.voxelDims+self.buffer,0,self.voxelDims+self.buffer]])
         else: 
@@ -547,7 +543,6 @@ class dmri_simulation:
         newPosition = cuda.local.array(shape = 3, dtype= float32)
         distanceCell = float32(0.0)
         distanceFiber = float32(0.0)
-
         for step in range(numSteps):
             print(step)
             invalidMove = True
@@ -832,7 +827,8 @@ class dmri_simulation:
 
         if plotFibers and self.simulateFibers:
             axFiber = fig.add_subplot(projection = '3d')
-            axFiber.scatter(self.fiberPositionsT2p[:,0], self.fiberPositionsT2p[:,1], self.fiberPositionsT2p[:,2], s = 1)
+            #axFiber.scatter(self.fiberPositionsT2p[:,0], self.fiberPositionsT2p[:,1], self.fiberPositionsT2p[:,2], s = 1)
+            axFiber.scatter(self.fiberCenters[:,0], self.fiberCenters[:,1], self.fiberCenters[:,2])
             axFiber.set_xlim(0,self.voxelDims+self.buffer)
             axFiber.set_ylim(0,self.voxelDims+self.buffer)
             axFiber.set_zlim(0,self.voxelDims+self.buffer)
@@ -861,22 +857,17 @@ def main():
     Start = time.time()
     # inter-fiber-distance = 0, .1, .2, .5, 1.0
     # dt = .1, .001
-    
-    sim.from_config(r'/Users/jacobblum/simulation_configuration.ini')
-    
-    
-    exit()
     sim.set_parameters(
-        numSpins= 1000*10**3,
-        fiberFraction= (0.82, .82),  # Fraction in each Half/Quadrant Depending on 'P'/'NP'
+        numSpins= 100*10**3,
+        fiberFraction= (0.40, .80),  # Fraction in each Half/Quadrant Depending on 'P'/'NP'
         fiberRadius= 1.0,            # um
-        Thetas = (0,0),              # degrees
-        fiberDiffusions= (1.0, 1.0), # um^2/mm
+        Thetas = (0,90),              # degrees
+        fiberDiffusions= (1.0, 2.0), # um^2/mm
         cellFraction= .0,            # Fraction in each Half/Quadrant Depending on 'P'/'NP'
         cellRadii= (3,10),           # um
-        penetrating = 'P',           # 'P' = Penetrating Cells; 'NP = Non-Penetrating Cells 
+        fiberConfiguration = 'Non-Penetrating',           # 'P' = Penetrating Cells; 'NP = Non-Penetrating Cells, 'IW' 
         Delta = 10,                  # ms  
-        dt = 0.0003,                    # ms 
+        dt = 0.001,                  # ms 
         voxelDim= 20,                # um
         buffer = 10,                 # um
         path_to_bvals= r"C:\MCSIM\Repo\simulation_data\DBSI\DBSI-99\bval",
@@ -890,9 +881,16 @@ def main():
     print('Inter Fiber Distance: {}'.format(np.linalg.norm(grid[0,0:3]-grid[1,0:3], ord = 2) - 2*sim.fiberRadius))
     cont = input(r"Do you wish to proceed with these parameters: [y\n] ")
 
+
+
     if cont == 'y':
 
-        sim.simulate(simulateFibers=True, simulateCells=False, simulateExtraEnvironment=True)
+        sim.simulate(simulateFibers=True, simulateCells=False, simulateExtraEnvironment=False)
+        sim.plot(plotFibers=True, plotCells=False, plotExtra=False)
+        
+        
+        exit()
+        
         sim.save_data(r"C:\MCSIM\dMRI-MCSIM-main\gpu_data")
         s, b = sim.signal(sim.fiberPositionsT1m, sim.fiberPositionsT2p, xyz = True)
         ifd = np.linalg.norm(grid[0,0:3]-grid[1,0:3], ord = 2) - 2*sim.fiberRadius
@@ -911,20 +909,20 @@ def main():
 
         plt.clf()
 
-        sWater, bWater = sim.signal(sim.extraPositionT1m, sim.extraPositionT2p, xyz = True)
-        
-        bwx, mwx = np.linalg.lstsq(A, np.log(sWater[0:20]), rcond=None)[0]
-        bwy, mwy = np.linalg.lstsq(A, np.log(sWater[20:40]), rcond=None)[0]
-        bwz, mwz = np.linalg.lstsq(A, np.log(sWater[40:60]), rcond=None)[0]
-        plt.plot(bWater, (sWater[0:20]), 'bx', label = mwx)
-        plt.plot(bWater, (sWater[20:40]), 'rx', label = mwy)
-        plt.plot(bWater, (sWater[40:60]), 'gx', label = mwz)
-        plt.legend()
-        plt.savefig(r"C:\MCSIM\dMRI-MCSIM-main\gpu_data\extra_signal_angle={}_diffusivities={}_dt={}_ff={}_dist={}.png".format(sim.Thetas, sim.fiberDiffusions,sim.dt,sim.fiberFraction, round(ifd,4)))
+        #sWater, bWater = sim.signal(sim.extraPositionT1m, sim.extraPositionT2p, xyz = True)
+       # 
+       # bwx, mwx = np.linalg.lstsq(A, np.log(sWater[0:20]), rcond=None)[0]
+       # bwy, mwy = np.linalg.lstsq(A, np.log(sWater[20:40]), rcond=None)[0]
+       # bwz, mwz = np.linalg.lstsq(A, np.log(sWater[40:60]), rcond=None)[0]
+       # plt.plot(bWater, (sWater[0:20]), 'bx', label = mwx)
+       # plt.plot(bWater, (sWater[20:40]), 'rx', label = mwy)
+       # plt.plot(bWater, (sWater[40:60]), 'gx', label = mwz)
+       # plt.legend()
+       # plt.savefig(r"C:\MCSIM\dMRI-MCSIM-main\gpu_data\extra_signal_angle={}_diffusivities={}_dt={}_ff={}_dist={}.png".format(sim.Thetas, sim.fiberDiffusions,sim.dt,sim.fiberFraction, round(ifd,4)))
 
-        plt.clf()
+        #plt.clf()
         End = time.time()
-        sim.plot(plotFibers=False, plotCells=False,plotExtra=True)
+        sim.plot(plotFibers=True, plotCells=False,plotExtra=False)
         print('Simulation Executed in: {} sec'.format(End-Start))
     return
    
