@@ -1,3 +1,4 @@
+from cProfile import label
 from tkinter import PROJECTING
 import numpy as np 
 import numba 
@@ -826,16 +827,28 @@ class dmri_simulation:
         fig = plt.figure(figsize = (8,8))
 
         if plotFibers and self.simulateFibers:
+
+            fiber_indicies = (self.spinInFiber_i[self.spinInFiber_i > 0]).astype(np.int16)
+
+            bundle_1 = self.fiberPositionsT2p[[i for i in range(len(fiber_indicies)) if self.fiberCenters[fiber_indicies[i],4] == 1.0],:]
+            bundle_2 = self.fiberPositionsT2p[[i for i in range(len(fiber_indicies)) if self.fiberCenters[fiber_indicies[i],4] == 0.0],:]
+
+
+        
+
+
             axFiber = fig.add_subplot(projection = '3d')
-            #axFiber.scatter(self.fiberPositionsT2p[:,0], self.fiberPositionsT2p[:,1], self.fiberPositionsT2p[:,2], s = 1)
-            axFiber.scatter(self.fiberCenters[:,0], self.fiberCenters[:,1], self.fiberCenters[:,2])
+            axFiber.scatter(bundle_1[:,0], bundle_1[:,1], bundle_1[:,2], s = 2, color = 'mediumseagreen', label = 'Bundle 1', alpha = .50)
+            axFiber.scatter(bundle_2[:,0], bundle_2[:,1], bundle_2[:,2], s = 2, label = 'Bundle 2')
+            #axFiber.view_init(elev=90, azim=0)
+            #axFiber.scatter(self.fiberCenters[:,0], self.fiberCenters[:,1], self.fiberCenters[:,2])
             axFiber.set_xlim(0,self.voxelDims+self.buffer)
             axFiber.set_ylim(0,self.voxelDims+self.buffer)
             axFiber.set_zlim(0,self.voxelDims+self.buffer)
             axFiber.set_xlabel('x')
             axFiber.set_ylabel('y')
             axFiber.set_zlabel('z')
-            axFiber.legend()
+            axFiber.legend(markerscale=10)
         
         if plotExtra and self.simulateExtra:
             axExtra = fig.add_subplot(projection = '3d')
@@ -843,9 +856,9 @@ class dmri_simulation:
             axExtra.set_xlim(0,self.voxelDims+self.buffer)
             axExtra.set_ylim(0,self.voxelDims+self.buffer)
             axExtra.set_zlim(0,self.voxelDims+self.buffer)
-            axExtra.set_xlabel('x')
-            axExtra.set_ylabel('y')
-            axExtra.set_zlabel('z')
+            axExtra.set_xlabel(r'x $\quad \mu m$')
+            axExtra.set_ylabel(r'y $\quad \mu m$')
+            axExtra.set_zlabel(r'z $\quad \mu m$')
             axExtra.legend()
 
         if any([plotFibers, plotExtra, plotCells]):
@@ -859,13 +872,13 @@ def main():
     # dt = .1, .001
     sim.set_parameters(
         numSpins= 100*10**3,
-        fiberFraction= (0.40, .80),  # Fraction in each Half/Quadrant Depending on 'P'/'NP'
+        fiberFraction= (0.50, .50),  # Fraction in each Half/Quadrant Depending on 'P'/'NP'
         fiberRadius= 1.0,            # um
-        Thetas = (0,90),              # degrees
-        fiberDiffusions= (1.0, 2.0), # um^2/mm
+        Thetas = (0,0),              # degrees
+        fiberDiffusions= (1.0, 1.0), # um^2/mm
         cellFraction= .0,            # Fraction in each Half/Quadrant Depending on 'P'/'NP'
         cellRadii= (3,10),           # um
-        fiberConfiguration = 'Non-Penetrating',           # 'P' = Penetrating Cells; 'NP = Non-Penetrating Cells, 'IW' 
+        fiberConfiguration = 'Inter-Woven',           # 'P' = Penetrating Cells; 'NP = Non-Penetrating Cells, 'IW' 
         Delta = 10,                  # ms  
         dt = 0.001,                  # ms 
         voxelDim= 20,                # um
