@@ -15,6 +15,7 @@ import nibabel as nb
 import glob as glob 
 import configparser
 from ast import literal_eval
+from multiprocessing import Process
 
 class dmri_simulation:
     def __init__(self):
@@ -542,7 +543,6 @@ class dmri_simulation:
         distanceCell = float32(0.0)
         distanceFiber = float32(0.0)
         for step in range(numSteps):
-            print(step)
             invalidMove = True
             while(invalidMove):
                 isInFiber = False
@@ -862,19 +862,19 @@ class dmri_simulation:
             plt.show()
 
 
-def main():   
-    
-    
-    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\simulation_configuration_Theta=*_Fraction=*.ini")
-    device = cuda.get_current_device()
-    
-    for cfg in configs[0:2]:
-        print(cfg)
-        sim = dmri_simulation()
-        sim.from_config(cfg)
+def dmri_sim_wraper(arg):
+    x = dmri_simulation()
+    x.from_config(arg)
+
+def main():       
+    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\IW\simulation_configuration_Theta=*_Fraction=*.ini")
+    for cfg in configs:
+        p = Process(target=dmri_sim_wraper, args = (cfg,))
+        p.start()
+        p.join()
+
     exit()
-    
-    
+
     sim.set_parameters(
         numSpins= 100*10**3,
         fiberFraction= (0.50, .50),  # Fraction in each Half/Quadrant Depending on 'P'/'NP'
