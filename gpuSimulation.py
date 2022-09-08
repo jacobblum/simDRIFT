@@ -1,5 +1,4 @@
 from cProfile import label
-from tkinter import PROJECTING
 import numpy as np 
 import numba 
 from numba import jit, cuda, int32, void, float32
@@ -16,6 +15,7 @@ import glob as glob
 import configparser
 from ast import literal_eval
 from multiprocessing import Process
+import shutil
 
 class dmri_simulation:
     def __init__(self):
@@ -49,6 +49,7 @@ class dmri_simulation:
         buffer = 100
         bvals = 0
         bvecs = 0
+        cfg_pass = ''
         return
     
     def set_parameters(self, numSpins, fiberFraction, fiberRadius, Thetas, fiberDiffusions, cellFraction, cellRadii, fiberConfiguration, Delta, dt, voxelDim, buffer, path_to_bvals, path_to_bvecs):
@@ -78,6 +79,8 @@ class dmri_simulation:
         self.get_spin_locations()
 
     def from_config(self, path_to_configuration_file):
+
+        self.cfg_path = path_to_configuration_file
 
         
         ## Simulation Parameters
@@ -125,7 +128,7 @@ class dmri_simulation:
             simulateFibers=simulateFibers,
             simulateCells=simulateCells,
             simulateExtraEnvironment=simulateExtra)
-                
+            
         self.save_data(path_to_save, plot_xyz=True)
         return
 
@@ -488,6 +491,7 @@ class dmri_simulation:
                 #for k in range(newPosition.shape[0]): newPosition[k] = prevPosition[k]
             cuda.syncthreads()
             for k in range(newPosition.shape[0]): spinTrajectories[i,k] = newPosition[k]
+            if i == 0: print('Fiber Step', step)
             cuda.syncthreads()
         return
 
@@ -649,7 +653,7 @@ class dmri_simulation:
                     invalidStep = True
             
             cuda.syncthreads()
-            for k in range(newPosition.shape[0]): spinTrajectories[i,k] = newPosition[k]
+            print('Water Step', step)
             cuda.syncthreads()  
         return 
     
@@ -686,7 +690,7 @@ class dmri_simulation:
         traj2_vox = []
 
         for i in range(trajectoryT1m.shape[0]):
-            if np.amin(trajectoryT2p[i,0:2]) >= 0 + 0.5*self.buffer and np.amax(trajectoryT2p[i,0:2]) <= self.voxelDims + 0.5*self.buffer:
+            if np.amin(trajectoryT2p[i,0:3]) >= 0 + 0.5*self.buffer and np.amax(trajectoryT2p[i,0:3]) <= self.voxelDims + 0.5*self.buffer:
                 traj1_vox.append(trajectoryT1m[i,:])
                 traj2_vox.append(trajectoryT2p[i,:])
         return np.array(traj1_vox), np.array(traj2_vox) 
@@ -762,9 +766,10 @@ class dmri_simulation:
             return signal + real_channel_noise
 
     def save_data(self, path, plot_xyz):
-
         data_dir = path + os.sep + "FF={}_Theta={}_Diffusions={}_Simulation".format(self.fiberFraction, self.Thetas, self.fiberDiffusions)
         if not os.path.exists(data_dir): os.mkdir(data_dir)
+        path, file = os.path.split(self.cfg_path)  
+        if not os.path.exists(data_dir + os.sep + file): shutil.move(self.cfg_path, data_dir + os.sep + file)
         overallData = []
         if self.simulateFibers:
             fiber_trajectories = [self.fiberPositionsT1m, self.fiberPositionsT2p]
@@ -782,7 +787,7 @@ class dmri_simulation:
             print(self.cellPositionsT1m.shape[0])
             np.save(data_dir + os.sep + "cellPositionsT1m_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.cellPositionsT1m)
             np.save(data_dir + os.sep + "cellPositionsT2p_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.cellPositionsT2p)
-            pureCellSignal, _ = self.signal(self.cellPositionsT1m, self.cellPositionsT2p, xyz = True)
+            pureCellSignal, _ = self.signal(self.cellPositionsT1m, self.cellPositionsT2p, xyz = False)
             dwiCell = nb.Nifti1Image(pureCellSignal.reshape(1,1,1,-1), affine = np.eye(4))
             nb.save(dwiCell, data_dir + os.sep + "pureCellSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
         if self.simulateExtra:
@@ -791,61 +796,125 @@ class dmri_simulation:
             print(self.extraPositionT1m.shape[0])
             np.save(data_dir + os.sep + "waterPositionsT1m_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.extraPositionT1m)
             np.save(data_dir + os.sep + "waterPositionsT2p_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.extraPositionT2p)
-            pureWaterSignal, _ = self.signal(self.extraPositionT1m, self.extraPositionT2p, xyz = True)
+            pureWaterSignal, bvals = self.signal(self.extraPositionT1m, self.extraPositionT2p, xyz = True)
             dwiWater = nb.Nifti1Image(pureWaterSignal.reshape(1,1,1,-1), affine = np.eye(4))
             nb.save(dwiWater, data_dir + os.sep  + "pureWaterSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
-        
+
+            A = np.vstack([np.ones(bvals.shape), -1/1000 * bvals]).T
+            bx, mx = np.linalg.lstsq(A, np.log(pureWaterSignal[0:20]), rcond=None)[0]
+            by, my = np.linalg.lstsq(A, np.log(pureWaterSignal[20:40]), rcond=None)[0]
+            bz, mz = np.linalg.lstsq(A, np.log(pureWaterSignal[40:60]), rcond=None)[0]
+            plt.plot(bvals, (np.log(pureWaterSignal[0:20])), 'bx', label = mx)
+            plt.plot(bvals, np.log(pureWaterSignal[20:40]), 'rx', label = my)
+            plt.plot(bvals, np.log(pureWaterSignal[40:60]), 'gx', label = mz)
+            plt.legend()
+            plt.savefig(data_dir + os.sep + 'infinite_voxel_XYZ.png')
+
         if self.simulateFibers and self.simulateExtra:
-            expSignal, bvals = self.signal(np.vstack([self.fiberPositionsT1m, self.extraPositionT1m]), np.vstack([self.fiberPositionsT2p, self.extraPositionT2p]), xyz = True)
+            expSignal, bvals = self.signal(np.vstack([self.fiberPositionsT1m, self.extraPositionT1m]), np.vstack([self.fiberPositionsT2p, self.extraPositionT2p]), xyz = False)
             dwi = nb.Nifti1Image(expSignal.reshape(1,1,1,-1), affine = np.eye(4))
             nb.save(dwi,data_dir + os.sep + "totalSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
 
-    def plot(self, plotFibers, plotCells, plotExtra):
-        def plot_fiber(self, fiberCenter):
-            x_ctr = fiberCenter[0]
-            y_ctr = fiberCenter[1]
-            radius = fiberCenter[3]
-            z = np.linspace(-10, 200+10,2)
-            theta = np.linspace(0,2*np.pi,25)
-            th, zs = np.meshgrid(theta, z)
-            xs = (radius * np.cos(th) + x_ctr)
-            ys = (radius * np.sin(th) + y_ctr)
+    def plot(self, plotFibers, plotCells, plotExtra, plotConfig):
+        def plot_fiber(self, fiberCenters):
+
+
+            translation_factor = np.zeros(fiberCenters.shape[0])
+            vertResolution = 2
+            rotResolution = 25
+
+            z_min = 0
+
+            Xs_b1 = []
+            Ys_b1 = []
+            Zs_b1 = []
+            Xs_b2 = []
+            Ys_b2 = []
+            Zs_b2 = []
+            b1 = []
+            b2 = []
+
+        
+            for i in range(fiberCenters.shape[0]):
+                fiberCenter = fiberCenters[i,:]
+                x_ctr = fiberCenter[0]
+                y_ctr = fiberCenter[1]
+                radius = fiberCenter[3]
+                z = np.linspace(z_min, (self.voxelDims + self.buffer), vertResolution)
+                theta = np.linspace(0,2*np.pi,rotResolution)
+                th, zs = np.meshgrid(theta, z)
+                xs = (radius * np.cos(th) + x_ctr)
+                ys = (radius * np.sin(th) + y_ctr)
+
+                if fiberCenter[4] == 0:
+                    Xs_b1.append(xs)
+                    Ys_b1.append(ys)
+                    Zs_b1.append(zs)
+                    b1.append(fiberCenter[4])
+                else:
+                    rotation = np.dot(self.rotMat, np.array([xs.ravel(), ys.ravel(), zs.ravel()]))
+                    translation_factor[i] = np.amin(rotation[2,:])
+                    Xs_b2.append(rotation[0,:].reshape(xs.shape)) 
+                    Ys_b2.append(rotation[1,:].reshape(xs.shape))
+                    Zs_b2.append(rotation[2,:].reshape(xs.shape))
+                    b2.append(fiberCenter[4])
             
-            if fiberCenter[4] == 0:
-                return xs,ys,zs
-            else:
-                rotation = np.dot(self.rotMat, np.array([xs.ravel(), ys.ravel(), zs.ravel()]))
-                x = rotation[0,:].reshape(xs.shape) 
-                y = rotation[1,:].reshape(ys.shape)
-                z = rotation[2,:].reshape(zs.shape) + np.abs(np.amin(rotation[2,:]))
-                print(np.abs(np.amin(rotation[2,:])))
-                return x,y,z
+            Xs_b1 = np.array(Xs_b1)
+            Ys_b1 = np.array(Ys_b1)
+            Zs_b1 = np.array(Zs_b1)
+
+            Xs_b2 = np.array(Xs_b2)
+            Ys_b2 = np.array(Ys_b2)
+            
+            Zs_b2 = np.array(Zs_b2) + np.abs(np.amin(translation_factor-z_min))
+            return np.vstack([Xs_b1,Xs_b2]), np.vstack([Ys_b1, Ys_b2]), np.vstack([Zs_b1,Zs_b2]), np.array(np.hstack([b1, b2]))
+
         
         fig = plt.figure(figsize = (8,8))
+
+        if plotConfig:
+
+            axFibers = fig.add_subplot(projection = '3d')
+           
+            X,Y,Z, B = plot_fiber(self, fiberCenters = self.fiberCenters)
+            for i in range(X.shape[0]):
+                Xp, Yp, Zp = X[i,:,:], Y[i,:,:], Z[i,:,:]
+                if B[i] == 1:       
+                    surf = axFibers.plot_surface(Xp,Yp,Zp, color = 'r')
+                else:
+                    surf = axFibers.plot_surface(Xp,Yp,Zp, color = 'b')
+
+            #axFibers.set_ylim(0.5*(self.buffer), self.voxelDims+0.5*self.buffer)
+            #axFibers.set_xlim(0.5*(self.buffer), self.voxelDims+0.5*self.buffer)
+            #axFibers.set_zlim(0.5*(self.buffer), self.voxelDims+0.5*self.buffer)
+            plt.show()
+
 
         if plotFibers and self.simulateFibers:
 
             fiber_indicies = (self.spinInFiber_i[self.spinInFiber_i > 0]).astype(np.int16)
 
-            bundle_1 = self.fiberPositionsT2p[[i for i in range(len(fiber_indicies)) if self.fiberCenters[fiber_indicies[i],4] == 1.0],:]
-            bundle_2 = self.fiberPositionsT2p[[i for i in range(len(fiber_indicies)) if self.fiberCenters[fiber_indicies[i],4] == 0.0],:]
+            bundle_1_T1m = (self.fiberPositionsT1m[[i for i in range(len(fiber_indicies)) if self.fiberCenters[fiber_indicies[i],4] == 1.0],:])
+            bundle_1_T2p = (self.fiberPositionsT2p[[i for i in range(len(fiber_indicies)) if self.fiberCenters[fiber_indicies[i],4] == 1.0],:])
+            bundle_2_T1m = (self.fiberPositionsT1m[[i for i in range(len(fiber_indicies)) if self.fiberCenters[fiber_indicies[i],4] == 0.0],:])
+            bundle_2_T2p = (self.fiberPositionsT2p[[i for i in range(len(fiber_indicies)) if self.fiberCenters[fiber_indicies[i],4] == 0.0],:])
 
 
-        
-
+            bundle_1_T1m, bundle_1_T2p = self.spins_in_voxel(bundle_1_T1m, bundle_1_T2p)
+            bundle_2_T1m, bundle_2_T2p = self.spins_in_voxel(bundle_2_T1m, bundle_2_T2p)
 
             axFiber = fig.add_subplot(projection = '3d')
-            axFiber.scatter(bundle_1[:,0], bundle_1[:,1], bundle_1[:,2], s = 2, color = 'mediumseagreen', label = 'Bundle 1', alpha = .50)
-            axFiber.scatter(bundle_2[:,0], bundle_2[:,1], bundle_2[:,2], s = 2, label = 'Bundle 2')
+            axFiber.scatter(bundle_1_T2p[:,0], bundle_1_T2p[:,1], bundle_1_T2p[:,2], s = 2, color = 'darkmagenta', label = 'Bundle 2')
+            axFiber.scatter(bundle_2_T2p[:,0], bundle_2_T2p[:,1], bundle_2_T2p[:,2], s = 2, color = 'cadetblue', label = 'Bundle 1')
             #axFiber.view_init(elev=90, azim=0)
             #axFiber.scatter(self.fiberCenters[:,0], self.fiberCenters[:,1], self.fiberCenters[:,2])
-            axFiber.set_xlim(0,self.voxelDims+self.buffer)
-            axFiber.set_ylim(0,self.voxelDims+self.buffer)
-            axFiber.set_zlim(0,self.voxelDims+self.buffer)
-            axFiber.set_xlabel('x')
-            axFiber.set_ylabel('y')
-            axFiber.set_zlabel('z')
-            axFiber.legend(markerscale=10)
+            axFiber.set_xlim(0.5*self.buffer,self.voxelDims+0.5*self.buffer)
+            axFiber.set_ylim(0.5*self.buffer,self.voxelDims+0.5*self.buffer)
+            axFiber.set_zlim(0.5*self.buffer,self.voxelDims+0.5*self.buffer)
+            axFiber.set_xlabel(r'x $\quad \mu m$')
+            axFiber.set_ylabel(r'y $\quad \mu m$')
+            axFiber.set_zlabel(r'z $\quad \mu m$')
+            axFiber.legend(markerscale=5)
         
         if plotExtra and self.simulateExtra:
             axExtra = fig.add_subplot(projection = '3d')
@@ -858,32 +927,31 @@ class dmri_simulation:
             axExtra.set_zlabel(r'z $\quad \mu m$')
             axExtra.legend()
 
-        if any([plotFibers, plotExtra, plotCells]):
+        if any([plotFibers, plotExtra, plotCells]):  
             plt.show()
-
 
 def dmri_sim_wraper(arg):
     x = dmri_simulation()
     x.from_config(arg)
 
 def main():       
-    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\IW\simulation_configuration_Theta=*_Fraction=*.ini")
+    
+    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\density_Tests\*.ini")
     for cfg in configs:
         p = Process(target=dmri_sim_wraper, args = (cfg,))
         p.start()
         p.join()
-
     exit()
-
+    sim = dmri_simulation()
     sim.set_parameters(
-        numSpins= 100*10**3,
+        numSpins= 500*10**3,
         fiberFraction= (0.50, .50),  # Fraction in each Half/Quadrant Depending on 'P'/'NP'
         fiberRadius= 1.0,            # um
-        Thetas = (0,0),              # degrees
+        Thetas = (0,60),              # degrees
         fiberDiffusions= (1.0, 1.0), # um^2/mm
         cellFraction= .0,            # Fraction in each Half/Quadrant Depending on 'P'/'NP'
         cellRadii= (3,10),           # um
-        fiberConfiguration = 'Inter-Woven',           # 'P' = Penetrating Cells; 'NP = Non-Penetrating Cells, 'IW' 
+        fiberConfiguration = 'Penetrating',           # 'P' = Penetrating Cells; 'NP = Non-Penetrating Cells, 'IW' 
         Delta = 10,                  # ms  
         dt = 0.001,                  # ms 
         voxelDim= 20,                # um
@@ -891,57 +959,8 @@ def main():
         path_to_bvals= r"C:\MCSIM\Repo\simulation_data\DBSI\DBSI-99\bval",
         path_to_bvecs= r"C:\MCSIM\Repo\simulation_data\DBSI\DBSI-99\bvec"
         )   
-    grid = sim.fiberCenters
-    
-    
-    print('numSpins: {}'.format(sim.numSpins))
-    print('fiberFractions: {}'.format(sim.fiberFraction))
-    print('Inter Fiber Distance: {}'.format(np.linalg.norm(grid[0,0:3]-grid[1,0:3], ord = 2) - 2*sim.fiberRadius))
-    cont = input(r"Do you wish to proceed with these parameters: [y\n] ")
-
-
-
-    if cont == 'y':
-
-        sim.simulate(simulateFibers=True, simulateCells=False, simulateExtraEnvironment=False)
-        sim.plot(plotFibers=True, plotCells=False, plotExtra=False)
-        
-        
-        exit()
-        
-        sim.save_data(r"C:\MCSIM\dMRI-MCSIM-main\gpu_data")
-        s, b = sim.signal(sim.fiberPositionsT1m, sim.fiberPositionsT2p, xyz = True)
-        ifd = np.linalg.norm(grid[0,0:3]-grid[1,0:3], ord = 2) - 2*sim.fiberRadius
-        ('Inter Fiber Distance: {}'.format(ifd))
-
-        A = np.ones((b.shape[0],2))
-        A[:,1] = -1/1000 * b
-        bx, mx = np.linalg.lstsq(A, np.log(s[0:20]), rcond=None)[0]
-        by, my = np.linalg.lstsq(A, np.log(s[20:40]), rcond=None)[0]
-        bz, mz = np.linalg.lstsq(A, np.log(s[40:60]), rcond=None)[0]
-        plt.plot(b, (np.log(s[0:20])), 'bx', label = mx)
-        plt.plot(b, np.log(s[20:40]), 'rx', label = my)
-        plt.plot(b, np.log(s[40:60]), 'gx', label = mz)
-        plt.legend()
-        plt.savefig(r"C:\MCSIM\dMRI-MCSIM-main\gpu_data\fiber_signal_angle={}_diffusivities={}_dt={}_ff={}_dist={}.png".format(sim.Thetas, sim.fiberDiffusions,sim.dt,sim.fiberFraction, round(ifd,4)))
-
-        plt.clf()
-
-        #sWater, bWater = sim.signal(sim.extraPositionT1m, sim.extraPositionT2p, xyz = True)
-       # 
-       # bwx, mwx = np.linalg.lstsq(A, np.log(sWater[0:20]), rcond=None)[0]
-       # bwy, mwy = np.linalg.lstsq(A, np.log(sWater[20:40]), rcond=None)[0]
-       # bwz, mwz = np.linalg.lstsq(A, np.log(sWater[40:60]), rcond=None)[0]
-       # plt.plot(bWater, (sWater[0:20]), 'bx', label = mwx)
-       # plt.plot(bWater, (sWater[20:40]), 'rx', label = mwy)
-       # plt.plot(bWater, (sWater[40:60]), 'gx', label = mwz)
-       # plt.legend()
-       # plt.savefig(r"C:\MCSIM\dMRI-MCSIM-main\gpu_data\extra_signal_angle={}_diffusivities={}_dt={}_ff={}_dist={}.png".format(sim.Thetas, sim.fiberDiffusions,sim.dt,sim.fiberFraction, round(ifd,4)))
-
-        #plt.clf()
-        End = time.time()
-        sim.plot(plotFibers=True, plotCells=False,plotExtra=False)
-        print('Simulation Executed in: {} sec'.format(End-Start))
+    sim.simulate(simulateFibers=True, simulateCells=False, simulateExtraEnvironment=False)
+    sim.plot(plotFibers=True, plotCells=False, plotExtra=False, plotConfig=False)
     return
    
 
