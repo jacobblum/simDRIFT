@@ -135,6 +135,7 @@ class dmri_simulation:
             simulateFibers = self.simulateFibers,
             simulateCells = self.simulateCells,
             simulateExtraEnvironment = self.simulateExtra)
+        self.plot(plotFibers=True, plotCells=True, plotExtra=False, plotConfig=False)
         self.save_data(self.path_to_save, plot_xyz=True)
         return
 
@@ -209,6 +210,11 @@ class dmri_simulation:
         if self.fiberCofiguration == 'Non-Penetrating':
             regions = np.array([[0,self.voxelDims+self.buffer,0,0.5*(self.voxelDims+self.buffer),0.5*(self.voxelDims+self.buffer), self.voxelDims+self.buffer], 
                                 [0,0.5*(self.voxelDims+self.buffer),0.5*(self.voxelDims+self.buffer), self.voxelDims+self.buffer,0,self.voxelDims+self.buffer]])
+        
+        elif self.fiberCofiguration == 'Void':
+            regions = np.array([[0, self.voxelDims+self.buffer, 0.5*(self.voxelDims+self.buffer)-0.5*self.voidDist, 0.5*(self.voxelDims+self.buffer), 0, self.voxelDims+self.buffer], 
+                                [0, self.voxelDims+self.buffer, 0.5*(self.voxelDims+self.buffer), 0.5*(self.voxelDims+self.buffer)+0.5*self.voidDist,0,self.voxelDims+self.buffer]])
+                
         else: 
             regions = np.array([[0,self.voxelDims+self.buffer,0,0.5*(self.voxelDims+self.buffer), 0,self.voxelDims+self.buffer],
                                 [0,self.voxelDims+self.buffer,0.5*(self.voxelDims+self.buffer),self.voxelDims+self.buffer,0,self.voxelDims+self.buffer]])
@@ -586,6 +592,7 @@ class dmri_simulation:
 
             cuda.syncthreads()
             for k in range(newPosition.shape[0]): spinTrajecotires[i,k] = newPosition[k]
+            if i == 0: print('Cell Step', step)
             cuda.syncthreads()  
         return 
 
@@ -813,8 +820,8 @@ class dmri_simulation:
             dwiWater = nb.Nifti1Image(pureWaterSignal.reshape(1,1,1,-1), affine = np.eye(4))
             nb.save(dwiWater, data_dir + os.sep  + "pureWaterSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
 
-        if self.simulateFibers and self.simulateExtra:
-            expSignal, bvals = self.signal(np.vstack([self.fiberPositionsT1m, self.extraPositionT1m]), np.vstack([self.fiberPositionsT2p, self.extraPositionT2p]), xyz = False, finite = False)
+        if self.simulateFibers and self.simulateExtra and self.simulateCells:
+            expSignal, bvals = self.signal(np.vstack([self.fiberPositionsT1m, self.cellPositionsT1m,self.extraPositionT1m]), np.vstack([self.fiberPositionsT2p,self.cellPositionsT2p,self.extraPositionT2p]), xyz = False, finite = False)
             dwi = nb.Nifti1Image(expSignal.reshape(1,1,1,-1), affine = np.eye(4))
             nb.save(dwi,data_dir + os.sep + "totalSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
 
@@ -891,6 +898,7 @@ class dmri_simulation:
             #axFibers.set_zlim(0.5*(self.buffer), self.voxelDims+0.5*self.buffer)
             plt.show()
 
+        axFiber = fig.add_subplot(projection = '3d')
 
         if plotFibers and self.simulateFibers:
 
@@ -902,7 +910,6 @@ class dmri_simulation:
             bundle_1_T1m, bundle_1_T2p = self.spins_in_voxel(bundle_1_T1m, bundle_1_T2p)
             bundle_2_T1m, bundle_2_T2p = self.spins_in_voxel(bundle_2_T1m, bundle_2_T2p)
 
-            axFiber = fig.add_subplot(projection = '3d')
             axFiber.scatter(bundle_1_T2p[:,0], bundle_1_T2p[:,1], bundle_1_T2p[:,2], s = 2, color = 'darkmagenta', label = 'Bundle 2')
             axFiber.scatter(bundle_2_T2p[:,0], bundle_2_T2p[:,1], bundle_2_T2p[:,2], s = 2, color = 'cadetblue', label = 'Bundle 1')
             #axFiber.view_init(elev=90, azim=0)
@@ -914,6 +921,9 @@ class dmri_simulation:
             axFiber.set_ylabel(r'y $\quad \mu m$')
             axFiber.set_zlabel(r'z $\quad \mu m$')
             axFiber.legend(markerscale=5)
+        
+        if plotCells and self.simulateCells:
+            axFiber.scatter(self.cellPositionsT2p[:,0], self.cellPositionsT2p[:,1], self.cellPositionsT2p[:,2])
         
         if plotExtra and self.simulateExtra:
             axExtra = fig.add_subplot(projection = '3d')
@@ -960,7 +970,7 @@ def dmri_sim_wraper(arg):
 
 def main():       
     
-    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\Void_Tests_60\simulation_configuration*")
+    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\Cells_in_void_test\simulation_configuration_Theta=(0, 90)_Fraction=(0.7, 0.7)_Diffusivity(1.0, 2.0).ini")
     for cfg in configs:
         p = Process(target=dmri_sim_wraper, args = (cfg,))
         p.start()
