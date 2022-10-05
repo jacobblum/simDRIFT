@@ -1,7 +1,7 @@
 from cProfile import label
 import numpy as np 
 import numba 
-from numba import jit, cuda, int32, void, float32
+from numba import jit, cuda, int32, float32
 from numba.cuda import random 
 from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128p_states
 import math
@@ -208,34 +208,47 @@ class dmri_simulation:
         numCells = self.numCells
         cellCentersTotal = []
 
-        ### NEED TO FIX THIS
         if self.fiberCofiguration == 'Non-Penetrating':
             regions = np.array([[0,self.voxelDims+self.buffer,0,0.5*(self.voxelDims+self.buffer),0.5*(self.voxelDims+self.buffer), self.voxelDims+self.buffer], 
                                 [0,0.5*(self.voxelDims+self.buffer),0.5*(self.voxelDims+self.buffer), self.voxelDims+self.buffer,0,self.voxelDims+self.buffer]])
         
         elif self.fiberCofiguration == 'Void':
-            regions = np.array([[0, self.voxelDims+self.buffer, 0.5*(self.voxelDims+self.buffer)-0.5*self.voidDist, 0.5*(self.voxelDims+self.buffer), 0, self.voxelDims+self.buffer], 
-                                [0, self.voxelDims+self.buffer, 0.5*(self.voxelDims+self.buffer), 0.5*(self.voxelDims+self.buffer)+0.5*self.voidDist,0,self.voxelDims+self.buffer]])
-                
+            regions = np.array([[0, self.voxelDims+self.buffer, 0.5*(self.voxelDims+self.buffer)-0.5*self.voidDist, 0.5*(self.voxelDims+self.buffer)+0.5*(self.voidDist), 0, self.voxelDims+self.buffer], 
+                                [0, self.voxelDims+self.buffer, 0.5*(self.voxelDims+self.buffer)-0.5*self.voidDist, 0.5*(self.voxelDims+self.buffer)+0.5*self.voidDist,0,self.voxelDims+self.buffer]])            
         else: 
             regions = np.array([[0,self.voxelDims+self.buffer,0,0.5*(self.voxelDims+self.buffer), 0,self.voxelDims+self.buffer],
                                 [0,self.voxelDims+self.buffer,0.5*(self.voxelDims+self.buffer),self.voxelDims+self.buffer,0,self.voxelDims+self.buffer]])
         
-        for i in range(len(numCells)):
+        for i in (range(len(numCells))):
             print('{} / {}'.format(i+1, len(numCells)))
             cellCenters = np.zeros((numCells[i]**3, 4))
-            for j in tqdm(range(cellCenters.shape[0])):
+            for j in range(cellCenters.shape[0]):
                 if j == 0:
-                    xllim, xulim = regions[i,0], regions[i,1]
-                    yllim, yulim = regions[i,2], regions[i,3]
-                    zllim, zulim = regions[i,4], regions[i,5]
-                    radius = self.cellRadii[i]
-                    cell_x = np.random.uniform(xllim + radius, xulim - radius)
-                    cell_y = np.random.uniform(yllim + radius, yulim - radius)
-                    cell_z = np.random.uniform(zllim + radius, zulim - radius)
-                    cell_0 = np.array([cell_x, cell_y, cell_z, radius])
-                    cellCenters[j,:] = cell_0
-                elif j > 0:
+                    invalid = True 
+                    while(invalid):   
+                        radius = self.cellRadii[i]
+                        xllim, xulim = regions[i,0], regions[i,1]
+                        yllim, yulim = regions[i,2], regions[i,3]
+                        zllim, zulim = regions[i,4], regions[i,5]
+                        cell_x = np.random.uniform(xllim + radius, xulim - radius)
+                        cell_y = np.random.uniform(yllim + radius, yulim - radius)
+                        cell_z = np.random.uniform(zllim + radius, zulim - radius)
+                        cell_0 = np.array([cell_x, cell_y, cell_z, radius])
+                        propostedCell = cell_0
+                        ctr = 0
+                        if i == 0:
+                            cellCenters[j,:] = propostedCell
+                            invalid = False
+                        elif i > 0:
+                            for k in range(cellCentersTotal[0].shape[0]):
+                                distance = np.linalg.norm(propostedCell-cellCentersTotal[0][k,:], ord = 2)
+                                if distance < (radius + cellCentersTotal[0][k,3]):
+                                        ctr += 1
+                                        break
+                        if ctr == 0:
+                            cellCenters[j,:] = propostedCell
+                            invalid = False
+                elif (j > 0):
                     invalid = True
                     while(invalid):
                         xllim, xulim = regions[i,0], regions[i,1]
@@ -261,7 +274,7 @@ class dmri_simulation:
                         if ctr == 0:
                             cellCenters[j,:] = propostedCell
                             invalid = False
-                cellCentersTotal.append(cellCenters)
+            cellCentersTotal.append(cellCenters)
         return np.vstack([cellCentersTotal[0], cellCentersTotal[1]])
     
     def get_spin_locations(self):
@@ -953,7 +966,12 @@ class dmri_simulation:
 
         
         if plotCells:
-            axFiber.scatter(self.cellCenters[:,0], self.cellCenters[:,1], self.cellCenters[:,2])
+            cell1 = self.cellCenters[np.where(self.cellCenters[:,3] == self.cellRadii[0])]
+            cell2 = self.cellCenters[np.where(self.cellCenters[:,3] == self.cellRadii[1])]
+            
+            
+            axFiber.scatter(cell1[:,0], cell1[:,1], cell1[:,2])
+            axFiber.scatter(cell2[:,0], cell2[:,1], cell2[:,2])
         
         if plotExtra:
             axExtra = fig.add_subplot(projection = '3d')
@@ -982,7 +1000,6 @@ class dmri_simulation:
                     fig, ax = plt.subplots(figsize = (10,3))
                     ax.hist(traj2-traj1, bins = 1000)
                     plt.show()
-                    
                     signal, bvals = self.signal(traj1, traj2, xyz = False, finite = (f == 'fin'))
                     plt.show()
                     dwi = nb.Nifti1Image(signal.reshape(1,1,1,-1), affine = np.eye(4))
@@ -1021,13 +1038,18 @@ def main():
         fiberConfiguration = 'Void',           # 'P' = Penetrating Cells; 'NP = Non-Penetrating Cells, 'IW' 
         Delta = 10,                  # ms  
         dt = 0.001,                  # ms 
-        voxelDim= 30,                # um
-        buffer = 10,                 # um
+        voxelDim= 50,                # um
+        buffer = 0,                 # um
         path_to_bvals= r'/Users/jacobblum/Desktop/Neo/MCSIM-Jacob/CrossingFibers/DBSI-99/bval-99.bval',
         path_to_bvecs= r'/Users/jacobblum/Desktop/Neo/MCSIM-Jacob/CrossingFibers/DBSI-99/bvec-99.bvec'
         )   
-    
-    print(sim.cellCenters)
+    arr = sim.cellCenters
+
+    for i in range(arr.shape[0]):
+        print(np.linalg.norm(arr[0,0:3] - arr[i,0:3], ord = 2))
+
+
+
     sim.plot(plotFibers=True, plotCells=True, plotExtra=False, plotConfig=False)
     return
    
