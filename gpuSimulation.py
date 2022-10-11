@@ -824,7 +824,7 @@ class dmri_simulation:
             return signal + real_channel_noise
 
     def save_data(self, path, plot_xyz):
-        data_dir = path + os.sep + "FF={}_Theta={}_Diffusions={}_Simulation".format(self.fiberFraction, self.Thetas, self.fiberDiffusions)
+        data_dir = path + os.sep + "FF={}_CF={}_CellRad={}_Theta={}_Diffusions={}_fibConfig={}_Sim".format(self.fiberFraction, self.cellFraction, self.cellRadii, self.Thetas, self.fiberDiffusions, self.fiberCofiguration)
         if not os.path.exists(data_dir): os.mkdir(data_dir)
         path, file = os.path.split(self.cfg_path)  
         if not os.path.exists(data_dir + os.sep + file): shutil.move(self.cfg_path, data_dir + os.sep + file)
@@ -1022,7 +1022,7 @@ def dmri_sim_wraper(arg):
 
 def main():       
     #numba.cuda.detect()
-    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config\mosaic_Tests\R*_config_Theta=*_fibFrac=*_cellFrac=*_cellRad=*_Diff=(1.0, 2.0)_*.ini")
+    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config\mosaic_Tests\No_Cells\R*_config_Theta=*_fibFrac=*_cellFrac=*_cellRad=*_Diff=(1.0, 2.0)_*.ini")
     for cfg in configs:
         p = Process(target=dmri_sim_wraper, args = (cfg,))
         p.start()
