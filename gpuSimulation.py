@@ -1022,7 +1022,7 @@ def dmri_sim_wraper(arg):
 
 def main():       
     #numba.cuda.detect()
-    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\density_Tests\sim_config_Theta=*_Fraction=*_Diff=*.ini")
+    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config\mosaic_Tests\R*_config_Theta=*_fibFrac=*_cellFrac=*_cellRad=*_Diff=(1.0, 2.0)_*.ini")
     for cfg in configs:
         p = Process(target=dmri_sim_wraper, args = (cfg,))
         p.start()
