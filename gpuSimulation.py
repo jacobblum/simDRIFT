@@ -80,7 +80,7 @@ class dmri_simulation:
         self.spinPotionsT1m = np.random.uniform(low = 0 + self.buffer*.5, high = self.voxelDims+0.5*(self.buffer), size = (int(self.numSpins),3))
         self.spinInFiber_i = -1*np.ones(self.numSpins)
         self.spinInCell_i = -1*np.ones(self.numSpins)
-        #self.get_spin_locations()
+        self.get_spin_locations()
 
     def _set_params_from_config(self, path_to_configuration_file):
         self.cfg_path = path_to_configuration_file
@@ -135,7 +135,7 @@ class dmri_simulation:
             simulateFibers = self.simulateFibers,
             simulateCells = self.simulateCells,
             simulateExtraEnvironment = self.simulateExtra)
-        self.plot(plotFibers=True, plotCells=True, plotExtra=False, plotConfig=False)
+        self.plot(plotFibers=False, plotCells=False, plotExtra=False, plotConfig=False)
         self.save_data(self.path_to_save, plot_xyz=True)
         return
 
@@ -540,19 +540,21 @@ class dmri_simulation:
             #if distance > fiberCenters[inx,3]:
                 #for k in range(newPosition.shape[0]): newPosition[k] = prevPosition[k]
             cuda.syncthreads()
-            for k in range(newPosition.shape[0]): spinTrajectories[i,k] = newPosition[k]
-            if i == 0: print('Fiber Step', step)
+            for k in range(newPosition.shape[0]):
+                spinTrajectories[i,k] = newPosition[k]
+            if i == 0 and (step % (numSteps / 5) == 0):
+                print('Fiber Step: ', step,' (',int((step/numSteps)*100.),' %)')
             cuda.syncthreads()
         return
 
     @cuda.jit
-    def diffusion_in_cell(rng_states, spinTrajecotires, cellAtSpin_i, numSteps, cellCenters, fiberCenters, fiberRotationReference, dt):
+    def diffusion_in_cell(rng_states, spinTrajectories, cellAtSpin_i, numSteps, cellCenters, fiberCenters, fiberRotationReference, dt):
         i = cuda.grid(1)
-        if i > spinTrajecotires.shape[0]:
+        if i > spinTrajectories.shape[0]:
             return
         
         """"
-        Simulate molecular diffusion of spins within the cells; dirichelt boundary conditions
+        Simulate molecular diffusion of spins within the cells; Dirichelt boundary conditions
 
         Parameters
         ----------
@@ -603,7 +605,7 @@ class dmri_simulation:
                 isNotInCell = False 
                 newPosition = jp.randomDirection(rng_states, newPosition, i)
                 for k in range(newPosition.shape[0]):
-                    prevPosition[k] = spinTrajecotires[i,k]
+                    prevPosition[k] = spinTrajectories[i,k]
                     newPosition[k] = prevPosition[k] + Step*newPosition[k]
                 distanceCell = jp.euclidean_distance(newPosition, cellCenters[inx,0:3], fiberRotationReference[0,:], 'cell')
                 if distanceCell > cellCenters[inx,3]:
@@ -623,8 +625,10 @@ class dmri_simulation:
                     invalidMove = True
 
             cuda.syncthreads()
-            for k in range(newPosition.shape[0]): spinTrajecotires[i,k] = newPosition[k]
-            if i == 0: print('Cell Step', step)
+            for k in range(newPosition.shape[0]):
+                spinTrajectories[i,k] = newPosition[k]
+            if i == 0 and (step % (numSteps / 5) == 0):
+                print('Cell Step: ', step,' (',int((step/numSteps)*100.),' %)')
             cuda.syncthreads()  
         return 
 
@@ -703,8 +707,10 @@ class dmri_simulation:
                 else:
                     invalidStep = True
             cuda.syncthreads()
-            for k in range(newPosition.shape[0]): spinTrajectories[i,k] = newPosition[k]
-            if i == 0: print('Water Step', step)
+            for k in range(newPosition.shape[0]): 
+                spinTrajectories[i,k] = newPosition[k]
+            if i == 0 and (step % (numSteps / 5) == 0):
+                print('Water Step: ', step,' (',int((step/numSteps)*100.),' %)')
             cuda.syncthreads()
            
         return 
@@ -1015,17 +1021,14 @@ def dmri_sim_wraper(arg):
     
 
 def main():       
-    """
-    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\Cells_in_void_test\simulation_configuration_Theta=(0, 90)_Fraction=(0.7, 0.7)_Diffusivity(1.0, 2.0).ini")
+    #numba.cuda.detect()
+    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\density_Tests\sim_config_Theta=*_Fraction=*_Diff=*.ini")
     for cfg in configs:
         p = Process(target=dmri_sim_wraper, args = (cfg,))
         p.start()
         p.join()
-
-    exit()
+    
     """
-
-
     sim = dmri_simulation()
     sim.set_parameters(
         numSpins= 100*10**3,
@@ -1040,21 +1043,11 @@ def main():
         dt = 0.001,                  # ms 
         voxelDim= 50,                # um
         buffer = 0,                 # um
-        path_to_bvals= r'/Users/jacobblum/Desktop/Neo/MCSIM-Jacob/CrossingFibers/DBSI-99/bval-99.bval',
-        path_to_bvecs= r'/Users/jacobblum/Desktop/Neo/MCSIM-Jacob/CrossingFibers/DBSI-99/bvec-99.bvec'
+        path_to_bvals= r'C:\MCSIM\Repo\simulation_data\DBSI\DBSI-99\bval\bval-99.bval',
+        path_to_bvecs= r'C:\MCSIM\Repo\simulation_data\DBSI\DBSI-99\bvec\bvec-99.bvec',
+        path_to_save_file_dir= r'C:\MCSIM\dMRI-MCSIM-main\klu_test'
         )   
-    arr = sim.cellCenters
-
-    for i in range(arr.shape[0]):
-        print(np.linalg.norm(arr[0,0:3] - arr[i,0:3], ord = 2))
-
-
-
-    sim.plot(plotFibers=True, plotCells=True, plotExtra=False, plotConfig=False)
-    return
-   
-
-
+    """
 
 if __name__ == "__main__":
     main()
