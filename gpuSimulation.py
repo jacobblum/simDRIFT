@@ -1,4 +1,5 @@
 from cProfile import label
+from pickletools import read_unicodestring1
 import numpy as np 
 import numba 
 from numba import jit, cuda, int32, float32
@@ -16,6 +17,11 @@ import configparser
 from ast import literal_eval
 from multiprocessing import Process
 import shutil
+import walk_in_fiber
+import walk_in_cell
+import walk_in_extra_environ
+import sys
+
 
 class dmri_simulation:
     def __init__(self):
@@ -131,12 +137,53 @@ class dmri_simulation:
 
     def from_config(self, path_to_configuration_file):
         self._set_params_from_config(path_to_configuration_file)
-        self.simulate(
-            simulateFibers = self.simulateFibers,
-            simulateCells = self.simulateCells,
-            simulateExtraEnvironment = self.simulateExtra)
-        self.plot(plotFibers=False, plotCells=False, plotExtra=False, plotConfig=False)
-        self.save_data(self.path_to_save, plot_xyz=True)
+        
+        
+
+        rng_states_gpu = cuda.to_device(create_xoroshiro128p_states(self.spinPotionsT1m.shape[0], seed = 42))
+        spin_positions_t1m = self.spinPotionsT1m.copy()
+        spin_positions_gpu = cuda.to_device(self.spinPotionsT1m)
+        spin_in_fiber_at_index_gpu = cuda.to_device(self.spinInFiber_i)
+        fiber_centers_gpu = cuda.to_device(self.fiberCenters)
+        spin_in_cell_at_index_gpu = cuda.to_device(self.spinInCell_i)
+        cell_centers_gpu = cuda.to_device(self.cellCenters)
+        rotation_reference_gpu = cuda.to_device(self.fiberRotationReference)
+        dt_gpu = (self.dt)
+
+        N_iter = int(self.Delta/self.dt)
+        
+        for i in (range(N_iter)):
+            sys.stdout.write('\r' + str(i+1) + '/' + str(N_iter))
+            sys.stdout.flush()
+            cuda.synchronize()
+            self._diffusion_context_manager.forall(spin_positions_gpu.shape[0])(
+                rng_states_gpu,
+                spin_positions_gpu,
+                spin_in_fiber_at_index_gpu,
+                fiber_centers_gpu,
+                spin_in_cell_at_index_gpu,
+                cell_centers_gpu,
+                rotation_reference_gpu,
+                dt_gpu,
+                self.fiberCofiguration == 'Void'
+            )
+            cuda.synchronize()
+        print('\n')
+        print('Simulation executed')
+        
+
+
+
+        spin_positions_t2p = spin_positions_gpu.copy_to_host()
+        
+        print('Coppied to Host')
+        
+        fig = plt.figure(figsize = (8,8))
+        ax = fig.add_subplot(projection = '3d')
+        ax.scatter(self.fiberCenters[:,0], self.fiberCenters[:,1], self.fiberCenters[:,2])
+        ax.scatter(spin_positions_t2p[np.where(self.spinInFiber_i == -1)][:,0],spin_positions_t2p[np.where(self.spinInFiber_i == -1)][:,1], spin_positions_t2p[np.where(self.spinInFiber_i == -1)][:,2], s = 1)
+        plt.show()
+       
         return
 
     def set_num_fibers(self):
@@ -476,7 +523,46 @@ class dmri_simulation:
         spinInFiber_i[i] = KeyFiber
         cuda.syncthreads()
         return
+
+
+
+    @numba.cuda.jit
+    def _diffusion_context_manager(rng_states, spin_positions, spin_in_fiber_key, fiber_centers, spin_in_cell_key, cell_centers, fiber_rotation_reference, dt, void):
+        """
+        Parameters:
+
+        rng_states:
+        spinPositions: (N_spins, 3) numpy array
+        spin_in_fiber_key: (N_spins, ) numpy array, the spin_in_fiber[i] is the fiber index of the i-th spin. -1 if spin not in fiber.
+        
+        
+        """
+        gpu_index = cuda.grid(1)
+        if gpu_index > spin_positions.shape[0]:
+            return
+        
+        spin_in_fiber_index = int(spin_in_fiber_key[gpu_index])
+        spin_in_cell_index  = int(spin_in_cell_key[gpu_index])
+
+        spin_in_fiber_boolean = (spin_in_fiber_index > -1)
+        spin_in_cell_boolean  = ((spin_in_cell_index > -1) & (spin_in_fiber_index == -1)) 
+
+        if spin_in_fiber_boolean:
+            walk_in_fiber._diffusion_in_fiber(gpu_index, rng_states, spin_in_fiber_index, spin_positions, fiber_centers, fiber_rotation_reference, dt)
+        
+        if spin_in_cell_boolean:
+            walk_in_cell._diffusion_in_cell(gpu_index, rng_states, spin_positions, spin_in_cell_index, cell_centers, fiber_centers, fiber_rotation_reference, dt, void)
+        
+        if (not(spin_in_cell_boolean)) & (not(spin_in_fiber_boolean)):
+            walk_in_extra_environ._diffusion_in_extra_environment(gpu_index,rng_states,spin_positions,fiber_centers, cell_centers, fiber_rotation_reference, dt)
+        return
             
+
+
+
+
+
+
     @cuda.jit
     def diffusion_in_fiber(rng_states, spinTrajectories, fiberIndexAt_i, numSteps, fiberCenters, fiberRotationReference, dt):   
         i = cuda.grid(1)
@@ -610,7 +696,7 @@ class dmri_simulation:
                 distanceCell = jp.euclidean_distance(newPosition, cellCenters[inx,0:3], fiberRotationReference[0,:], 'cell')
                 if distanceCell > cellCenters[inx,3]:
                     isNotInCell = True
-                    for k in range(newPosition.shape[0]): newPosition[k] = prevPosition[k]
+                   # for k in range(newPosition.shape[0]): newPosition[k] = prevPosition[k]
                 else:
                     for j in range(fiberCenters.shape[0]):
                         rotation_Index = int(fiberCenters[j,4])
@@ -1022,7 +1108,7 @@ def dmri_sim_wraper(arg):
 
 def main():       
     #numba.cuda.detect()
-    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config\mosaic_Tests\No_Cells\R*_config_Theta=*_fibFrac=*_cellFrac=*_cellRad=*_Diff=(1.0, 2.0)_*.ini")
+    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\Yes_Cells\R4_config_Theta=(0, 90)_fibFrac=(0.1, 0.1)_cellFrac=0.35_cellRad=(2.5, 2.5)_Diff=(1.0, 2.0)_Pene.ini")
     for cfg in configs:
         p = Process(target=dmri_sim_wraper, args = (cfg,))
         p.start()
@@ -1049,9 +1135,9 @@ def main():
         )   
     """
 
+
 if __name__ == "__main__":
     main()
-
     
  
 
