@@ -13,7 +13,6 @@ def _diffusion_in_cell(gpu_index, rng_states, spin_positions, spin_in_cell_at_in
     Step = numba.float32(math.sqrt(6*D*dt))
     previous_position = cuda.local.array(shape = 3, dtype = numba.float32)
     proposed_new_position = cuda.local.array(shape = 3, dtype = numba.float32)
-  
     distance_cell = numba.float32(0.0)
     distance_fiber = numba.float32(0.0)
     invalid_step = True
@@ -25,10 +24,8 @@ def _diffusion_in_cell(gpu_index, rng_states, spin_positions, spin_in_cell_at_in
             previous_position[k] = spin_positions[gpu_index, k]
             proposed_new_position[k] = previous_position[k] + (Step*proposed_new_position[k])
         distance_cell = jp.euclidean_distance(proposed_new_position, cell_centers[spin_in_cell_at_index,0:3], rotation_reference[0,:], 'cell')
-       
         if distance_cell > cell_centers[spin_in_cell_at_index,3]:
             is_not_in_cell = True
-
         if (not(is_not_in_cell)) & (not(void)):
             for k in range(fiber_centers.shape[0]):
                 rotation_index = int(fiber_centers[k, 4])

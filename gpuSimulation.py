@@ -20,8 +20,9 @@ import shutil
 import walk_in_fiber
 import walk_in_cell
 import walk_in_extra_environ
+import spin_init_positions
 import sys
-
+import diffusion
 
 class dmri_simulation:
     def __init__(self):
@@ -84,10 +85,8 @@ class dmri_simulation:
         self.fiberCenters = self.place_fiber_grid()
         self.cellCenters = self.place_cell_grid()
         self.spinPotionsT1m = np.random.uniform(low = 0 + self.buffer*.5, high = self.voxelDims+0.5*(self.buffer), size = (int(self.numSpins),3))
-        self.spinInFiber_i = -1*np.ones(self.numSpins)
-        self.spinInCell_i = -1*np.ones(self.numSpins)
-        self.get_spin_locations()
-
+        self.spinInFiber_i, self.spinInCell_i = spin_init_positions._find_spin_locations(self.spinPotionsT1m, self.fiberCenters, self.cellCenters, self.fiberRotationReference )
+        
     def _set_params_from_config(self, path_to_configuration_file):
         self.cfg_path = path_to_configuration_file
         ## Simulation Parameters
@@ -137,53 +136,23 @@ class dmri_simulation:
 
     def from_config(self, path_to_configuration_file):
         self._set_params_from_config(path_to_configuration_file)
-        
-        
+        spin_positions_t2p = diffusion._simulate_diffusion(self.spinPotionsT1m, 
+                                      self.spinInFiber_i, 
+                                      self.spinInCell_i,
+                                      self.fiberCenters,
+                                      self.cellCenters,
+                                      self.Delta,
+                                      self.dt,
+                                      self.fiberCofiguration,
+                                      self.fiberRotationReference)
 
-        rng_states_gpu = cuda.to_device(create_xoroshiro128p_states(self.spinPotionsT1m.shape[0], seed = 42))
-        spin_positions_t1m = self.spinPotionsT1m.copy()
-        spin_positions_gpu = cuda.to_device(self.spinPotionsT1m)
-        spin_in_fiber_at_index_gpu = cuda.to_device(self.spinInFiber_i)
-        fiber_centers_gpu = cuda.to_device(self.fiberCenters)
-        spin_in_cell_at_index_gpu = cuda.to_device(self.spinInCell_i)
-        cell_centers_gpu = cuda.to_device(self.cellCenters)
-        rotation_reference_gpu = cuda.to_device(self.fiberRotationReference)
-        dt_gpu = (self.dt)
-
-        N_iter = int(self.Delta/self.dt)
         
-        for i in (range(N_iter)):
-            sys.stdout.write('\r' + str(i+1) + '/' + str(N_iter))
-            sys.stdout.flush()
-            cuda.synchronize()
-            self._diffusion_context_manager.forall(spin_positions_gpu.shape[0])(
-                rng_states_gpu,
-                spin_positions_gpu,
-                spin_in_fiber_at_index_gpu,
-                fiber_centers_gpu,
-                spin_in_cell_at_index_gpu,
-                cell_centers_gpu,
-                rotation_reference_gpu,
-                dt_gpu,
-                self.fiberCofiguration == 'Void'
-            )
-            cuda.synchronize()
-        print('\n')
-        print('Simulation executed')
-        
-
-
-
-        spin_positions_t2p = spin_positions_gpu.copy_to_host()
-        
-        print('Coppied to Host')
-        
+    
         fig = plt.figure(figsize = (8,8))
         ax = fig.add_subplot(projection = '3d')
         ax.scatter(self.fiberCenters[:,0], self.fiberCenters[:,1], self.fiberCenters[:,2])
-        ax.scatter(spin_positions_t2p[np.where(self.spinInFiber_i == -1)][:,0],spin_positions_t2p[np.where(self.spinInFiber_i == -1)][:,1], spin_positions_t2p[np.where(self.spinInFiber_i == -1)][:,2], s = 1)
+        ax.scatter(spin_positions_t2p[np.where(self.spinInFiber_i > -1)][:,0],spin_positions_t2p[np.where(self.spinInFiber_i > -1)][:,1], spin_positions_t2p[np.where(self.spinInFiber_i > -1)][:,2], s = 1)
         plt.show()
-       
         return
 
     def set_num_fibers(self):
@@ -324,19 +293,6 @@ class dmri_simulation:
             cellCentersTotal.append(cellCenters)
         return np.vstack([cellCentersTotal[0], cellCentersTotal[1]])
     
-    def get_spin_locations(self):
-        print('Getting location of {} spins'.format(self.numSpins))
-        spinInFiber_i_GPU = self.spinInFiber_i.astype(np.float32)
-        spinInCell_i_GPU  = self.spinInCell_i.astype(np.float32)
-        spinInitialPositions_GPU = self.spinPotionsT1m.astype(np.float32)
-        fiberCenters_GPU = self.fiberCenters.astype(np.float32)
-        cellCenters_GPU = self.cellCenters.astype(np.float32)
-        Start = time.time()
-        self.find_spin_locations.forall(self.numSpins)(spinInFiber_i_GPU, spinInCell_i_GPU, spinInitialPositions_GPU, fiberCenters_GPU, cellCenters_GPU, self.fiberRotationReference)
-        End = time.time()
-        print('Finding {} spins - task completed in {} sec'.format(self.numSpins, End-Start))
-        self.spinInFiber_i = spinInFiber_i_GPU
-        self.spinInCell_i = spinInCell_i_GPU
     
     def rotation(self):        
         rotationReferences = np.zeros((len(self.Thetas),3))
@@ -350,457 +306,6 @@ class dmri_simulation:
         print('Fiber Rotation Matrix: \n {}'.format(rotationReferences))
         return rotationReferences
 
-
-    def simulate(self, simulateFibers, simulateCells, simulateExtraEnvironment):        
-        self.simulateFibers = simulateFibers
-        self.simulateCells = simulateCells
-        self.simulateExtra = simulateExtraEnvironment
-        
-
-        """
-        Simulate Fiber Diffusion: 
-        """
-        if self.simulateFibers:
-            self.fiberPositionsT1m = self.spinPotionsT1m[self.spinInFiber_i != -1].astype(np.float32)
-            fiberSpins = cuda.to_device(self.spinPotionsT1m[self.spinInFiber_i != -1].astype(np.float32))
-            fiberAtSpin_i = self.spinInFiber_i[self.spinInFiber_i != -1].astype(np.float32)
-            rng_states_fibers = create_xoroshiro128p_states(len(self.spinInFiber_i[self.spinInFiber_i != -1]), seed = 42)
-            print('STARTING FIBER SIMULATION')
-            Start = time.time()
-            self.diffusion_in_fiber.forall(len(fiberAtSpin_i))(rng_states_fibers,
-                                    fiberSpins,
-                                    fiberAtSpin_i,
-                                    int(self.Delta/self.dt),
-                                    self.fiberCenters.astype(np.float32),
-                                    self.fiberRotationReference,
-                                    self.dt)
-            End = time.time()
-            self.fiberPositionsT2p = fiberSpins.copy_to_host()
-            print('ENDING FIBER SIMULATION')
-            print(fiberSpins.shape)
-            print('Fiber Diffusion Compuation Time: {} seconds'.format(End-Start))
-            
-        """
-        Simulate Intra-Cellular Diffusion: 
-            Each Spin must know which cell it is in before distributing computation to the GPU. Also, to avoid looping over all of the fibers, we need to also pass an array of penetrating fiber indicies to diffusion_in_cells
-        """
-        
-        if self.simulateCells:
-            cellSpins = self.spinPotionsT1m[(self.spinInCell_i > -1) & (self.spinInFiber_i < 0)] 
-            self.cellPositionsT1m = cellSpins.copy()
-            cellSpins_GPU = (cellSpins)
-            cellAtSpin_i_GPU = (self.spinInCell_i[(self.spinInCell_i > -1) & (self.spinInFiber_i < 0)])
-            rng_states_cells = create_xoroshiro128p_states(cellSpins.shape[0], seed = 42)
-            print('STARTING CELLULAR SIMULATION')
-            Start = time.time()
-            self.diffusion_in_cell.forall(cellSpins.shape[0])(rng_states_cells, 
-                                    cellSpins_GPU,
-                                    cellAtSpin_i_GPU,
-                                    int(self.Delta/self.dt),
-                                    self.cellCenters,
-                                    self.fiberCenters.astype(np.float32),
-                                    self.fiberRotationReference,
-                                    self.dt
-            )
-            End = time.time()
-            print('ENDING CELLULAR SIMULATION')
-            self.cellPositionsT2p = cellSpins_GPU
-            print('Cell Diffusion Computation Time: {} seconds'.format(End - Start))
-        
-        
-        """
-        Simulate Extra-Cellular and Extra-Axonal Diffusion
-        """
-        if self.simulateExtra:
-            self.extraPositionT1m = (self.spinPotionsT1m[(self.spinInCell_i < 0) & (self.spinInFiber_i < 0)])
-            rng_states_Extra = create_xoroshiro128p_states(self.extraPositionT1m.shape[0], seed = 42)
-            extraSpins_GPU = cuda.to_device(self.extraPositionT1m.astype(np.float32).copy())
-            print('STARTING WATER SIMULATION')
-            Start = time.time()
-            self.diffusion_in_water.forall(self.extraPositionT1m.shape[0])(rng_states_Extra,
-                                            extraSpins_GPU,
-                                            int(self.Delta/self.dt),
-                                            self.cellCenters,
-                                            self.fiberCenters.astype(np.float32),
-                                            self.fiberRotationReference,
-                                            self.dt
-            )
-            End = time.time()
-            print('ENDED WATER SIMULATION')
-            self.extraPositionT2p = extraSpins_GPU.copy_to_host()
-            print('Water Diffusion Computation Time: {} seconds'.format(End - Start))
-            
-    def find_penetrating_fibers(self, cellCenters, fiberCenters, fiberRotationReference):
-        
-        """
-        Global Variables:
-
-        penetratingFibers - (numCells, numPotentialPenetratingFibers); the [i,j] element of this array is the index of a penetrating fiber [READ/WRITE]
-        cellCenters - (numCells, 4); x,y,z, radius of cell[i]
-        fiberCenters - (numFibers, 4); x,y,z, radius of fiber[i]
-
-        Local Variables
-        indexList - (25, ) the index of penetrating fibers 
-        ctr - indexList index variable
-        distanceFiber - distance from fiber to cell center
-        """
-        penetratingFibersList = []
-     
-        for i in range(cellCenters.shape[0]):
-            penetratingFibersSublist = []
-            for j in range(fiberCenters.shape[0]):
-                distance = math.sqrt(np.linalg.norm(cellCenters[i,0:3]-fiberCenters[j,0:3], ord = 2)**2 - ((cellCenters[i,0:3]-fiberCenters[j,0:3]).dot(fiberRotationReference))**2)
-                if distance < cellCenters[i,3]:
-                    penetratingFibersSublist.append(j)
-            penetratingFibersList.append(penetratingFibersSublist)
-        return penetratingFibersList       
-
-    @cuda.jit 
-    def find_spin_locations(spinInFiber_i, spinInCell_i, initialSpinPositions, fiberCenters, cellCenters, fiberRotationReference):
-        i = cuda.grid(1)
-        if i > initialSpinPositions.shape[0]:
-            return 
-        
-        """ Find the position of each of the ensemble's spins within the imaging voxel
-
-            Parameters
-            ----------
-            spinInFiber_i: 1-d ndarray
-                The index of the fiber a spin is located within; -1 if False, 0... N_fibers if True.
-            spinInCell_i: 1-d ndarray
-                The index of the cell a spin is located within; -1 if False, 0...N_cells if True
-            initialSpinPositions : N_spins x 3 ndarray
-                The initialSpinPositions[i,:] are the 3 spatial positions of the spin at its initial position
-            fiberCenters: N_{fibers} x 6 ndarray
-                The spatial position, rotmat index, intrinsic diffusivity, and radius of the i-th fiber
-            cellCenters: N_{cells} x 4 ndarray
-                The 3-spatial dimensions and radius of the i-th cell
-            fiberRotationReference: 2 x 3 ndarray
-                The Ry(Theta_{i}).dot([0,0,1]) vector  
-
-            Returns
-            -------
-            spinInFiber_i : 1-d ndarray
-                See parameters note
-            spinInCell_i: 1-d ndarray
-                See parameters note             
-
-            Notes
-            -----
-            None
-
-            References
-            ----------
-            None
-
-            Examples
-            --------
-            >>> self.find_spin_locations.forall(self.numSpins)(spinInFiber_i_GPU, spinInCell_i_GPU, spinInitialPositions_GPU, fiberCenters_GPU, cellCenters_GPU, self.fiberRotationReference)
-        """
-        KeyFiber = int32(-1)
-        KeyCell = int32(-1)
-        spinPosition = cuda.local.array(shape = 3, dtype = float32)
-        fiberDistance = float32(0.0)
-        cellDistance = float32(0.0)
-        rotationIndex = 0
-
-        for k in range(spinPosition.shape[0]): spinPosition[k] = initialSpinPositions[i,k]
-        for j in range(fiberCenters.shape[0]): 
-            rotationIndex = int(fiberCenters[j,4])
-            fiberDistance = jp.euclidean_distance(spinPosition, fiberCenters[j,0:3], fiberRotationReference[rotationIndex,:], 'fiber')
-            if fiberDistance < fiberCenters[j,3]: 
-                KeyFiber = j
-                break
-        
-        for j in range(cellCenters.shape[0]):
-            cellDistance = jp.euclidean_distance(spinPosition, cellCenters[j,0:3], fiberRotationReference[0,:], 'cell')
-            if cellDistance < cellCenters[j,3]:
-                KeyCell = j
-                break
-        
-        cuda.syncthreads()
-        spinInCell_i[i] = KeyCell
-        spinInFiber_i[i] = KeyFiber
-        cuda.syncthreads()
-        return
-
-
-
-    @numba.cuda.jit
-    def _diffusion_context_manager(rng_states, spin_positions, spin_in_fiber_key, fiber_centers, spin_in_cell_key, cell_centers, fiber_rotation_reference, dt, void):
-        """
-        Parameters:
-
-        rng_states:
-        spinPositions: (N_spins, 3) numpy array
-        spin_in_fiber_key: (N_spins, ) numpy array, the spin_in_fiber[i] is the fiber index of the i-th spin. -1 if spin not in fiber.
-        
-        
-        """
-        gpu_index = cuda.grid(1)
-        if gpu_index > spin_positions.shape[0]:
-            return
-        
-        spin_in_fiber_index = int(spin_in_fiber_key[gpu_index])
-        spin_in_cell_index  = int(spin_in_cell_key[gpu_index])
-
-        spin_in_fiber_boolean = (spin_in_fiber_index > -1)
-        spin_in_cell_boolean  = ((spin_in_cell_index > -1) & (spin_in_fiber_index == -1)) 
-
-        if spin_in_fiber_boolean:
-            walk_in_fiber._diffusion_in_fiber(gpu_index, rng_states, spin_in_fiber_index, spin_positions, fiber_centers, fiber_rotation_reference, dt)
-        
-        if spin_in_cell_boolean:
-            walk_in_cell._diffusion_in_cell(gpu_index, rng_states, spin_positions, spin_in_cell_index, cell_centers, fiber_centers, fiber_rotation_reference, dt, void)
-        
-        if (not(spin_in_cell_boolean)) & (not(spin_in_fiber_boolean)):
-            walk_in_extra_environ._diffusion_in_extra_environment(gpu_index,rng_states,spin_positions,fiber_centers, cell_centers, fiber_rotation_reference, dt)
-        return
-            
-
-
-
-
-
-
-    @cuda.jit
-    def diffusion_in_fiber(rng_states, spinTrajectories, fiberIndexAt_i, numSteps, fiberCenters, fiberRotationReference, dt):   
-        i = cuda.grid(1)
-        if i > spinTrajectories.shape[0]:
-            return
-        """"
-        Simulate molecular diffusion of spins within the fibers; Dirichlet boundary conditions 
-
-        Parameters
-        ----------
-        rng_states : 1-d ndarray
-            The random states of the spins
-        spinTrajectories :  N_{fiber_spins} x 3 ndarray
-            The spinTrajectories[i,:] sub-array are the spins physical cordinates
-        spinInFiber_i: 1-d ndarray
-            The index of the fiber a spin is located within; -1 if False, 0... N_fibers if True.
-        numSteps: int
-            int(Delta/dt); the number of timesteps
-        fiberCenters: N_{fibers} x 6 ndarray
-            The spatial position, rotmat index, intrinsic diffusivity, and radius of the i-th fiber
-        fiberRotationReference: 2 x 3 ndarray
-            The Ry(Theta_{i}).dot([0,0,1]) vector  
-        dt : float32
-            The time-discretization parameter
-
-        Returns
-        -------
-        spinTrajectories: N_{fiber_spins} x 3 ndarray  
-            for 0 <= step <= numSteps, the spins trajectory is updated until the spin steps within the fiber.           
-
-        Notes
-        -----
-        re-stepping (currently implemented) vs. stepping is an ongoing discussion between me and S.K. Song about what is more reasonable. Tentatively, re-stepping allows for 
-        accurate simulation at lower temporal resolutions, which gives favorable preformance results. 
-        
-        References
-        ----------
-        Discussions with S.K. Song about what physics is reasonable to implement here. 
-
-        """
-        
-        i = cuda.grid(1)
-        if i > spinTrajectories.shape[0]:
-            return
-        inx = int32(fiberIndexAt_i[i])
-        D = float32(fiberCenters[inx, 5])
-        Step = float32(math.sqrt(6*D*dt))
-        prevPosition = cuda.local.array(shape = 3, dtype= float32)
-        newPosition = cuda.local.array(shape = 3, dtype = float32)
-        distanceFiber = float32(0.0)
-        rotationIndex = int(fiberCenters[inx, 4])
-
-        for step in range(numSteps):
-            distance = fiberCenters[inx, 3] + .10
-            while(distance > fiberCenters[inx, 3]):
-                newPosition = jp.randomDirection(rng_states, newPosition, i)
-                for k in range(newPosition.shape[0]): 
-                    prevPosition[k] = spinTrajectories[i,k] 
-                    newPosition[k] = prevPosition[k] + (Step * newPosition[k])
-                distance = jp.euclidean_distance(newPosition,fiberCenters[inx,0:3], fiberRotationReference[rotationIndex,:], 'fiber')
-            #if distance > fiberCenters[inx,3]:
-                #for k in range(newPosition.shape[0]): newPosition[k] = prevPosition[k]
-            cuda.syncthreads()
-            for k in range(newPosition.shape[0]):
-                spinTrajectories[i,k] = newPosition[k]
-            if i == 0 and (step % (numSteps / 5) == 0):
-                print('Fiber Step: ', step,' (',int((step/numSteps)*100.),' %)')
-            cuda.syncthreads()
-        return
-
-    @cuda.jit
-    def diffusion_in_cell(rng_states, spinTrajectories, cellAtSpin_i, numSteps, cellCenters, fiberCenters, fiberRotationReference, dt):
-        i = cuda.grid(1)
-        if i > spinTrajectories.shape[0]:
-            return
-        
-        """"
-        Simulate molecular diffusion of spins within the cells; Dirichelt boundary conditions
-
-        Parameters
-        ----------
-        rng_states : 1-d ndarray
-            The random states of the spins
-        spinTrajectories :  N_{fiber_spins} x 3 ndarray
-            The spinTrajectories[i,:] sub-array are the spins physical cordinates
-        cellAtSpin_i: 1-d ndarray
-            The index of the cell a spin is located within; -1 if False, 0... N_fibers if True.
-        numSteps: int
-            int(Delta/dt); the number of timesteps
-        cellCenters: N_{cells} x 4 ndarray
-            The 3-spatial dimensions and radius of the i-th cell
-        fiberCenters: N_{fibers} x 6 ndarray
-            The spatial position, rotmat index, intrinsic diffusivity, and radius of the i-th fiber
-        fiberRotationReference: 2 x 3 ndarray
-            The Ry(Theta_{i}).dot([0,0,1]) vector  
-        dt : float32
-            The time-discretization parameter
-
-        Returns
-        -------
-        spinTrajectories: N_{fiber_spins} x 3 ndarray  
-            for 0 <= step <= numSteps, the spins trajectory is continuously updated until the spin steps within the cell but not within the fiber.           
-
-        Notes
-        -----
-        re-stepping (currently implemented) vs. stepping is an ongoing discussion between me and S.K. Song about what is more reasonable. Tentatively, re-stepping allows for 
-        accurate simulation at lower temporal resolutions, which gives favorable preformance results at the cost of some physical realism. 
-        
-        References
-        ----------
-        Discussions with S.K. Song about what physics is reasonable to implement here. 
-
-        """
-        
-        inx = int32(cellAtSpin_i[i])
-        D = float32(2.0)
-        Step = float32(math.sqrt(6*D*dt))
-        prevPosition = cuda.local.array(shape = 3, dtype= float32)
-        newPosition = cuda.local.array(shape = 3, dtype= float32)
-        distanceCell = float32(0.0)
-        distanceFiber = float32(0.0)
-        for step in range(numSteps):
-            invalidMove = True
-            while(invalidMove):
-                isInFiber = False
-                isNotInCell = False 
-                newPosition = jp.randomDirection(rng_states, newPosition, i)
-                for k in range(newPosition.shape[0]):
-                    prevPosition[k] = spinTrajectories[i,k]
-                    newPosition[k] = prevPosition[k] + Step*newPosition[k]
-                distanceCell = jp.euclidean_distance(newPosition, cellCenters[inx,0:3], fiberRotationReference[0,:], 'cell')
-                if distanceCell > cellCenters[inx,3]:
-                    isNotInCell = True
-                   # for k in range(newPosition.shape[0]): newPosition[k] = prevPosition[k]
-                else:
-                    for j in range(fiberCenters.shape[0]):
-                        rotation_Index = int(fiberCenters[j,4])
-                        distanceFiber = jp.euclidean_distance(newPosition, fiberCenters[j,0:3], fiberRotationReference[rotation_Index,:], 'fiber')
-                        if distanceFiber < fiberCenters[j,3]:
-                            isInFiber = True
-                            for k in range(newPosition.shape[0]): newPosition[k] = prevPosition[k]
-                            break
-                if (not isInFiber) & (not isNotInCell):
-                    invalidMove = False
-                else:
-                    invalidMove = True
-
-            cuda.syncthreads()
-            for k in range(newPosition.shape[0]):
-                spinTrajectories[i,k] = newPosition[k]
-            if i == 0 and (step % (numSteps / 5) == 0):
-                print('Cell Step: ', step,' (',int((step/numSteps)*100.),' %)')
-            cuda.syncthreads()  
-        return 
-
-    @cuda.jit 
-    def diffusion_in_water(rng_states, spinTrajectories, numSteps, cellCenters, fiberCenters, fiberRotationReference, dt):
-        i = cuda.grid(1)
-        if i > spinTrajectories.shape[0]:
-            return   
-        """"
-        Simulate molecular diffusion of spins within the extra-cellular and extra-axonal environment; dirichelt boundary conditions (i.e., spins in the extra-cellular/fiber environment
-        are not allowed to diffuse into a fiber or into a cell). This step involves significant computation on O(N_{fibers}+N_{cells}). 
-
-        Parameters
-        ----------
-        rng_states : 1-d ndarray
-            The random states of the spins
-        spinTrajectories :  N_{fiber_spins} x 3 ndarray
-            The spinTrajectories[i,:] sub-array are the spins physical cordinates
-        numSteps: int
-            int(Delta/dt); the number of timesteps
-        cellCenters: N_{cells} x 4 ndarray
-            The 3-spatial dimensions and radius of the i-th cell
-        fiberCenters: N_{fibers} x 6 ndarray
-            The spatial position, rotmat index, intrinsic diffusivity, and radius of the i-th fiber
-        fiberRotationReference: 2 x 3 ndarray
-            The Ry(Theta_{i}).dot([0,0,1]) vector  
-        dt : float32
-            The time-discretization parameter
-
-        Returns
-        -------
-        spinTrajectories: N_{fiber_spins} x 3 ndarray  
-            for 0 <= step <= numSteps, the spins trajectory is continuously updated until the spin steps within the extra-cellular/extra-fiber environment.           
-
-        Notes
-        -----
-        re-stepping (currently implemented) vs. stepping is an ongoing discussion between me and S.K. Song about what is more reasonable. Tentatively, re-stepping allows for 
-        accurate simulation at lower temporal resolutions, which gives favorable preformance results at the cost of some physical realism. 
-        
-        References
-        ----------
-        Discussions with S.K. Song about what physics is reasonable to implement here. 
-
-        """
-        D = float32(3.0)
-        Step = float32(math.sqrt(6*D*dt))
-        prevPosition = cuda.local.array(shape = 3, dtype= float32)
-        newPosition = cuda.local.array(shape = 3, dtype= float32)
-        distanceCell = float32(0.0)
-        distanceFiber = float32(0.0)
-       
-        for step in range(numSteps): 
-            invalidStep = True
-            while invalidStep:    
-                inFiber = False
-                inCell = False
-                newPosition = jp.randomDirection(rng_states, newPosition, i)        
-                for k in range(newPosition.shape[0]): 
-                    prevPosition[k] = spinTrajectories[i,k]
-                    newPosition[k] = prevPosition[k] + Step * newPosition[k]
-                for l in range(cellCenters.shape[0]):
-                    distanceCell = jp.euclidean_distance(newPosition, cellCenters[l, 0:3], fiberRotationReference[0,:], 'cell')
-                    if distanceCell < cellCenters[l,3]:
-                        inCell = True
-                        #for k in range(newPosition.shape[0]): newPosition[k] = prevPosition[k]
-                        break
-                for l in range(fiberCenters.shape[0]):
-                    rotationIndex = int(fiberCenters[l,4])
-                    distanceFiber = jp.euclidean_distance(newPosition, fiberCenters[l,0:3], fiberRotationReference[rotationIndex,:], 'fiber')
-                    if distanceFiber < fiberCenters[l,3]:
-                        inFiber = True
-                        #for k in range(newPosition.shape[0]): newPosition[k] = prevPosition[k]
-                        break
-                if (not inFiber):
-                    invalidStep = False
-                else:
-                    invalidStep = True
-            cuda.syncthreads()
-            for k in range(newPosition.shape[0]): 
-                spinTrajectories[i,k] = newPosition[k]
-            if i == 0 and (step % (numSteps / 5) == 0):
-                print('Water Step: ', step,' (',int((step/numSteps)*100.),' %)')
-            cuda.syncthreads()
-           
-        return 
-    
     def spins_in_voxel(self, trajectoryT1m, trajectoryT2p):
         """
          Helper function to ensure that the spins at time T2p are wtihin the self.voxelDims x self.voxelDims x inf imaging voxel
