@@ -35,7 +35,7 @@ def dhi_config(patient):
     Config.set('DHI','dhi_config_file',r"C:\dhi_release_sc\Configuration_DHI_IA_Human.mat")
     Config.set('DHI','dhi_class_file','dhi_class.mat')
     Config.add_section('OUTPUT')
-    Config.set('OUTPUT','output_option','1')
+    Config.set('OUTPUT','output_option','0')
     Config.set('OUTPUT','output_format','nii')
     Config.set('OUTPUT','iso_threshold','0.3,0.3,3.0,3.0')
     Config.set('OUTPUT','output_fib','0')
@@ -56,7 +56,7 @@ def dhi_calc(patient):
     pathname, filename = os.path.split(nii_file)
     current_dir = pathname
     os.chdir(current_dir)
-    eng = matlab.engine.start_matlab("-nodesktop -nosplash -nojvm -nodisplay")
+    eng = matlab.engine.start_matlab("-nodesktop -nosplash -nodisplay")
     eng.addpath(r'C:\dhi_release_sc',r'C:\dhi_release_sc\Misc', r'C:\dhi_release_sc\Misc\NIfTI_20140122')      
     eng.dhi_calc('config.ini',nargout=0)
     eng.quit()
@@ -71,7 +71,7 @@ def dhi_save(patient):
     eng.quit()
 
 
-new_dwi_files = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\6x6-Mosaic_DBSI-vs-NEO\Row=?_Col=?\_Total_Signal*.nii")
+new_dwi_files = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\6x6-Mosaic_DBSI-vs-NEO\*\*_total_Signal_DBSI.nii")
 
 for patient in new_dwi_files:
     path, file = os.path.split(patient)
