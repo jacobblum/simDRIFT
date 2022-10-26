@@ -3,7 +3,7 @@
 __gpuSimulation.py:__
 
 gpuSimulation.py is a high preformance diffusion MRI Monte Carlo Simulation libarary with allows users to simulate molecular diffusion in a $[0 \mu m \text{ , } 200\mu m]^{3}$ imaging voxel with: 2 fiber bundles with set-able volume fractions, intrinsic diffusivities, and crossing angles, and non-overlapping cells of 2 radii, each with a volume fraction, which either aggregate around the fibers or being penetrated by the fibers. 
-![My Image](figures_for_mcsim/diff_sequence.png)
+![My Image](figures_for_mcsim/Void Configuration-3.png)
 
 __Setting the intra-voxel tissue configuration:__
 
@@ -27,113 +27,6 @@ The tissue configuration is set in the following way:
         path_to_bvecs= r"C:\Users\Administrator\Desktop\dMRI-MCSIM-main\Gradients\DBSI99\bvec"
         )   
 ```
-Here are some examples of the possible fiber configurations:
-
-$$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 0^{\circ} $$
-
-<p align="center">
-  <img width="460" height="300" src="https://github.com/jacobblum/dMRI-MCSIM/blob/main/figures_for_mcsim/Penetrating_(0%2C0).png">
-</p>
-
-$$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 30^{\circ} $$
-
-<p align="center">
-  <img width="460" height="300" src="https://github.com/jacobblum/dMRI-MCSIM/blob/main/figures_for_mcsim/Penetrating_(0%2C30).png">
-</p>
-
-
-$$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 60^{\circ} $$
-
-<p align="center">
-  <img width="460" height="300" src="https://github.com/jacobblum/dMRI-MCSIM/blob/main/figures_for_mcsim/Penetrating_(0%2C60).png">
-</p>
-
-$$ \text{Penetrating Fibers: } \theta_{1} = 0^{\circ}, \theta_{2} = 90^{\circ} $$
-
-<p align="center">
-  <img width="460" height="300" src="https://github.com/jacobblum/dMRI-MCSIM/blob/main/figures_for_mcsim/Penetrating_(0%2C90).png">
-</p>
-
-
-__Extra-Environment Signal at various resolutions:__
-Interestingly, fitting 2-DT's with NEO to the extra-cellular and extra-fiber environment results in a substantially more realistic description of the diffusion environment than fitting just 1-DT.
-
-
-1. dt = .01 ms: Fitting 1 tensor to the data, we estimate the following : 
-    
-    AD = 2.511,
-    
-    RD = 1.20,
-    
-    Loss = 4.646e-6 
-    
-    however, with fitting 2 tensors to the data, we estimate the following : 
-    
-    AD1 = 2.96,
-    
-    AD2 = 2.73, 
-    
-    RD1 = 0.91,  
-    
-    RD2 = 1.15, 
-    
-    ff1 = .342, 
-    
-    ff2 = .657,
-    
-    Loss = 4.800e-7 
-
-
-2. dt = .001 ms: Fitting 1 tensor to the data, we estimate the following : 
-    
-    AD = 2.721, 
-    
-    RD = 1.28,
-    
-    Loss = 2.51e-6 
-    
-    However, with fitting 2 tensors to the data, we estimate the following : 
-    
-    AD1 = 3.10, 
-    
-    AD2 = 2.90, 
-    
-    RD1 = 1.15,  
-    
-    RD2 = 1.15, 
-    
-    ff1 = .561, 
-    
-    ff2 = .438, 
-    
-    Loss = 5.60e-7 
-
-
-3. dt = .0005 ms: Fitting 1 tensor to the data, we estimate the following : 
-    
-    AD = 3.05, 
-    
-    RD = 1.82,
-    
-    Loss = 8.23e-4 
-    
-    However, with fitting 2 tensors to the data, we estimate the following : 
-    
-    AD1 = 2.78, 
-    
-    AD2 = 2.97, 
-    
-    RD1 = 1.34,  
-    
-    RD2 = 2.86, 
-    
-    ff1 = .500, 
-    
-    ff2 = .500, 
-    
-    Loss = 5.74e-7 
-
-
 
 
 
