@@ -1,3 +1,6 @@
+import contextlib
+from email.policy import default
+from multiprocessing.sharedctypes import Value
 import numpy as np 
 import numba 
 from numba import jit, cuda, int32, float32
@@ -62,21 +65,102 @@ class dmri_simulation:
 
         return
     
-    def set_parameters(self, numSpins, fiberFraction, fiberRadius, Thetas, fiberDiffusions, cellFraction, cellRadii, fiberConfiguration, Delta, dt, voxelDim, buffer, path_to_bvals, path_to_bvecs):
+    def set_parameters(self,**kwargs):
+
+
+        sys.stdout.write('\nChecking Validity of Inputs...')
+
+        num_spins = kwargs.pop('num_spins',                     None)
+        fiber_fraction = kwargs.pop('fiber_fraction',           None)
+        fiber_radii = kwargs.pop('fiber_radius',                None)
+        thetas = kwargs.pop('thetas',                           None)
+        fiber_diffusions = kwargs.pop('fiber_diffusions',       None)
+        cell_fraction = kwargs.pop('cell_fraction',             None)
+        cell_radii = kwargs.pop('cell_radii',                   None)
+        fiber_configuration = kwargs.pop('fiber_configuration', None)
+        Delta = kwargs.pop('Delta',                             None)
+        dt = kwargs.pop('dt',                                   None)
+        voxel_dims = kwargs.pop('voxel_dims',                   None)
+        buffer = kwargs.pop('buffer',                           None)
+        path_to_bvals = kwargs.pop('path_to_bvals',             None)
+        path_to_bvecs = kwargs.pop('path_to_bvecs',             None)
+
+        if not isinstance(num_spins, int) or num_spins < 0:
+            raise ValueError("Incorrect data type or value for spin. To run the simulation,"
+                             +" make sure num_spins is an interger"
+                             +" make sure num_spins > 0" 
+                            )
+        if not isinstance(fiber_fraction, tuple):
+            raise ValueError("Incorrect Data Type for fiber_fraction. To run the simulation,"
+                             +" make sure fiber_fraction is a tuple of the form: ([X, Y])"
+                            )
+        if not isinstance(fiber_radii, float):
+            raise ValueError("Incorrect Data Type for fiber_radius. To run the simulation,"
+                             +" make sure fiber_radius is a float"
+                            )
+        if not isinstance(thetas, tuple):
+            raise ValueError("Incorrect Data Type for Thetas. To run the simulation,"
+                            +" make sure Thetas is a tuple of the form: ([0, X])"
+                            )
+        if not isinstance(fiber_diffusions, tuple):
+            raise ValueError("Incorrect Data Type for fiberDiffusions. To run the simulation,"
+                             +" make sure fiberDiffusions is a tuple of the form: ([X, Y])"
+                            )
+
+        if not isinstance(cell_fraction, float):
+            raise ValueError("Incorect Data Type for cellFraction. To run the simulation,"
+                             +" make sure cellFraction is a float")
+        
+        if not isinstance(cell_radii, tuple):
+             raise ValueError("Incorrect Data Type for cellRadii. To run the simulation,"
+                            +" make sure cellRadii is a tuple of the form: ([X, Y])"
+                            )
+        if not isinstance(fiber_configuration, str):
+             raise ValueError("Incorrect Data Type for fiberConfiguration. To run the simulation,"
+                            +" make sure fiberConfiguration is a string"
+                            )
+        if not isinstance(Delta,float):
+            raise ValueError("Incorrect Data Type for Delta. To run the simulation,"
+                    +" make sure Delta is a float")
+
+        if not isinstance(dt, float):
+            raise ValueError("Inccorect Data Type for dt. To run the simulation,"
+                    +" make sure cellFraction is a float")
+
+        if not isinstance(voxel_dims, float):
+            raise ValueError("Incorect Data Type for voxelDim. To run the simulation,"
+                    +" make sure cellFraction is a float")
+
+        if not isinstance(buffer, float):
+            raise ValueError("Incorrect Data Type for buffer. To run the simulation,"
+                    +" make sure cellFraction is a float")
+
+        if not os.path.exists(path_to_bvals):
+            raise ValueError("Path to bval files does not exist. To run the simulation,"
+                             +" make sure you have entered a valid path to the bval file")
+        if not os.path.exists(path_to_bvecs):
+            raise ValueError("Path to bvec files does not exist. To run the simulation,"
+                             +" make sure you have entered a valid path to the bvec file")
+        if not os.path.exists(self.path_to_save):
+            raise ValueError("Path to data directory does not exist. To run the simulation,"
+                             +" make sure you have entered a valid path to the data directory")
+        
+        sys.stdout.write('\nInputs are valid... proceeding to simulation')
+
         self.bvals = np.loadtxt(path_to_bvals) 
         self.bvecs = np.loadtxt(path_to_bvecs)
-        self.voxelDims = voxelDim
+        self.voxelDims = voxel_dims      
         self.buffer = buffer 
-        self.numSpins = numSpins
-        self.fiberFraction = fiberFraction
-        self.fiberRadius = fiberRadius
-        self.Thetas = Thetas
-        self.fiberDiffusions = fiberDiffusions
-        self.fiberRotationReference, self.rotMat = set_voxel_configuration._generate_rot_mat(Thetas)        
+        self.numSpins = num_spins
+        self.fiberFraction = fiber_fraction
+        self.fiberRadius = fiber_radii
+        self.Thetas = thetas
+        self.fiberDiffusions = fiber_diffusions
+        self.fiberRotationReference, self.rotMat = set_voxel_configuration._generate_rot_mat(thetas)        
         self.numFibers = set_voxel_configuration._set_num_fibers(self.fiberFraction, self.fiberRadius,self.voxelDims, self.buffer)
-        self.cellFraction = cellFraction
-        self.cellRadii = cellRadii
-        self.fiberCofiguration = fiberConfiguration
+        self.cellFraction = cell_fraction
+        self.cellRadii = cell_radii
+        self.fiberCofiguration = fiber_configuration
         self.voidDist = .60*self.voxelDims
         self.numCells = set_voxel_configuration._set_num_cells(self.cellFraction, self.cellRadii, self.voxelDims, self.buffer)
         self.Delta = Delta
@@ -92,22 +176,19 @@ class dmri_simulation:
         ## Simulation Parameters
         config = configparser.ConfigParser()
         config.read(path_to_configuration_file)
-        numSpins = literal_eval(config['Simulation Parameters']['numSpins'])
-        fiberFraction = literal_eval(config['Simulation Parameters']['fiberFraction'])
-        fiberRadius = literal_eval(config['Simulation Parameters']['fiberRadius'])
-        Thetas = literal_eval(config['Simulation Parameters']['Thetas'])
-        fiberDiffusions = literal_eval(config['Simulation Parameters']['fiberDiffusions'])
-        cellFraction = literal_eval(config['Simulation Parameters']['cellFraction'])
-        cellRadii = literal_eval(config['Simulation Parameters']['cellRadii'])
-        fiberConfiguration = (config['Simulation Parameters']['fiberConfiguration'])
-        self.simulateFibers = literal_eval(config['Simulation Parameters']['simulateFibers'])
-        self.simulateCells = literal_eval(config['Simulation Parameters']['simulateCells'])
-        self.simulateExtra = literal_eval(config['Simulation Parameters']['simulateExtraEnvironment'])
-
+        num_spins = literal_eval(config['Simulation Parameters']['numSpins'])
+        fiber_fractions = literal_eval(config['Simulation Parameters']['fiberFraction'])
+        fiber_radii = literal_eval(config['Simulation Parameters']['fiberRadius'])
+        thetas = literal_eval(config['Simulation Parameters']['Thetas'])
+        fiber_diffusions = literal_eval(config['Simulation Parameters']['fiberDiffusions'])
+        cell_fraction = literal_eval(config['Simulation Parameters']['cellFraction'])
+        cell_radii = literal_eval(config['Simulation Parameters']['cellRadii'])
+        fiber_configuration = (config['Simulation Parameters']['fiberConfiguration'])
+        
         ## Scanning Parameters
         Delta = literal_eval(config['Scanning Parameters']['Delta'])
         dt = literal_eval(config['Scanning Parameters']['dt'])
-        voxelDims = literal_eval(config['Scanning Parameters']['voxelDim'])
+        voxel_dims = literal_eval(config['Scanning Parameters']['voxelDim'])
         buffer = literal_eval(config['Scanning Parameters']['buffer'])
         bvals_path = config['Scanning Parameters']['path_to_bvals']
         bvecs_path = config['Scanning Parameters']['path_to_bvecs']
@@ -116,17 +197,17 @@ class dmri_simulation:
         self.path_to_save = config['Saving Parameters']['path_to_save_file_dir']
 
         self.set_parameters(
-            numSpins=numSpins,
-            fiberFraction= fiberFraction,
-            fiberRadius=fiberRadius,
-            Thetas=Thetas,
-            fiberDiffusions=fiberDiffusions,
-            cellFraction=cellFraction,
-            cellRadii=cellRadii,
-            fiberConfiguration=fiberConfiguration,
+            num_spins=num_spins,
+            fiber_fraction= fiber_fractions,
+            fiber_radius=fiber_radii,
+            thetas=thetas,
+            fiber_diffusions=fiber_diffusions,
+            cell_fraction=cell_fraction,
+            cell_radii=cell_radii,
+            fiber_configuration=fiber_configuration,
             Delta=Delta,
             dt=dt,
-            voxelDim=voxelDims,
+            voxel_dims=voxel_dims,
             buffer=buffer,
             path_to_bvals= bvals_path, 
             path_to_bvecs= bvecs_path)
@@ -157,7 +238,14 @@ class dmri_simulation:
         sys.stdout.write('\nExtra Cellular/Fiber Volume: {}'.format(self.extraPositionsT1m.shape[0]/self.spinPotionsT1m.shape[0]))
         sys.stdout.write('\n\nSaving Results...')
         sys.stdout.write('\n')
-        save_simulated_data._save_data(self, self.path_to_save, plot_xyz=False)
+        #save_simulated_data._save_data(self, self.path_to_save, plot_xyz=False)
+
+
+        
+        fig = plt.figure(figsize=(12, 12))
+        ax = fig.add_subplot(projection='3d')
+        ax.scatter(self.extraPositionsT2p[:,0], self.extraPositionsT2p[:,1],self.extraPositionsT2p[:,2], s = 1)
+        plt.show()
         return
     
     def _signal_from_trajectory_data(self,trajectory_dir):
@@ -184,8 +272,19 @@ def dmri_sim_wraper(arg):
     #x._signal_from_trajectory_data(path)
     
 def main():       
-    #numba.cuda.detect()
-    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\Yes_Cells\R4_config_Theta=(0, 90)_fibFrac=(0.1, 0.1)_cellFrac=0.35_cellRad=(2.5, 2.5)_Diff=(1.0, 2.0)_Pene.ini")
+
+    with open(os.devnull, "w") as f, contextlib.redirect_stdout(f): 
+        try:
+            numba.cuda.detect()
+        except:
+            raise Exception(
+                    "Numba was unable to detect a CUDA GPU. To run the simulation,"
+                    + " check that the requirements are met and CUDA installation"
+                    + " path is correctly set up: "
+                    + "https://numba.pydata.org/numba-doc/dev/cuda/overview.html"
+                )
+
+    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\Yes_Cells\20_Void_CF=0.05.ini")
     for cfg in configs:
         p = Process(target=dmri_sim_wraper, args = (cfg,))
         p.start()

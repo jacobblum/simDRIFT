@@ -24,7 +24,6 @@ import spin_init_positions
 import sys
 import diffusion
 
-
 def _set_num_fibers(fiber_fractions, fiber_radius, voxel_dimensions, buffer):
     num_fibers = []
     for i in range(len(fiber_fractions)):
@@ -41,6 +40,7 @@ def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
     return num_cells
 
 def _place_fiber_grid(fiber_fractions, num_fibers, fiber_radius, fiber_diffusions, voxel_dimensions, buffer, void_distance, rotation_matrix, fiber_configuration):
+    print('called')
     first_step_cordinates = []
     for i in range(len(fiber_fractions)):
         fiber_cordinates = np.zeros((num_fibers[i]**2,6))
@@ -76,6 +76,7 @@ def _place_fiber_grid(fiber_fractions, num_fibers, fiber_radius, fiber_diffusion
         output_one_arg[null_index] = 0
     final_output_arg = output_one_arg[~np.all(output_one_arg == 0, axis = 1)]
     sys.stdout.write('\nfiber grid placed...')
+    sys.stdout.write('\n')
     return final_output_arg
 
 def _place_cells(num_cells, cell_radii, fiber_configuration, voxel_dimentions, buffer, void_dist):
