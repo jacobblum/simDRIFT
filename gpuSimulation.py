@@ -29,39 +29,36 @@ import save_simulated_data
 
 class dmri_simulation:
     def __init__(self):
-        numSpins = 0.0 
-        numFibers = 0.0
-        fiberFraction = 0.0
-        fiberRadius = 0.0 #um
-        Delta = 0.0 #ms
-        dt = 0.0 #ms
-        delta = 0.0 #ms
-        numCells = 0.0
-        cellFraction = 0.0
-        cellRadii = 0.0 #um
-        spinPositionsT1m = 0
-        fiberPositionsT1m = 0
-        fiberPositionsT2p = 0
-        cellPositionsT1m = 0
-        cellPositionsT2p = 0
-        extraPositionsT1m = 0
-        extraPositionsT2p = 0
-        spinInFiber_i = 0
-        spinInCell_i = 0
-        fiberRotationReference = 0
-        Thetas = 0
-        fiberDiffusions  = 0
-        rotMat = 0
-        simulateFibers = 0
-        simulateCells = 0
-        simulateExtra = 0
-        fiberConfiguration = ''
-        voidDist = 0
-        buffer = 100
-        bvals = 0
-        bvecs = 0
-        cfg_path = ''
-        path_to_save = ''
+        numSpins =                  0.0 
+        numFibers =                 0.0
+        fiberFraction =             0.0
+        fiberRadius =               0.0 #um
+        Delta =                     0.0 #ms
+        dt =                        0.0 #ms
+        delta =                     0.0 #ms
+        numCells =                  0.0
+        cellFraction =              0.0
+        cellRadii =                 0.0 #um
+        spinPositionsT1m =          0.0
+        fiberPositionsT1m =         0.0
+        fiberPositionsT2p =         0.0
+        cellPositionsT1m =          0.0
+        cellPositionsT2p =          0.0
+        extraPositionsT1m =         0.0
+        extraPositionsT2p =         0.0
+        spinInFiber_i =             0.0
+        spinInCell_i =              0.0
+        fiberRotationReference =    0.0
+        Thetas =                    0.0
+        fiberDiffusions  =          0.0
+        rotMat =                    0.0
+        fiberConfiguration =        ''
+        voidDist =                  0.0
+        buffer =                    0.0
+        bvals =                     0.0
+        bvecs =                     0.0
+        cfg_path =                  ''
+        path_to_save =              ''
 
         return
     
