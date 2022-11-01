@@ -33,7 +33,6 @@ def _add_noise(self, signal, snr, noise_type):
     if noise_type == 'Gaussian':
         return signal + real_channel_noise
 
-
 def _signal(self, trajectoryT1m, trajectoryT2p, xyz, finite):
         """
         Aquire the signal by integrating the ensemble distribution from t1m to t2p; int
@@ -113,15 +112,15 @@ def _save_data(self, path, plot_xyz):
     dwiFiber = nb.Nifti1Image(pureFiberSignal.reshape(1,1,1,-1), affine = np.eye(4))
     nb.save(dwiFiber, data_dir + os.sep + "pureFiberSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
 
-
-    cell_trajectories = [self.cellPositionsT1m, self.cellPositionsT2p]
-    overallData.append(cell_trajectories)
-    np.save(data_dir + os.sep + "cellPositionsT1m_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.cellPositionsT1m)
-    np.save(data_dir + os.sep + "cellPositionsT2p_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.cellPositionsT2p)
-    sys.stdout.write('\nAquiring Pure Cell Signal: \n')
-    pureCellSignal, _ = _signal(self,self.cellPositionsT1m, self.cellPositionsT2p, xyz = False, finite=False)
-    dwiCell = nb.Nifti1Image(pureCellSignal.reshape(1,1,1,-1), affine = np.eye(4))
-    nb.save(dwiCell, data_dir + os.sep + "pureCellSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
+    if self.cellFraction > 0:
+        cell_trajectories = [self.cellPositionsT1m, self.cellPositionsT2p]
+        overallData.append(cell_trajectories)
+        np.save(data_dir + os.sep + "cellPositionsT1m_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.cellPositionsT1m)
+        np.save(data_dir + os.sep + "cellPositionsT2p_angle={}_diffusivities={}_dt={}_ff={}.npy".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)), self.cellPositionsT2p)
+        sys.stdout.write('\nAquiring Pure Cell Signal: \n')
+        pureCellSignal, _ = _signal(self,self.cellPositionsT1m, self.cellPositionsT2p, xyz = False, finite=False)
+        dwiCell = nb.Nifti1Image(pureCellSignal.reshape(1,1,1,-1), affine = np.eye(4))
+        nb.save(dwiCell, data_dir + os.sep + "pureCellSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
 
     water_trajectories = [self.extraPositionsT1m, self.extraPositionsT2p]
     overallData.append(water_trajectories)
@@ -136,5 +135,4 @@ def _save_data(self, path, plot_xyz):
     expSignal, bvals = _signal(self, np.vstack([self.fiberPositionsT1m, self.cellPositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiberPositionsT2p,self.cellPositionsT2p,self.extraPositionsT2p]), xyz = False, finite = False)
     dwi = nb.Nifti1Image(expSignal.reshape(1,1,1,-1), affine = np.eye(4))
     nb.save(dwi,data_dir + os.sep + "totalSignal_angle={}_diffusivities={}_dt={}_ff={}.nii".format(str(self.Thetas), str(self.fiberDiffusions), str(self.dt), str(self.fiberFraction)))
-
     return

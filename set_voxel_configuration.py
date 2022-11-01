@@ -53,9 +53,9 @@ def _place_fiber_grid(fiber_fractions, num_fibers, fiber_radius, fiber_diffusion
         first_step_cordinates.append(fiber_cordinates[voxel_index,:])
     output_one_arg = np.vstack([first_step_cordinates[0], first_step_cordinates[1]])
 
-    if fiber_configuration == 'Inter-Woven':
+    if fiber_configuration == 'IW':
         Ys_mod2 = np.unique(output_one_arg[:,1])[::2]
-        index = np.ind1d(output_one_arg[:,1], Ys_mod2)
+        index = np.where(np.in1d(output_one_arg[:,1], Ys_mod2))[0]
         fiber_cordinates_pre_rotation = output_one_arg[index,0:3]
     
     if fiber_configuration == 'Penetrating' or fiber_configuration == 'Void':
@@ -63,17 +63,20 @@ def _place_fiber_grid(fiber_fractions, num_fibers, fiber_radius, fiber_diffusion
         fiber_cordinates_pre_rotation = output_one_arg[index, 0:3]
 
     rotated_cordinates = (rotation_matrix.dot(fiber_cordinates_pre_rotation.T)).T
-    
+
     if rotated_cordinates.shape[0] > 0:
         z_correction = np.amin(rotated_cordinates[:,2])
         rotated_fibers = rotated_cordinates
         rotated_fibers[:,2] = rotated_fibers[:,2] + np.abs(z_correction)
-        output_one_arg[index, 0:3], output_one_arg[index,4], output_one_arg[index,5], output_one_arg[[i for i in range(output_one_arg.shape[0]) if i not in index],5] = rotated_fibers, 1.0, fiber_diffusions[0], fiber_diffusions[1]
+        
+        output_one_arg[index, 0:3], output_one_arg[index, 4], output_one_arg[index, 5], output_one_arg[[i for i in range(output_one_arg.shape[0]) if i not in index],5] = rotated_fibers, 1, fiber_diffusions[0], fiber_diffusions[1] 
+        
 
     if fiber_configuration == 'Void':
         null_index = np.where((output_one_arg[:,1] > 0.5*(voxel_dimensions+buffer)-0.5*void_distance)
                               & (output_one_arg[:,1] < 0.5*(voxel_dimensions+buffer)+0.5*void_distance))
         output_one_arg[null_index] = 0
+    
     final_output_arg = output_one_arg[~np.all(output_one_arg == 0, axis = 1)]
     sys.stdout.write('\nfiber grid placed...')
     sys.stdout.write('\n')

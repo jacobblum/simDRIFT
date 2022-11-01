@@ -59,12 +59,12 @@ class dmri_simulation:
         bvecs =                     0.0
         cfg_path =                  ''
         path_to_save =              ''
+        random_state =              0.0
 
         return
     
     def set_parameters(self,**kwargs):
-
-
+        
         sys.stdout.write('\nChecking Validity of Inputs...')
 
         num_spins = kwargs.pop('num_spins',                     None)
@@ -81,6 +81,7 @@ class dmri_simulation:
         buffer = kwargs.pop('buffer',                           None)
         path_to_bvals = kwargs.pop('path_to_bvals',             None)
         path_to_bvecs = kwargs.pop('path_to_bvecs',             None)
+        random_state = kwargs.pop('random_state',               42  )
 
         if not isinstance(num_spins, int) or num_spins < 0:
             raise ValueError("Incorrect data type or value for spin. To run the simulation,"
@@ -143,7 +144,7 @@ class dmri_simulation:
                              +" make sure you have entered a valid path to the data directory")
         
         sys.stdout.write('\nInputs are valid... proceeding to simulation')
-
+        np.random.seed(random_state)
         self.bvals = np.loadtxt(path_to_bvals) 
         self.bvecs = np.loadtxt(path_to_bvecs)
         self.voxelDims = voxel_dims      
@@ -154,21 +155,44 @@ class dmri_simulation:
         self.Thetas = thetas
         self.fiberDiffusions = fiber_diffusions
         self.fiberRotationReference, self.rotMat = set_voxel_configuration._generate_rot_mat(thetas)        
-        self.numFibers = set_voxel_configuration._set_num_fibers(self.fiberFraction, self.fiberRadius,self.voxelDims, self.buffer)
+        self.numFibers = set_voxel_configuration._set_num_fibers(self.fiberFraction, 
+                                                                 self.fiberRadius,
+                                                                 self.voxelDims, 
+                                                                 self.buffer)
         self.cellFraction = cell_fraction
         self.cellRadii = cell_radii
         self.fiberCofiguration = fiber_configuration
         self.voidDist = .60*self.voxelDims
-        self.numCells = set_voxel_configuration._set_num_cells(self.cellFraction, self.cellRadii, self.voxelDims, self.buffer)
+        self.numCells = set_voxel_configuration._set_num_cells(self.cellFraction, 
+                                                               self.cellRadii, 
+                                                               self.voxelDims, 
+                                                               self.buffer)
         self.Delta = Delta
         self.dt = dt
         self.delta = dt
-        self.fiberCenters = set_voxel_configuration._place_fiber_grid(self.fiberFraction, self.numFibers, self.fiberRadius, self.fiberDiffusions, self.voxelDims, self.buffer, self.voidDist, self.rotMat, self.fiberCofiguration)
-        self.cellCenters = set_voxel_configuration._place_cells(self.numCells, self.cellRadii, self.fiberCofiguration, self.voxelDims, self.buffer, self.voidDist)
+        self.fiberCenters = set_voxel_configuration._place_fiber_grid(self.fiberFraction, 
+                                                                      self.numFibers, 
+                                                                      self.fiberRadius, 
+                                                                      self.fiberDiffusions, 
+                                                                      self.voxelDims, 
+                                                                      self.buffer, 
+                                                                      self.voidDist, 
+                                                                      self.rotMat, 
+                                                                      self.fiberCofiguration)
+        self.cellCenters = set_voxel_configuration._place_cells(self.numCells, 
+                                                                self.cellRadii, 
+                                                                self.fiberCofiguration, 
+                                                                self.voxelDims, 
+                                                                self.buffer, 
+                                                                self.voidDist)
         self.spinPotionsT1m = np.random.uniform(low = 0 , high = 60, size = (int(self.numSpins),3))
-        self.spinInFiber_i, self.spinInCell_i = spin_init_positions._find_spin_locations(self.spinPotionsT1m, self.fiberCenters, self.cellCenters, self.fiberRotationReference )
-        
+        self.spinInFiber_i, self.spinInCell_i = spin_init_positions._find_spin_locations(self.spinPotionsT1m, 
+                                                                                         self.fiberCenters, 
+                                                                                         self.cellCenters, 
+                                                                                         self.fiberRotationReference)
+
     def _set_params_from_config(self, path_to_configuration_file):
+        
         self.cfg_path = path_to_configuration_file
         ## Simulation Parameters
         config = configparser.ConfigParser()
@@ -189,7 +213,6 @@ class dmri_simulation:
         buffer = literal_eval(config['Scanning Parameters']['buffer'])
         bvals_path = config['Scanning Parameters']['path_to_bvals']
         bvecs_path = config['Scanning Parameters']['path_to_bvecs']
-
         ## Saving Parameters
         self.path_to_save = config['Saving Parameters']['path_to_save_file_dir']
 
@@ -211,16 +234,16 @@ class dmri_simulation:
         return
 
     def from_config(self, path_to_configuration_file):
-        self._set_params_from_config(path_to_configuration_file)
+        self._set_params_from_config(path_to_configuration_file)    
         spin_positions_t2p,spin_positions_t1m = diffusion._simulate_diffusion(self.spinPotionsT1m, 
-                                      self.spinInFiber_i, 
-                                      self.spinInCell_i,
-                                      self.fiberCenters,
-                                      self.cellCenters,
-                                      self.Delta,
-                                      self.dt,
-                                      self.fiberCofiguration,
-                                      self.fiberRotationReference)
+                                                                              self.spinInFiber_i, 
+                                                                              self.spinInCell_i,
+                                                                              self.fiberCenters,
+                                                                              self.cellCenters,
+                                                                              self.Delta,
+                                                                              self.dt,
+                                                                              self.fiberCofiguration,
+                                                                              self.fiberRotationReference)
         
         self.fiberPositionsT1m  = spin_positions_t1m[np.where(self.spinInFiber_i > -1)]
         self. fiberPositionsT2p = spin_positions_t2p[np.where(self.spinInFiber_i > -1)]
@@ -235,14 +258,10 @@ class dmri_simulation:
         sys.stdout.write('\nExtra Cellular/Fiber Volume: {}'.format(self.extraPositionsT1m.shape[0]/self.spinPotionsT1m.shape[0]))
         sys.stdout.write('\n\nSaving Results...')
         sys.stdout.write('\n')
-        #save_simulated_data._save_data(self, self.path_to_save, plot_xyz=False)
-
-
         
-        fig = plt.figure(figsize=(12, 12))
-        ax = fig.add_subplot(projection='3d')
-        ax.scatter(self.extraPositionsT2p[:,0], self.extraPositionsT2p[:,1],self.extraPositionsT2p[:,2], s = 1)
-        plt.show()
+        save_simulated_data._save_data(self, 
+                                       self.path_to_save, 
+                                       plot_xyz=False)
         return
     
     def _signal_from_trajectory_data(self,trajectory_dir):
@@ -263,13 +282,10 @@ class dmri_simulation:
         return
 def dmri_sim_wraper(arg):
     path, file = os.path.split(arg)
-    x = dmri_simulation()
-    x.from_config(arg)
-    #x._set_params_from_config(arg)
-    #x._signal_from_trajectory_data(path)
-    
-def main():       
+    simObj = dmri_simulation()
+    simObj.from_config(arg)
 
+def main():       
     with open(os.devnull, "w") as f, contextlib.redirect_stdout(f): 
         try:
             numba.cuda.detect()
@@ -281,7 +297,7 @@ def main():
                     + "https://numba.pydata.org/numba-doc/dev/cuda/overview.html"
                 )
 
-    configs = glob.glob(r"C:\MCSIM\dMRI-MCSIM-main\Yes_Cells\20_Void_CF=0.05.ini")
+    configs = glob.glob(r"C:\Users\Jacob\Desktop\NN-DTI-main\for_grant\from_kainan\jacobs_runs\*.ini")
     for cfg in configs:
         p = Process(target=dmri_sim_wraper, args = (cfg,))
         p.start()

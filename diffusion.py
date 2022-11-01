@@ -13,8 +13,19 @@ import walk_in_extra_environ
 import sys
 
 
-def _simulate_diffusion(spin_positions_t1m, spin_in_fiber_at_index, spin_in_cell_at_index, fiber_centers, cell_centers, Delta, dt, fiber_configuration, rotation_reference):
-    rng_states_gpu = cuda.to_device(create_xoroshiro128p_states(spin_positions_t1m.shape[0], seed = 42))
+def _simulate_diffusion(spin_positions_t1m, 
+                        spin_in_fiber_at_index, 
+                        spin_in_cell_at_index, 
+                        fiber_centers, 
+                        cell_centers, 
+                        Delta, 
+                        dt, 
+                        fiber_configuration, 
+                        rotation_reference, 
+                        **kwargs):
+
+    random_state = kwargs.pop('random_state', 42)
+    rng_states_gpu = cuda.to_device(create_xoroshiro128p_states(spin_positions_t1m.shape[0], seed = random_state))
     spin_positions_t1m_cpy = spin_positions_t1m.copy()
     spin_positions_t1m_gpu = cuda.to_device(spin_positions_t1m.astype(np.float32))
     spin_in_fiber_at_index_gpu = cuda.to_device(spin_in_fiber_at_index.astype(np.float32))
