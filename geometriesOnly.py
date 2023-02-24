@@ -65,7 +65,7 @@ class dmri_simulation:
         return
     
     def set_parameters(self,**kwargs):
-        sys.stdout.write('\nChecking input validity...')
+        ('\nChecking input validity...')
 
         num_spins = kwargs.pop('num_spins',                     None)
         fiber_fraction = kwargs.pop('fiber_fraction',           None)
@@ -143,7 +143,7 @@ class dmri_simulation:
             raise ValueError("Path to data directory does not exist. To run the simulation,"
                              +" make sure you have entered a valid path to the data directory")
         
-        sys.stdout.write('\n    Inputs are valid!\n    Proceeding to simulation step.')
+        ('\n    Inputs are valid!\n    Proceeding to simulation step.')
         np.random.seed(random_state)
         self.bvals = np.loadtxt(path_to_bvals) 
         self.bvecs = np.loadtxt(path_to_bvecs)
@@ -235,38 +235,13 @@ class dmri_simulation:
             voxel_dims=voxel_dims,
             buffer=buffer,
             path_to_bvals= bvals_path, 
-            path_to_bvecs= bvecs_path)
+            path_to_bvecs= bvals_path)
         return
 
     def from_config(self, path_to_configuration_file):
-        self._set_params_from_config(path_to_configuration_file)    
-        spin_positions_t2p,spin_positions_t1m = diffusion._simulate_diffusion(self.spinPositionsT1m, 
-                                                                              self.spinInFiber_i, 
-                                                                              self.spinInCell_i,
-                                                                              self.fiberCenters,
-                                                                              self.cellCenters,
-                                                                              self.Delta,
-                                                                              self.dt,
-                                                                              self.fiberCofiguration,
-                                                                              self.fiberRotationReference)
-        
-        self.fiberPositionsT1m  = spin_positions_t1m[np.where(self.spinInFiber_i > -1)]
-        self. fiberPositionsT2p = spin_positions_t2p[np.where(self.spinInFiber_i > -1)]
-        self.cellPositionsT1m   = spin_positions_t1m[np.where((self.spinInCell_i > -1) & (self.spinInFiber_i == -1))]
-        self.cellPositionsT2p   = spin_positions_t2p[np.where((self.spinInCell_i > -1) & (self.spinInFiber_i == -1))] 
-        self.extraPositionsT1m  = spin_positions_t1m[np.where((self.spinInCell_i == -1) & (self.spinInFiber_i == -1))]
-        self.extraPositionsT2p  = spin_positions_t2p[np.where((self.spinInCell_i == -1) & (self.spinInFiber_i == -1))]
-        
-        sys.stdout.write('\nMC Integration Empirical Volume Fractions:')
-        sys.stdout.write('\nFiber Volume: {}'.format(self.fiberPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\nCell Volume: {}'.format(self.cellPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\nExtra Cellular/Fiber Volume: {}'.format(self.extraPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\n\nSaving Results...')
-        sys.stdout.write('\n')
-        
-        save_simulated_data._save_data(self, 
-                                       self.path_to_save, 
-                                       plot_xyz=False)
+        ('\n\nSaving Geometry and Spin Initialization...')
+        ('\n')
+        self._set_params_from_config(path_to_configuration_file)   
         return
 
 def dmri_sim_wrapper(arg):
@@ -286,19 +261,17 @@ def main():
                     + "https://numba.pydata.org/numba-doc/dev/cuda/overview.html"
                 )
 
-    configs = glob.glob(r"C:\MCSIM\TestSims\*.ini")
+    configs = glob.glob(r"C:\MCSIM\geometryTest\*.ini")
     for cfg in configs:
-        print('\nNow simulating:' + str(cfg))
+        sys.stdout.write('\n-------------------------------------------------------------------')
+        sys.stdout.write('\n                           Now Preparing:')
+        sys.stdout.write('\n  {}'.format(str(cfg)))
+        sys.stdout.write('\n-------------------------------------------------------------------')
+
         p = Process(target=dmri_sim_wrapper, args = (cfg,))
         p.start()
         p.join()
 
-
 if __name__ == "__main__":
     #mp.set_start_method('forkserver')
     main()
-    
- 
-
-
-

@@ -4,40 +4,46 @@ from fractions import Fraction
 import os 
 import numpy as np
 
+#Fractions = [(0.20, 0.20), (0.25, 0.25), (0.35, 0.35), (0.45, 0.45), (0.55, 0.55), (0.65, 0.65), (0.70, 0.70), (0.75, 0.75), (0.8, 0.8)]
+Fractions = [(0.25, 0.25), (0.30, 0.30), (0.35, 0.35), (0.45, 0.45), (0.50, 0.50), (0.55, 0.55), (0.60, 0.60), (0.65, 0.65), (0.7, 0.7)]
+#Fractions = [(0.20, 0.80), (0.25, 0.75), (0.35, 0.65), (0.45, 0.55), (0.5, 0.5), (0.6, 0.4), (0.67, 0.33), (0.70, 0.30), (0.85, 0.15)]
+#CellFracs = [0.025, 0.050, 0.075, 0.100, 0.125, 0.150, 0.175, 0.200, 0.225]
+#CellFracs = [0.05, 0.10, 0.15, 0.25, 0.35, 0.40, 0.45, 0.50, 0.55]
+#Diffusions = [(1.5, 2.5)]
+#Thetas = [(0,10), (0,20), (0,30), (0,40), (0,50), (0,60), (0,70), (0,80), (0,90)]
 
-fractions = [(.1 , .1), (.2, .2), (.3,.3), (.4, .4), (.5, .5), (.6, .6)]
-Thetas = [(0,90), (0,90)]
-Diffusions = [(1.0, 2.0)]
+row = 8
+col = 0
 
-for fraction in fractions:
-        for theta in Thetas:
-                config = configparser.ConfigParser()
-                cfgfile = open(r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\density_Tests" + os.sep + "simulation_configuration_Theta={}_Fraction={}_Diffusivity{}.ini".format(theta,fraction, Diffusions[0]), 'w')
-                config['Simulation Parameters'] = {
-                                'numSpins': 100*10**3,
-                                'fiberFraction': fraction ,
-                                'fiberRadius': 1.0,
-                                'Thetas': theta,
-                                'fiberDiffusions': (1.0, 2.0),
-                                'cellFraction': 0.0,
-                                'cellRadii': (3,10),
-                                'fiberConfiguration': 'Penetrating',
-                                'simulateFibers': True,
-                                'simulateCells': False,
-                                'simulateExtraEnvironment': True
-                                }
-
-                config['Scanning Parameters'] = {
-                        'Delta': 10,
-                        'dt': 0.001,
-                        'voxelDim': 200,
-                        'buffer': 50,
-                        'path_to_bvals': r'C:\MCSIM\Repo\simulation_data\DBSI\DBSI-99\bval',
-                        'path_to_bvecs': r'C:\MCSIM\Repo\simulation_data\DBSI\DBSI-99\bvec'
+for frac in Fractions:
+        config = configparser.ConfigParser()
+        cfgfile = open(r"/bmr207/nmrgrp/nmr202/MCSIM/newMosaic" + os.sep + "{}{}_Config.ini".format(row, col), 'w')
+        config['Simulation Parameters'] = {
+                        'numSpins': 250*10**3,
+                        'fiberFraction': frac,
+                        'fiberRadius': 1.0,
+                        'Thetas': (0, 45),
+                        'fiberDiffusions': (1.5, 2.5),
+                        'cellFraction': 0.20,
+                        'cellRadii': (2.5, 5.0),
+                        'fiberConfiguration': 'Interwoven',
+                        'simulateFibers': True,
+                        'simulateCells': True,
+                        'simulateExtraEnvironment': True
                         }
 
-                config['Saving Parameters'] = {
-                        'path_to_save_file_dir': r"C:\MCSIM\dMRI-MCSIM-main\run_from_config_test\density_Tests"
+        config['Scanning Parameters'] = {
+                'Delta': 10,
+                'dt': 0.001,
+                'voxelDim': 50,
+                'buffer': 5,
+                'path_to_bvals': r"/bmr207/nmrgrp/nmr202/MCSIM/Repo/DBSI/bval-99.bval",
+                'path_to_bvecs': r"/bmr207/nmrgrp/nmr202/MCSIM/Repo/DBSI/bvec-99.bvec"
                 }
-                config.write(cfgfile)
-                cfgfile.close()
+
+        config['Saving Parameters'] = {
+                'path_to_save_file_dir': r"/bmr207/nmrgrp/nmr202/MCSIM/newMosaicSave/"
+        }
+        config.write(cfgfile)
+        cfgfile.close()
+        col+=1

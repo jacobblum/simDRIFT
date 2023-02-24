@@ -4,9 +4,9 @@ from numba import jit, cuda
 from numba.cuda import random 
 from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128p_states
 import math
-import jp
+import jp as jp
 
-@cuda.jit(device=True)
+@numba.cuda.jit
 def _diffusion_in_extra_environment(gpu_index, rng_states, spin_positions, fiber_centers, cell_centers, rotation_reference, dt):
     D = numba.float32(3.0)
     Step = numba.float32(math.sqrt(6*D*dt))

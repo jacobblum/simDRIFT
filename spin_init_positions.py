@@ -1,27 +1,17 @@
+import os  
+import sys
+import multiprocessing as mp
+from multiprocessing.sharedctypes import Value
 import numpy as np 
 import numba 
 from numba import jit, cuda
 from numba.cuda import random 
 from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128p_states
 import math
-import jp
-import time 
+import time
+import jp as jp
 
-def _find_spin_locations(initial_spin_positions, fiber_centers, cell_centers, rotation_reference):
-    spin_in_fiber_at_index = -1.0*np.ones(initial_spin_positions.shape[0])
-    spin_in_cell_at_index  = -1.0*np.ones(initial_spin_positions.shape[0])
-    spin_in_fiber_at_index_gpu, spin_in_cell_at_index_gpu = cuda.to_device(spin_in_fiber_at_index), cuda.to_device(spin_in_cell_at_index)
-    fiber_centers_gpu, cell_centers_gpu = cuda.to_device(fiber_centers), cuda.to_device(cell_centers)
-    initial_spin_positions_gpu = cuda.to_device(initial_spin_positions)
-    
-    threads_per_block = 256
-    blocks_per_grid = (initial_spin_positions.shape[0] + (threads_per_block-1)) // threads_per_block
-    
-    _find_spin_locations_kernel[2048,512](spin_in_fiber_at_index_gpu, spin_in_cell_at_index_gpu, initial_spin_positions_gpu, fiber_centers_gpu, cell_centers_gpu, rotation_reference)
-    ## Return These
-    spin_in_fiber_at_index_output, spin_in_cell_at_index_output = spin_in_fiber_at_index_gpu.copy_to_host(), spin_in_cell_at_index_gpu.copy_to_host()
-    return spin_in_fiber_at_index_output, spin_in_cell_at_index_output
-@cuda.jit 
+@numba.cuda.jit
 def _find_spin_locations_kernel(spinInFiber_i, spinInCell_i, initialSpinPositions, fiberCenters, cellCenters, fiberRotationReference):
     i = cuda.grid(1)
     if i > initialSpinPositions.shape[0]:
@@ -68,7 +58,8 @@ def _find_spin_locations_kernel(spinInFiber_i, spinInCell_i, initialSpinPosition
     spinPosition = cuda.local.array(shape = 3, dtype = numba.float32)
     fiberDistance = numba.float32(0.0)
     cellDistance = numba.float32(0.0)
-    for k in range(spinPosition.shape[0]): spinPosition[k] = initialSpinPositions[i,k]
+    for k in range(spinPosition.shape[0]): 
+        spinPosition[k] = initialSpinPositions[i,k]
     for j in range(fiberCenters.shape[0]): 
         rotationIndex = int(fiberCenters[j,4])
         fiberDistance = jp.euclidean_distance(spinPosition, fiberCenters[j,0:3], fiberRotationReference[rotationIndex,:], 'fiber')
@@ -84,3 +75,26 @@ def _find_spin_locations_kernel(spinInFiber_i, spinInCell_i, initialSpinPosition
     spinInCell_i[i] = KeyCell
     spinInFiber_i[i] = KeyFiber
     return
+
+def _find_spin_locations(initial_spin_positions, fiber_centers, cell_centers, rotation_reference,savePath,cfg_path):
+    data_dir = savePath + os.sep + "R=" + str(cfg_path).split('_',1)[0][-2] + "_C=" + str(cfg_path).split('_',1)[0][-1]
+    if not os.path.exists(data_dir): os.mkdir(data_dir)
+    path, file = os.path.split(cfg_path)  
+    if not os.path.exists(data_dir + os.sep + file): shutil.move(cfg_path, data_dir + os.sep + file)
+
+    spin_in_fiber_at_index = -1.0*np.ones(initial_spin_positions.shape[0])
+    spin_in_cell_at_index  = -1.0*np.ones(initial_spin_positions.shape[0])
+    spin_in_fiber_at_index_gpu, spin_in_cell_at_index_gpu = cuda.to_device(spin_in_fiber_at_index), cuda.to_device(spin_in_cell_at_index)
+    fiber_centers_gpu, cell_centers_gpu = cuda.to_device(fiber_centers), cuda.to_device(cell_centers)
+    initial_spin_positions_gpu = cuda.to_device(initial_spin_positions)
+    
+    threads_per_block = 320
+    blocks_per_grid = (initial_spin_positions.shape[0] + (threads_per_block-1)) // threads_per_block
+    
+    _find_spin_locations_kernel[blocks_per_grid,threads_per_block](spin_in_fiber_at_index_gpu, spin_in_cell_at_index_gpu, initial_spin_positions_gpu, fiber_centers_gpu, cell_centers_gpu, rotation_reference)
+    ## Return These
+    spin_in_fiber_at_index_output, spin_in_cell_at_index_output = spin_in_fiber_at_index_gpu.copy_to_host(), spin_in_cell_at_index_gpu.copy_to_host()
+    np.save(data_dir + os.sep + "indFiberSpins.npy", spin_in_fiber_at_index_output)
+    np.save(data_dir + os.sep + "indCellsSpins.npy", spin_in_cell_at_index_output)
+    return spin_in_fiber_at_index_output, spin_in_cell_at_index_output
+

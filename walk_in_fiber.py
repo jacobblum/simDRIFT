@@ -6,11 +6,11 @@ from numba import jit, cuda
 from numba.cuda import random 
 from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128p_states
 import math
-import jp
+import jp as jp
 
 
 
-@cuda.jit(device=True)
+@numba.cuda.jit
 def _diffusion_in_fiber(gpu_index, rng_states, spin_in_fiber_at_index, spin_positions, fiber_centers, fiber_rotation_reference, dt):
     D = numba.float32(fiber_centers[spin_in_fiber_at_index,5])
     Step = numba.float32(math.sqrt(6.0*D*dt))
