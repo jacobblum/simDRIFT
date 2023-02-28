@@ -47,32 +47,32 @@ def _place_fiber_grid(fiber_fractions, num_fibers, fiber_radius, fiber_diffusion
     path, file = os.path.split(cfg_path)  
     if not os.path.exists(data_dir + os.sep + file): shutil.move(cfg_path, data_dir + os.sep + file)
 
-    first_step_cordinates = []
+    first_step_coordinates = []
     for i in range(len(fiber_fractions)):
-        fiber_cordinates = np.zeros((num_fibers[i]**2,6))
+        fiber_coordinates = np.zeros((num_fibers[i]**2,6))
         fiberYs, fiberXs = np.meshgrid(np.linspace(0+fiber_radius, voxel_dimensions+buffer-fiber_radius, num_fibers[i]),
                                        np.linspace(0+fiber_radius, voxel_dimensions+buffer-fiber_radius, num_fibers[i]))
-        fiber_cordinates[:,0] = fiberXs.flatten()
-        fiber_cordinates[:,1] = fiberYs.flatten()
-        fiber_cordinates[:,3] = fiber_radius
-        voxel_index = np.where((fiber_cordinates[:,1] >= i*0.5*(voxel_dimensions+buffer)) & (fiber_cordinates[:,1] < (i+1)*0.5*(voxel_dimensions+buffer)))[0]
-        first_step_cordinates.append(fiber_cordinates[voxel_index,:])
-    output_one_arg = np.vstack([first_step_cordinates[0], first_step_cordinates[1]])
+        fiber_coordinates[:,0] = fiberXs.flatten()
+        fiber_coordinates[:,1] = fiberYs.flatten()
+        fiber_coordinates[:,3] = fiber_radius
+        voxel_index = np.where((fiber_coordinates[:,1] >= i*0.5*(voxel_dimensions+buffer)) & (fiber_coordinates[:,1] < (i+1)*0.5*(voxel_dimensions+buffer)))[0]
+        first_step_coordinates.append(fiber_coordinates[voxel_index,:])
+    output_one_arg = np.vstack([first_step_coordinates[0], first_step_coordinates[1]])
 
     if fiber_configuration == 'IW' or fiber_configuration == 'Interwoven' or fiber_configuration == 'Inter-Woven':
         Ys_mod2 = np.unique(output_one_arg[:,1])[::2]
         index = np.where(np.in1d(output_one_arg[:,1], Ys_mod2))[0]
-        fiber_cordinates_pre_rotation = output_one_arg[index,0:3]
+        fiber_coordinates_pre_rotation = output_one_arg[index,0:3]
     
     if fiber_configuration == 'Penetrating' or fiber_configuration == 'Void' or fiber_configuration == 'P':
         index = np.where(output_one_arg[:,1] < 0.5*(voxel_dimensions+buffer))[0]
-        fiber_cordinates_pre_rotation = output_one_arg[index, 0:3]
+        fiber_coordinates_pre_rotation = output_one_arg[index, 0:3]
 
-    rotated_cordinates = (rotation_matrix.dot(fiber_cordinates_pre_rotation.T)).T
+    rotated_coordinates = (rotation_matrix.dot(fiber_coordinates_pre_rotation.T)).T
 
-    if rotated_cordinates.shape[0] > 0:
-        z_correction = np.amin(rotated_cordinates[:,2])
-        rotated_fibers = rotated_cordinates
+    if rotated_coordinates.shape[0] > 0:
+        z_correction = np.amin(rotated_coordinates[:,2])
+        rotated_fibers = rotated_coordinates
         rotated_fibers[:,2] = rotated_fibers[:,2] + np.abs(z_correction)
         
         output_one_arg[index, 0:3], output_one_arg[index, 4], output_one_arg[index, 5], output_one_arg[[i for i in range(output_one_arg.shape[0]) if i not in index],5] = rotated_fibers, 1, fiber_diffusions[0], fiber_diffusions[1] 
@@ -88,9 +88,11 @@ def _place_fiber_grid(fiber_fractions, num_fibers, fiber_radius, fiber_diffusion
     sys.stdout.write('\n')
     
     np.save(data_dir + os.sep + "fiberCenters.npy", final_output_arg)
+    np.save(data_dir + os.sep + "fiber1Centers.npy", final_output_arg[0:num_fibers[0]-1])
+    np.save(data_dir + os.sep + "fiber2Centers.npy", final_output_arg[num_fibers[0]:])
     return final_output_arg
 
-def _place_cells(num_cells, cell_radii, fiber_configuration, voxel_dimentions, buffer, void_dist,savePath,cfg_path):
+def _place_cells(num_cells, cell_radii, fiber_configuration, voxel_dimensions, buffer, void_dist,savePath,cfg_path):
     data_dir = savePath + os.sep + "R=" + str(cfg_path).split('_',1)[0][-2] + "_C=" + str(cfg_path).split('_',1)[0][-1]
     if not os.path.exists(data_dir): os.mkdir(data_dir)
     path, file = os.path.split(cfg_path)  
@@ -99,11 +101,11 @@ def _place_cells(num_cells, cell_radii, fiber_configuration, voxel_dimentions, b
     cell_centers_total = []
 
     if fiber_configuration == 'Void':
-        regions = np.array([[0, voxel_dimentions+buffer, 0.5*(voxel_dimentions+buffer)-0.5*void_dist, 0.5*(voxel_dimentions+buffer)+0.5*void_dist, 0, voxel_dimentions+buffer], 
-                   [0, voxel_dimentions+buffer, 0.5*(voxel_dimentions+buffer)-0.5*void_dist, 0.5*(voxel_dimentions+buffer)+0.5*void_dist, 0, voxel_dimentions+buffer]])  
+        regions = np.array([[0, voxel_dimensions+buffer, 0.5*(voxel_dimensions+buffer)-0.5*void_dist, 0.5*(voxel_dimensions+buffer)+0.5*void_dist, 0, voxel_dimensions+buffer], 
+                   [0, voxel_dimensions+buffer, 0.5*(voxel_dimensions+buffer)-0.5*void_dist, 0.5*(voxel_dimensions+buffer)+0.5*void_dist, 0, voxel_dimensions+buffer]])  
     else:
-        regions = np.array([[0,voxel_dimentions+buffer,0,0.5*(voxel_dimentions+buffer), 0,voxel_dimentions+buffer],
-                            [0,voxel_dimentions+buffer,0.5*(voxel_dimentions+buffer),voxel_dimentions+buffer,0,voxel_dimentions+buffer]])
+        regions = np.array([[0,voxel_dimensions+buffer,0,0.5*(voxel_dimensions+buffer), 0,voxel_dimensions+buffer],
+                            [0,voxel_dimensions+buffer,0.5*(voxel_dimensions+buffer),voxel_dimensions+buffer,0,voxel_dimensions+buffer]])
 
     for i in (range(len(num_cells))):
             cellCenters = np.zeros((num_cells[i], 4))
@@ -169,6 +171,8 @@ def _place_cells(num_cells, cell_radii, fiber_configuration, voxel_dimentions, b
     output_arg = np.vstack([cell_centers_total[0], cell_centers_total[1]])
     sys.stdout.write('\n')
     np.save(data_dir + os.sep + "cellsCenters.npy", output_arg)
+    np.save(data_dir + os.sep + "cells1Centers.npy", cell_centers_total[0])
+    np.save(data_dir + os.sep + "cells2Centers.npy", cell_centers_total[1])
     return output_arg
         
 def _generate_rot_mat(thetas,savePath,cfg_path):

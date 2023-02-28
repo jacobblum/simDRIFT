@@ -7,7 +7,7 @@ import math
 import jp as jp
 
 
-@numba.cuda.jit
+@numba.cuda.jit(nopython=True,parallel=True)
 def _diffusion_in_cell(gpu_index, rng_states, spin_positions, spin_in_cell_at_index, cell_centers, fiber_centers, rotation_reference, dt, void):
     D = numba.float32(3.0)
     Step = numba.float32(math.sqrt(6*D*dt))

@@ -28,6 +28,7 @@ import diffusion
 import set_voxel_configuration
 import save_simulated_data
 
+
 class dmri_simulation:
     def __init__(self):
         numSpins =                  0.0 
@@ -41,13 +42,16 @@ class dmri_simulation:
         cellFraction =              0.0
         cellRadii =                 0.0 #um
         spinPositionsT1m =          0.0
-        fiberPositionsT1m =         0.0
-        fiberPositionsT2p =         0.0
+        fiber1PositionsT1m =         0.0
+        fiber1PositionsT2p =         0.0
+        fiber2PositionsT1m =         0.0
+        fiber2PositionsT2p =         0.0
         cellPositionsT1m =          0.0
         cellPositionsT2p =          0.0
         extraPositionsT1m =         0.0
         extraPositionsT2p =         0.0
-        spinInFiber_i =             0.0
+        spinInFiber1_i =            0.0
+        spinInFiber2_i =            0.0
         spinInCell_i =              0.0
         fiberRotationReference =    0.0
         Thetas =                    0.0
@@ -65,7 +69,6 @@ class dmri_simulation:
         return
     
     def set_parameters(self,**kwargs):
-        
         sys.stdout.write('\nChecking input validity...')
 
         num_spins = kwargs.pop('num_spins',                     None)
@@ -73,13 +76,13 @@ class dmri_simulation:
         fiber_radii = kwargs.pop('fiber_radius',                None)
         thetas = kwargs.pop('thetas',                           None)
         fiber_diffusions = kwargs.pop('fiber_diffusions',       None)
-        cell_fraction = float(kwargs.pop('cell_fraction',             None))
+        cell_fraction = float(kwargs.pop('cell_fraction',       None))
         cell_radii = kwargs.pop('cell_radii',                   None)
         fiber_configuration = kwargs.pop('fiber_configuration', None)
-        Delta = float(kwargs.pop('Delta',                             None))
+        Delta = float(kwargs.pop('Delta',                       None))
         dt = kwargs.pop('dt',                                   None)
-        voxel_dims = float(kwargs.pop('voxel_dims',                   None))
-        buffer = float(kwargs.pop('buffer',                           None))
+        voxel_dims = float(kwargs.pop('voxel_dims',             None))
+        buffer = float(kwargs.pop('buffer',                     None))
         path_to_bvals = kwargs.pop('path_to_bvals',             None)
         path_to_bvecs = kwargs.pop('path_to_bvecs',             None)
         random_state = kwargs.pop('random_state',               42  )
@@ -144,7 +147,7 @@ class dmri_simulation:
             raise ValueError("Path to data directory does not exist. To run the simulation,"
                              +" make sure you have entered a valid path to the data directory")
         
-        sys.stdout.write('\n    Inputs are valid!\n    Proceeding to simulation step.\n')
+        sys.stdout.write('\n    Inputs are valid!\n    Proceeding to simulation step.')
 
         data_dir = self.path_to_save + os.sep + "R=" + str(self.cfg_path).split('_Co',1)[0][-2] + "_C=" + str(self.cfg_path).split('_Co',1)[0][-1]
         if not os.path.exists(data_dir): os.mkdir(data_dir)
@@ -174,7 +177,8 @@ class dmri_simulation:
         self.fiberCenters = np.load(data_dir + os.sep + "fiberCenters.npy")
         self.cellCenters = np.load(data_dir + os.sep + "cellsCenters.npy")
         self.spinPositionsT1m = np.random.uniform(low = 0 , high = self.voxelDims, size = (int(self.numSpins),3))
-        self.spinInFiber_i = np.load(data_dir + os.sep + "indFiberSpins.npy")
+        self.spinInFiber1_i = np.load(data_dir + os.sep + "indFiber1Spins.npy")
+        self.spinInFiber2_i = np.load(data_dir + os.sep + "indFiber2Spins.npy")
         self.spinInCell_i = np.load(data_dir + os.sep + "indCellsSpins.npy")
 
         self.numFibers = len(self.fiberCenters)
@@ -228,7 +232,8 @@ class dmri_simulation:
     def from_config(self, path_to_configuration_file):
         self._set_params_from_config(path_to_configuration_file)    
         spin_positions_t2p,spin_positions_t1m = diffusion._simulate_diffusion(self.spinPositionsT1m, 
-                                                                              self.spinInFiber_i, 
+                                                                              self.spinInFiber1_i,
+                                                                              self.spinInFiber2_i, 
                                                                               self.spinInCell_i,
                                                                               self.fiberCenters,
                                                                               self.cellCenters,
@@ -237,18 +242,24 @@ class dmri_simulation:
                                                                               self.fiberCofiguration,
                                                                               self.fiberRotationReference)
         
-        self.fiberPositionsT1m  = spin_positions_t1m[np.where(self.spinInFiber_i > -1)]
-        self. fiberPositionsT2p = spin_positions_t2p[np.where(self.spinInFiber_i > -1)]
-        self.cellPositionsT1m   = spin_positions_t1m[np.where((self.spinInCell_i > -1) & (self.spinInFiber_i == -1))]
-        self.cellPositionsT2p   = spin_positions_t2p[np.where((self.spinInCell_i > -1) & (self.spinInFiber_i == -1))] 
-        self.extraPositionsT1m  = spin_positions_t1m[np.where((self.spinInCell_i == -1) & (self.spinInFiber_i == -1))]
-        self.extraPositionsT2p  = spin_positions_t2p[np.where((self.spinInCell_i == -1) & (self.spinInFiber_i == -1))]
+        self.fiber1PositionsT1m = spin_positions_t1m[np.where(self.spinInFiber1_i > -1)]
+        self.fiber1PositionsT2p = spin_positions_t2p[np.where(self.spinInFiber1_i > -1)]
+        self.fiber2PositionsT1m = spin_positions_t1m[np.where(self.spinInFiber2_i > -1)]
+        self.fiber2PositionsT2p = spin_positions_t2p[np.where(self.spinInFiber2_i > -1)]
+        self.cellPositionsT1m   = spin_positions_t1m[np.where((self.spinInCell_i > -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))]
+        self.cellPositionsT2p   = spin_positions_t2p[np.where((self.spinInCell_i > -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))] 
+        self.extraPositionsT1m  = spin_positions_t1m[np.where((self.spinInCell_i == -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))] 
+        self.extraPositionsT2p  = spin_positions_t2p[np.where((self.spinInCell_i == -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))] 
         
-        sys.stdout.write('\nMC Integration Empirical Volume Fractions:')
-        sys.stdout.write('\nFiber Volume: {}'.format(self.fiberPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\nCell Volume: {}'.format(self.cellPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\nExtra Cellular/Fiber Volume: {}'.format(self.extraPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\n\nSaving Results...')
+        sys.stdout.write('\n----------------------------------')
+        sys.stdout.write('\n    Empirical Volume Fractions')
+        sys.stdout.write('\n----------------------------------')
+        sys.stdout.write('\n    Fiber 1 Volume: {}'.format(self.fiber1PositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
+        sys.stdout.write('\n    Fiber 2 Volume: {}'.format(self.fiber2PositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
+        sys.stdout.write('\nTotal Fiber Volume: {}'.format((self.fiber1PositionsT1m.shape[0] + self.fiber2PositionsT1m.shape[0])/self.spinPositionsT1m.shape[0]))
+        sys.stdout.write('\n       Cell Volume: {}'.format(self.cellPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
+        sys.stdout.write('\n      Water Volume: {}'.format(self.extraPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
+        sys.stdout.write('\n\nProceeding to save results...')
         sys.stdout.write('\n')
         
         save_simulated_data._save_data(self, 
@@ -257,21 +268,43 @@ class dmri_simulation:
         return
 
     def _signal_from_trajectory_data(self,trajectory_dir):
+        run_xyz = False
+        finite  = False
         trajectory_t1ms = glob.glob(trajectory_dir + os.sep + '*T1m*.npy')
         for trajectory_file in trajectory_t1ms:
-                for f in ['fin', 'inf']:
-                    traj_dir, fname = os.path.split(trajectory_file)
-                    compartment = (fname[0:5])
-                    traj1 = np.load(trajectory_file)
-                    traj2 = np.load(trajectory_file.replace('T1m', 'T2p'))
-                    fig, ax = plt.subplots(figsize = (10,3))
-                    ax.hist(traj2-traj1, bins = 1000)
-                    plt.show()
-                    signal, bvals = save_simulated_data._signal(self, traj1, traj2, xyz = False, finite = (f == 'fin'))
-                    plt.show()
-                    dwi = nb.Nifti1Image(signal.reshape(1,1,1,-1), affine = np.eye(4))
-                    nb.save(dwi, traj_dir + os.sep  + compartment + "_" + f + "_" "totalSignal.nii")
+                traj_dir, fname = os.path.split(trajectory_file)
+                compartment = (fname[0:5])
+                
+                traj1 = np.load(trajectory_file)
+                traj2 = np.load(trajectory_file.replace('T1m', 'T2p'))
+                if compartment == 'cellP':
+                    compartment = 'cells'
+                    self.cellPositionsT1m = traj1
+                    self.cellPositionsT2p = traj2
+                elif compartment == 'cells':
+                    self.cellPositionsT1m = traj1
+                    self.cellPositionsT2p = traj2
+
+                if compartment == 'fiber':
+                    self.fiberPositionsT1m = traj1
+                    self.fiberPositionsT2p = traj2
+
+                if compartment == 'water':
+                    self.extraPositionsT1m = traj1
+                    self.extraPositionsT2p = traj2
+
+                signal, bvals = save_simulated_data._signal(self, traj1, traj2, run_xyz, finite)
+                dwi = nb.Nifti1Image(signal.reshape(1,1,1,-1), affine = np.eye(4))
+                nb.save(dwi, traj_dir + os.sep  + compartment + "Signal_30dir.nii")
+
+        if self.cellFraction > 0:
+            expSignal, bvals = save_simulated_data._signal(self, np.vstack([self.fiberPositionsT1m, self.cellPositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiberPositionsT2p,self.cellPositionsT2p,self.extraPositionsT2p]), run_xyz, finite)
+        else:
+            expSignal, bvals = save_simulated_data._signal(self, np.vstack([self.fiberPositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiberPositionsT2p,self.extraPositionsT2p]), run_xyz, finite)
+        dwi = nb.Nifti1Image(expSignal.reshape(1,1,1,-1), affine = np.eye(4))
+        nb.save(dwi, traj_dir + os.sep + "totalSignal_30dir.nii")
         return
+        
 def dmri_sim_wrapper(arg):
     path, file = os.path.split(arg)
     simObj = dmri_simulation()

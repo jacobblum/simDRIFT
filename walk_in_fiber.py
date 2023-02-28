@@ -10,14 +10,16 @@ import jp as jp
 
 
 
-@numba.cuda.jit
+@numba.cuda.jit(nopython=True,parallel=True)
 def _diffusion_in_fiber(gpu_index, rng_states, spin_in_fiber_at_index, spin_positions, fiber_centers, fiber_rotation_reference, dt):
     D = numba.float32(fiber_centers[spin_in_fiber_at_index,5])
     Step = numba.float32(math.sqrt(6.0*D*dt))
     previous_position = cuda.local.array(shape = 3, dtype = numba.float32)
     proposed_new_position = cuda.local.array(shape = 3, dtype = numba.float32)
+
     current_fiber_radius = numba.float32(fiber_centers[spin_in_fiber_at_index,3])
     fiber_rotation_index = int(fiber_centers[spin_in_fiber_at_index,4])
+    
     distance = current_fiber_radius + .001
     while(distance > current_fiber_radius):
         proposed_new_position = jp.randomDirection(rng_states, proposed_new_position, gpu_index)

@@ -16,7 +16,8 @@ import sys
 
 
 def _simulate_diffusion(spin_positions_t1m, 
-                        spin_in_fiber_at_index, 
+                        spin_in_fiber1_at_index,
+                        spin_in_fiber2_at_index, 
                         spin_in_cell_at_index, 
                         fiber_centers, 
                         cell_centers, 
@@ -29,7 +30,8 @@ def _simulate_diffusion(spin_positions_t1m,
     rng_states_gpu = cuda.to_device(create_xoroshiro128p_states(spin_positions_t1m.shape[0], seed = random_state))
     spin_positions_t1m_cpy = spin_positions_t1m.copy()
     spin_positions_t1m_gpu = cuda.to_device(spin_positions_t1m.astype(np.float32))
-    spin_in_fiber_at_index_gpu = cuda.to_device(spin_in_fiber_at_index.astype(np.float32))
+    spin_in_fiber1_at_index_gpu = cuda.to_device(spin_in_fiber1_at_index.astype(np.float32))
+    spin_in_fiber2_at_index_gpu = cuda.to_device(spin_in_fiber2_at_index.astype(np.float32))
     fiber_centers_gpu = cuda.to_device(fiber_centers)
     spin_in_cell_at_index_gpu = cuda.to_device(spin_in_cell_at_index.astype(np.float32))
     cell_centers_gpu = cuda.to_device(cell_centers)
@@ -37,14 +39,15 @@ def _simulate_diffusion(spin_positions_t1m,
     dt_gpu = cuda.to_device(np.array([dt]).astype(np.float32))
     N_iter = int(Delta/dt)
     Start = time.time()
-    threads_per_block = 448
+    threads_per_block = 64
     blocks_per_grid = (spin_positions_t1m_cpy.shape[0] + (threads_per_block-1)) // threads_per_block
     for i in range(N_iter):
         sys.stdout.write('\r' + 'Step: ' +  str(i+1) + '/' + str(N_iter))
         sys.stdout.flush()
         _diffusion_context_manager[blocks_per_grid,threads_per_block](rng_states_gpu, 
                                             spin_positions_t1m_gpu, 
-                                            spin_in_fiber_at_index_gpu,
+                                            spin_in_fiber1_at_index_gpu,
+                                            spin_in_fiber2_at_index_gpu,
                                             fiber_centers_gpu,
                                             spin_in_cell_at_index_gpu,
                                             cell_centers_gpu,
@@ -64,8 +67,8 @@ def _simulate_diffusion(spin_positions_t1m,
     return spin_positions_t2p, spin_positions_t1m_cpy
 
 
-@cuda.jit
-def _diffusion_context_manager(rng_states, spin_positions, spin_in_fiber_key, fiber_centers, spin_in_cell_key, cell_centers, fiber_rotation_reference, dt, void):
+@cuda.jit(fastmath=True)
+def _diffusion_context_manager(rng_states, spin_positions, spin_in_fiber1_key, spin_in_fiber2_key, fiber_centers, spin_in_cell_key, cell_centers, fiber_rotation_reference, dt, void):
     """
     Parameters:
 
@@ -78,18 +81,23 @@ def _diffusion_context_manager(rng_states, spin_positions, spin_in_fiber_key, fi
     if gpu_index > spin_positions.shape[0]:
         return
     
-    spin_in_fiber_index = int(spin_in_fiber_key[gpu_index])
+    spin_in_fiber1_index = int(spin_in_fiber1_key[gpu_index])
+    spin_in_fiber2_index = int(spin_in_fiber2_key[gpu_index])
     spin_in_cell_index  = int(spin_in_cell_key[gpu_index])
 
-    spin_in_fiber_boolean = (spin_in_fiber_index > -1)
-    spin_in_cell_boolean  = ((spin_in_cell_index > -1) & (spin_in_fiber_index == -1)) 
+    spin_in_fiber1_boolean = (spin_in_fiber1_index > -1)
+    spin_in_fiber2_boolean = (spin_in_fiber2_index > -1)
+    spin_in_cell_boolean  = ((spin_in_cell_index > -1) & (spin_in_fiber1_index == -1) & (spin_in_fiber2_index == -1)) 
 
-    if spin_in_fiber_boolean:
-        walk_in_fiber._diffusion_in_fiber(gpu_index, rng_states, spin_in_fiber_index, spin_positions, fiber_centers, fiber_rotation_reference, dt)
+    if spin_in_fiber1_boolean:
+        walk_in_fiber._diffusion_in_fiber(gpu_index, rng_states, spin_in_fiber1_index, spin_positions, fiber_centers, fiber_rotation_reference, dt)
     
+    if spin_in_fiber2_boolean:
+        walk_in_fiber._diffusion_in_fiber(gpu_index, rng_states, spin_in_fiber2_index, spin_positions, fiber_centers, fiber_rotation_reference, dt)
+
     if spin_in_cell_boolean:
         walk_in_cell._diffusion_in_cell(gpu_index, rng_states, spin_positions, spin_in_cell_index, cell_centers, fiber_centers, fiber_rotation_reference, dt, void)
     
-    if (not(spin_in_cell_boolean)) & (not(spin_in_fiber_boolean)):
+    if (not(spin_in_cell_boolean)) & (not(spin_in_fiber1_boolean)) & (not(spin_in_fiber2_boolean)):
         walk_in_extra_environ._diffusion_in_extra_environment(gpu_index,rng_states,spin_positions,fiber_centers, cell_centers, fiber_rotation_reference, dt)
     return

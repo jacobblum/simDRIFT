@@ -6,7 +6,7 @@ from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128
 import math
 import jp as jp
 
-@numba.cuda.jit
+@numba.cuda.jit(nopython=True,parallel=True)
 def _diffusion_in_extra_environment(gpu_index, rng_states, spin_positions, fiber_centers, cell_centers, rotation_reference, dt):
     D = numba.float32(3.0)
     Step = numba.float32(math.sqrt(6*D*dt))

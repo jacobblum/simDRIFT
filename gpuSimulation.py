@@ -28,6 +28,7 @@ import diffusion
 import set_voxel_configuration
 import save_simulated_data
 
+
 class dmri_simulation:
     def __init__(self):
         numSpins =                  0.0 
@@ -41,13 +42,16 @@ class dmri_simulation:
         cellFraction =              0.0
         cellRadii =                 0.0 #um
         spinPositionsT1m =          0.0
-        fiberPositionsT1m =         0.0
-        fiberPositionsT2p =         0.0
+        fiber1PositionsT1m =         0.0
+        fiber1PositionsT2p =         0.0
+        fiber2PositionsT1m =         0.0
+        fiber2PositionsT2p =         0.0
         cellPositionsT1m =          0.0
         cellPositionsT2p =          0.0
         extraPositionsT1m =         0.0
         extraPositionsT2p =         0.0
-        spinInFiber_i =             0.0
+        spinInFiber1_i =            0.0
+        spinInFiber2_i =            0.0
         spinInCell_i =              0.0
         fiberRotationReference =    0.0
         Thetas =                    0.0
@@ -190,7 +194,7 @@ class dmri_simulation:
                                                                 self.path_to_save,
                                                                 self.cfg_path)
         self.spinPositionsT1m = np.random.uniform(low = 0 , high = self.voxelDims, size = (int(self.numSpins),3))
-        self.spinInFiber_i, self.spinInCell_i = spin_init_positions._find_spin_locations(self.spinPositionsT1m, 
+        self.spinInFiber1_i, self.spinInFiber2_i, self.spinInCell_i = spin_init_positions._find_spin_locations(self.spinPositionsT1m, 
                                                                                          self.fiberCenters, 
                                                                                          self.cellCenters, 
                                                                                          self.fiberRotationReference,
@@ -241,7 +245,8 @@ class dmri_simulation:
     def from_config(self, path_to_configuration_file):
         self._set_params_from_config(path_to_configuration_file)    
         spin_positions_t2p,spin_positions_t1m = diffusion._simulate_diffusion(self.spinPositionsT1m, 
-                                                                              self.spinInFiber_i, 
+                                                                              self.spinInFiber1_i,
+                                                                              self.spinInFiber2_i, 
                                                                               self.spinInCell_i,
                                                                               self.fiberCenters,
                                                                               self.cellCenters,
@@ -250,18 +255,24 @@ class dmri_simulation:
                                                                               self.fiberCofiguration,
                                                                               self.fiberRotationReference)
         
-        self.fiberPositionsT1m  = spin_positions_t1m[np.where(self.spinInFiber_i > -1)]
-        self. fiberPositionsT2p = spin_positions_t2p[np.where(self.spinInFiber_i > -1)]
-        self.cellPositionsT1m   = spin_positions_t1m[np.where((self.spinInCell_i > -1) & (self.spinInFiber_i == -1))]
-        self.cellPositionsT2p   = spin_positions_t2p[np.where((self.spinInCell_i > -1) & (self.spinInFiber_i == -1))] 
-        self.extraPositionsT1m  = spin_positions_t1m[np.where((self.spinInCell_i == -1) & (self.spinInFiber_i == -1))]
-        self.extraPositionsT2p  = spin_positions_t2p[np.where((self.spinInCell_i == -1) & (self.spinInFiber_i == -1))]
+        self.fiber1PositionsT1m = spin_positions_t1m[np.where(self.spinInFiber1_i > -1)]
+        self.fiber1PositionsT2p = spin_positions_t2p[np.where(self.spinInFiber1_i > -1)]
+        self.fiber2PositionsT1m = spin_positions_t1m[np.where(self.spinInFiber2_i > -1)]
+        self.fiber2PositionsT2p = spin_positions_t2p[np.where(self.spinInFiber2_i > -1)]
+        self.cellPositionsT1m   = spin_positions_t1m[np.where((self.spinInCell_i > -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))]
+        self.cellPositionsT2p   = spin_positions_t2p[np.where((self.spinInCell_i > -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))] 
+        self.extraPositionsT1m  = spin_positions_t1m[np.where((self.spinInCell_i == -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))] 
+        self.extraPositionsT2p  = spin_positions_t2p[np.where((self.spinInCell_i == -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))] 
         
-        sys.stdout.write('\nMC Integration Empirical Volume Fractions:')
-        sys.stdout.write('\nFiber Volume: {}'.format(self.fiberPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\nCell Volume: {}'.format(self.cellPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\nExtra Cellular/Fiber Volume: {}'.format(self.extraPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\n\nSaving Results...')
+        sys.stdout.write('\n----------------------------------')
+        sys.stdout.write('\n    Empirical Volume Fractions')
+        sys.stdout.write('\n----------------------------------')
+        sys.stdout.write('\n    Fiber 1 Volume: {}'.format(self.fiber1PositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
+        sys.stdout.write('\n    Fiber 2 Volume: {}'.format(self.fiber2PositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
+        sys.stdout.write('\nTotal Fiber Volume: {}'.format((self.fiber1PositionsT1m.shape[0] + self.fiber2PositionsT1m.shape[0])/self.spinPositionsT1m.shape[0]))
+        sys.stdout.write('\n       Cell Volume: {}'.format(self.cellPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
+        sys.stdout.write('\n      Water Volume: {}'.format(self.extraPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
+        sys.stdout.write('\n\nProceeding to save results...')
         sys.stdout.write('\n')
         
         save_simulated_data._save_data(self, 
@@ -286,7 +297,7 @@ def main():
                     + "https://numba.pydata.org/numba-doc/dev/cuda/overview.html"
                 )
 
-    configs = glob.glob(r"C:\MCSIM\TestSims\*.ini")
+    configs = glob.glob(r"C:\MCSIM\fiberSplit\*.ini")
     for cfg in configs:
         print('\nNow simulating:' + str(cfg))
         p = Process(target=dmri_sim_wrapper, args = (cfg,))

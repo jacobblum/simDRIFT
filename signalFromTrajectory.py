@@ -151,7 +151,7 @@ class dmri_simulation:
         self.Delta = Delta
         self.dt = dt
         self.delta = dt
-        
+        self.cellFraction = cell_fraction
         return 
 
 
@@ -177,12 +177,12 @@ class dmri_simulation:
         buffer = literal_eval(config['Scanning Parameters']['buffer'])
         #bvals_path = config['Scanning Parameters']['path_to_bvals']
         #bvecs_path = config['Scanning Parameters']['path_to_bvecs']
-        bvals_path = r"C:\MCSIM\Repo\simulation_data\DBSI\DBSI-50\bval-50.bval"
-        bvecs_path = r"C:\MCSIM\Repo\simulation_data\DBSI\DBSI-50\bvec-50.bvec"
+        bvals_path = r"C:\MCSIM\Repo\simulation_data\DBSI\DBSI-30\bval-30.bval"
+        bvecs_path = r"C:\MCSIM\Repo\simulation_data\DBSI\DBSI-30\bvec-30.bvec"
         
         ## Saving Parameters
         #self.path_to_save = config['Saving Parameters']['path_to_save_file_dir']
-        self.path_to_save = r"C:\Users\kainen.utt\Documents\Research\MosaicProject\6x6"
+        self.path_to_save = r"C:\Users\kainen.utt\Documents\MATLAB\Mosaic_Plots\input\9x9"
 
         self.set_parameters(
             num_spins=num_spins,
@@ -202,22 +202,41 @@ class dmri_simulation:
         return
 
     def _signal_from_trajectory_data(self,trajectory_dir):
+        run_xyz = False
+        finite  = False
         trajectory_t1ms = glob.glob(trajectory_dir + os.sep + '*T1m*.npy')
         for trajectory_file in trajectory_t1ms:
-                f = 'inf'
                 traj_dir, fname = os.path.split(trajectory_file)
                 compartment = (fname[0:5])
-                if compartment == 'cellP':
-                    compartment = 'cells'
+                
                 traj1 = np.load(trajectory_file)
                 traj2 = np.load(trajectory_file.replace('T1m', 'T2p'))
-                #fig, ax = plt.subplots(figsize = (10,3))
-                #ax.hist(traj2-traj1, bins = 1000)
-                #plt.show()
-                signal, bvals = save_simulated_data._signal(self, traj1, traj2, xyz = True, finite = (f == 'fin'))
-                #plt.show()
+                if compartment == 'cellP':
+                    compartment = 'cells'
+                    self.cellPositionsT1m = traj1
+                    self.cellPositionsT2p = traj2
+                elif compartment == 'cells':
+                    self.cellPositionsT1m = traj1
+                    self.cellPositionsT2p = traj2
+
+                if compartment == 'fiber':
+                    self.fiberPositionsT1m = traj1
+                    self.fiberPositionsT2p = traj2
+
+                if compartment == 'water':
+                    self.extraPositionsT1m = traj1
+                    self.extraPositionsT2p = traj2
+
+                signal, bvals = save_simulated_data._signal(self, traj1, traj2, run_xyz, finite)
                 dwi = nb.Nifti1Image(signal.reshape(1,1,1,-1), affine = np.eye(4))
-                nb.save(dwi, traj_dir + os.sep  + compartment + "_50-dir_XYZ-signal.nii")
+                nb.save(dwi, traj_dir + os.sep  + compartment + "Signal_30dir.nii")
+
+        if self.cellFraction > 0:
+            expSignal, bvals = save_simulated_data._signal(self, np.vstack([self.fiberPositionsT1m, self.cellPositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiberPositionsT2p,self.cellPositionsT2p,self.extraPositionsT2p]), run_xyz, finite)
+        else:
+            expSignal, bvals = save_simulated_data._signal(self, np.vstack([self.fiberPositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiberPositionsT2p,self.extraPositionsT2p]), run_xyz, finite)
+        dwi = nb.Nifti1Image(expSignal.reshape(1,1,1,-1), affine = np.eye(4))
+        nb.save(dwi, traj_dir + os.sep + "totalSignal_30dir.nii")
         return
 
 def sig_from_traj(arg):
@@ -238,9 +257,9 @@ def main():
                     + "https://numba.pydata.org/numba-doc/dev/cuda/overview.html"
                 )
 
-    configs = glob.glob(r"C:\Users\kainen.utt\Documents\Research\MosaicProject\6x6\*\*.ini")
+    configs = glob.glob(r"C:\Users\kainen.utt\Documents\MATLAB\Mosaic_Plots\input\9x9\*\*_*.ini")
     for cfg in configs:
-        print('\nNow generating signal from trajectory data for: ' + str(cfg).split(r'6x6',1)[1][1:8])
+        print('\nNow generating signal from trajectory data for: ' + str(cfg).split(r'9x9',1)[1][1:8])
         sig_from_traj(cfg,)
 
 

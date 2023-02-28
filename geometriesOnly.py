@@ -28,6 +28,7 @@ import diffusion
 import set_voxel_configuration
 import save_simulated_data
 
+
 class dmri_simulation:
     def __init__(self):
         numSpins =                  0.0 
@@ -41,13 +42,16 @@ class dmri_simulation:
         cellFraction =              0.0
         cellRadii =                 0.0 #um
         spinPositionsT1m =          0.0
-        fiberPositionsT1m =         0.0
-        fiberPositionsT2p =         0.0
+        fiber1PositionsT1m =         0.0
+        fiber1PositionsT2p =         0.0
+        fiber2PositionsT1m =         0.0
+        fiber2PositionsT2p =         0.0
         cellPositionsT1m =          0.0
         cellPositionsT2p =          0.0
         extraPositionsT1m =         0.0
         extraPositionsT2p =         0.0
-        spinInFiber_i =             0.0
+        spinInFiber1_i =            0.0
+        spinInFiber2_i =            0.0
         spinInCell_i =              0.0
         fiberRotationReference =    0.0
         Thetas =                    0.0
@@ -65,7 +69,7 @@ class dmri_simulation:
         return
     
     def set_parameters(self,**kwargs):
-        ('\nChecking input validity...')
+        sys.stdout.write('\nChecking input validity...')
 
         num_spins = kwargs.pop('num_spins',                     None)
         fiber_fraction = kwargs.pop('fiber_fraction',           None)
@@ -143,7 +147,11 @@ class dmri_simulation:
             raise ValueError("Path to data directory does not exist. To run the simulation,"
                              +" make sure you have entered a valid path to the data directory")
         
-        ('\n    Inputs are valid!\n    Proceeding to simulation step.')
+        sys.stdout.write('\n    Inputs are valid!\n    Proceeding to simulation step.')
+        data_dir = self.path_to_save + os.sep + "R=" + str(self.cfg_path).split('_Config',1)[0][-2] + "_C=" + str(self.cfg_path).split('_Config',1)[0][-1]
+        if not os.path.exists(data_dir): os.mkdir(data_dir)
+        path, file = os.path.split(self.cfg_path)  
+        if not os.path.exists(data_dir + os.sep + file): shutil.move(self.cfg_path, data_dir + os.sep + file)
         np.random.seed(random_state)
         self.bvals = np.loadtxt(path_to_bvals) 
         self.bvecs = np.loadtxt(path_to_bvecs)
@@ -190,7 +198,7 @@ class dmri_simulation:
                                                                 self.path_to_save,
                                                                 self.cfg_path)
         self.spinPositionsT1m = np.random.uniform(low = 0 , high = self.voxelDims, size = (int(self.numSpins),3))
-        self.spinInFiber_i, self.spinInCell_i = spin_init_positions._find_spin_locations(self.spinPositionsT1m, 
+        self.spinInFiber1_i, self.spinInFiber2_i, self.spinInCell_i = spin_init_positions._find_spin_locations(self.spinPositionsT1m, 
                                                                                          self.fiberCenters, 
                                                                                          self.cellCenters, 
                                                                                          self.fiberRotationReference,
@@ -235,7 +243,7 @@ class dmri_simulation:
             voxel_dims=voxel_dims,
             buffer=buffer,
             path_to_bvals= bvals_path, 
-            path_to_bvecs= bvals_path)
+            path_to_bvecs= bvecs_path)
         return
 
     def from_config(self, path_to_configuration_file):
