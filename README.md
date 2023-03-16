@@ -20,7 +20,7 @@ The diffusion process may be simpilated in arbitrary geometries admited by two f
 local diffusivities $\mathbf{D}_{0}^{\text{local}}$ and two cell populations with set-able radii and densitites.
 
 ## Signal Acquisition
-Data from the simulated spin trajectories is then used to compute the echo signal admited by the following PGSE experiment
+Data from the simulated spin trajectories is then used to compute the echo signal admited by the following PGSE experiment:
 ![This is an image](https://github.com/jacobblum/dMRI-MCSIM/blob/main/images/PGSE_sequence.png)
 
 Standard numerical integration gives that the k-th dMRI signal, correspodning to the k-th diffusion gradient $g_{k}$ is given by:
