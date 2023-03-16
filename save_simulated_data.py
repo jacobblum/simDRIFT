@@ -81,7 +81,7 @@ def _signal(self, trajectoryT1m, trajectoryT2p, xyz, finite):
             b_vals = self.bvals
         allSignal = np.zeros(unitGradients.shape[0])
         for i in (range(unitGradients.shape[0])):
-            sys.stdout.write('\r' + 'Gradient: ' +  str(i+1) + '/' + str(unitGradients.shape[0]))
+            sys.stdout.write('\r' + 'Gradient: ' +  f'{str(i+1):3}/' + f'{str(unitGradients.shape[0]):3}')
             sys.stdout.flush()
             signal = 0
             if xyz:
@@ -111,23 +111,23 @@ def _save_data(self, path, plot_xyz):
         overallData.append(fiber1_trajectories)
         np.save(data_dir + os.sep + "fiber1PositionsT1m.npy", self.fiber1PositionsT1m)
         np.save(data_dir + os.sep + "fiber1PositionsT2p.npy", self.fiber1PositionsT2p)
-        pureFiber1Signal, b = _signal(self, self.fiber1PositionsT1m, self.fiber1PositionsT2p, xyz = False, finite = False)
+        pureFiber1Signal, b = _signal(self, self.fiber1PositionsT1m, self.fiber1PositionsT2p, xyz = False, finite = True)
         dwiFiber1 = nb.Nifti1Image(pureFiber1Signal.reshape(1,1,1,-1), affine = np.eye(4))
-        nb.save(dwiFiber1, data_dir + os.sep + "pureFiber1Signal.nii")
+        nb.save(dwiFiber1, data_dir + os.sep + "fiber1Signal.nii")
 
     if self.fiberFraction[1] > 0:
         fiber2_trajectories = [self.fiber2PositionsT1m, self.fiber2PositionsT2p]
         overallData.append(fiber2_trajectories)
         np.save(data_dir + os.sep + "fiber2PositionsT1m.npy", self.fiber2PositionsT1m)
         np.save(data_dir + os.sep + "fiber2PositionsT2p.npy", self.fiber2PositionsT2p)
-        pureFiber2Signal, b = _signal(self, self.fiber2PositionsT1m, self.fiber2PositionsT2p, xyz = False, finite = False)
+        pureFiber2Signal, b = _signal(self, self.fiber2PositionsT1m, self.fiber2PositionsT2p, xyz = False, finite = True)
         dwiFiber2 = nb.Nifti1Image(pureFiber2Signal.reshape(1,1,1,-1), affine = np.eye(4))
-        nb.save(dwiFiber2, data_dir + os.sep + "pureFiber2Signal.nii")
+        nb.save(dwiFiber2, data_dir + os.sep + "fiber2Signal.nii")
 
     if (self.fiberFraction[0] > 0) and (self.fiberFraction[1] > 0):
-        np.save(data_dir + os.sep + "fiberPositionsT1m.npy",np.vstack([self.fiber1PositionsT1m, self.fiber2PositionsT1m]))
-        np.save(data_dir + os.sep + "fiberPositionsT2p.npy",np.vstack([self.fiber1PositionsT2p, self.fiber2PositionsT2p]))
-        comboFiberSignal, b = _signal(self, np.vstack([self.fiber1PositionsT1m, self.fiber2PositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.fiber2PositionsT2p]), xyz = False, finite = False)
+        np.save(data_dir + os.sep + "allFiberPositionsT1m.npy",np.vstack([self.fiber1PositionsT1m, self.fiber2PositionsT1m]))
+        np.save(data_dir + os.sep + "allFiberPositionsT2p.npy",np.vstack([self.fiber1PositionsT2p, self.fiber2PositionsT2p]))
+        comboFiberSignal, b = _signal(self, np.vstack([self.fiber1PositionsT1m, self.fiber2PositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.fiber2PositionsT2p]), xyz = False, finite = True)
         dwiFibers = nb.Nifti1Image(comboFiberSignal.reshape(1,1,1,-1), affine = np.eye(4))
         nb.save(dwiFibers, data_dir + os.sep + "comboFiberSignal.nii")
     
@@ -137,34 +137,34 @@ def _save_data(self, path, plot_xyz):
         np.save(data_dir + os.sep + "cellsPositionsT1m.npy", self.cellPositionsT1m)
         np.save(data_dir + os.sep + "cellsPositionsT2p.npy", self.cellPositionsT2p)
         sys.stdout.write('\nAquiring Pure Cell Signal: \n')
-        pureCellSignal, _ = _signal(self,self.cellPositionsT1m, self.cellPositionsT2p, xyz = False , finite=False)
+        pureCellSignal, _ = _signal(self,self.cellPositionsT1m, self.cellPositionsT2p, xyz = False , finite=True)
         dwiCell = nb.Nifti1Image(pureCellSignal.reshape(1,1,1,-1), affine = np.eye(4))
-        nb.save(dwiCell, data_dir + os.sep + "pureCellsSignal.nii")
+        nb.save(dwiCell, data_dir + os.sep + "cellsSignal.nii")
 
     water_trajectories = [self.extraPositionsT1m, self.extraPositionsT2p]
     overallData.append(water_trajectories)
     np.save(data_dir + os.sep + "waterPositionsT1m.npy", self.extraPositionsT1m)
     np.save(data_dir + os.sep + "waterPositionsT2p.npy", self.extraPositionsT2p)
     sys.stdout.write('\nAquiring Pure Extra Cell/Fiber Signal: \n')
-    pureWaterSignal, bvals = _signal(self,self.extraPositionsT1m, self.extraPositionsT2p, xyz = False, finite=False)
+    pureWaterSignal, bvals = _signal(self,self.extraPositionsT1m, self.extraPositionsT2p, xyz = False, finite=True)
     dwiWater = nb.Nifti1Image(pureWaterSignal.reshape(1,1,1,-1), affine = np.eye(4))
-    nb.save(dwiWater, data_dir + os.sep  + "pureWaterSignal.nii")
+    nb.save(dwiWater, data_dir + os.sep  + "waterSignal.nii")
 
     sys.stdout.write('\nAquiring Total Signal: \n')
     if (self.cellFraction > 0):
         if (self.fiberFraction[0] > 0) and (self.fiberFraction[1] > 0):
-            expSignal, bvals = _signal(self, np.vstack([self.fiber1PositionsT1m, self.fiber2PositionsT1m, self.cellPositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.fiber2PositionsT2p, self.cellPositionsT2p, self.extraPositionsT2p]), xyz = False, finite = False)
+            expSignal, bvals = _signal(self, np.vstack([self.fiber1PositionsT1m, self.fiber2PositionsT1m, self.cellPositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.fiber2PositionsT2p, self.cellPositionsT2p, self.extraPositionsT2p]), xyz = False, finite = True)
         elif (self.fiberFraction[0] > 0) and (self.fiberFraction[1] <= 0):
-            expSignal, bvals = _signal(self, np.vstack([self.fiber1PositionsT1m, self.cellPositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.cellPositionsT2p, self.extraPositionsT2p]), xyz = False, finite = False)
+            expSignal, bvals = _signal(self, np.vstack([self.fiber1PositionsT1m, self.cellPositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.cellPositionsT2p, self.extraPositionsT2p]), xyz = False, finite = True)
         elif (self.fiberFraction[0] <= 0) and (self.fiberFraction[1] <= 0):
-            expSignal, bvals = _signal(self, np.vstack([self.cellPositionsT1m, self.extraPositionsT1m]), np.vstack([self.cellPositionsT2p, self.extraPositionsT2p]), xyz = False, finite = False)
+            expSignal, bvals = _signal(self, np.vstack([self.cellPositionsT1m, self.extraPositionsT1m]), np.vstack([self.cellPositionsT2p, self.extraPositionsT2p]), xyz = False, finite = True)
     elif (self.cellFraction <= 0):
         if (self.fiberFraction[0] > 0) and (self.fiberFraction[1] > 0):
-            expSignal, bvals = _signal(self, np.vstack([self.fiber1PositionsT1m, self.fiber2PositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.fiber2PositionsT2p, self.extraPositionsT2p]), xyz = False, finite = False)
+            expSignal, bvals = _signal(self, np.vstack([self.fiber1PositionsT1m, self.fiber2PositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.fiber2PositionsT2p, self.extraPositionsT2p]), xyz = False, finite = True)
         elif (self.fiberFraction[0] > 0) and (self.fiberFraction[1] <= 0):
-            expSignal, bvals = _signal(self, np.vstack([self.fiber1PositionsT1m, self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.extraPositionsT2p]), xyz = False, finite = False)
+            expSignal, bvals = _signal(self, np.vstack([self.fiber1PositionsT1m, self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.extraPositionsT2p]), xyz = False, finite = True)
         elif (self.fiberFraction[0] <= 0) and (self.fiberFraction[1] <= 0):
-            expSignal, bvals = _signal(self, self.extraPositionsT1m, self.extraPositionsT2p, xyz = False, finite = False)
+            expSignal, bvals = _signal(self, self.extraPositionsT1m, self.extraPositionsT2p, xyz = False, finite = True)
     
     dwi = nb.Nifti1Image(expSignal.reshape(1,1,1,-1), affine = np.eye(4))
     nb.save(dwi,data_dir + os.sep + "totalSignal.nii")

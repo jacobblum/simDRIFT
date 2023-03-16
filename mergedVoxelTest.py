@@ -158,50 +158,24 @@ class dmri_simulation:
         self.fiberRadius = fiber_radii
         self.Thetas = thetas
         self.fiberDiffusions = fiber_diffusions
-        self.fiberRotationReference, self.rotMat = set_voxel_configuration._generate_rot_mat(thetas,self.path_to_save,self.cfg_path)        
-        self.numFibers = set_voxel_configuration._set_num_fibers(self.fiberFraction, 
-                                                                 self.fiberRadius,
-                                                                 self.voxelDims, 
-                                                                 self.buffer)
+        self.fiberRotationReference = np.load(self.path_to_save + os.sep + 'rotReference.npy')
+        self.rotMat = np.load(self.path_to_save + os.sep + 'rotMatrix.npy')
+        self.numFibers = 1521
         self.cellFraction = cell_fraction
         self.cellRadii = cell_radii
         self.fiberCofiguration = fiber_configuration
         self.voidDist = .60*self.voxelDims
-        self.numCells = set_voxel_configuration._set_num_cells(self.cellFraction, 
-                                                               self.cellRadii, 
-                                                               self.voxelDims, 
-                                                               self.buffer)
+        self.numCells = 3040
         self.Delta = Delta
         self.dt = dt
         self.delta = dt
-        self.fiberCenters = set_voxel_configuration._place_fiber_grid(self.fiberFraction, 
-                                                                      self.numFibers, 
-                                                                      self.fiberRadius, 
-                                                                      self.fiberDiffusions, 
-                                                                      self.voxelDims, 
-                                                                      self.buffer, 
-                                                                      self.voidDist, 
-                                                                      self.rotMat, 
-                                                                      self.fiberCofiguration,
-                                                                      self.path_to_save,
-                                                                      self.cfg_path)
-        self.cellCenters = set_voxel_configuration._place_cells(self.numCells, 
-                                                                self.cellRadii, 
-                                                                self.fiberCofiguration, 
-                                                                self.voxelDims, 
-                                                                self.buffer, 
-                                                                self.voidDist,
-                                                                self.path_to_save,
-                                                                self.cfg_path)
+        self.fiberCenters = np.load(self.path_to_save + os.sep + 'allFiberCenters.npy')
+        self.cellCenters = np.load(self.path_to_save + os.sep + 'cellsCenters.npy')
         self.spinPositionsT1m = np.random.uniform(low = 0 , high = self.voxelDims, size = (int(self.numSpins),3))
-        self.spinInFiber1_i, self.spinInFiber2_i, self.spinInCell_i = spin_init_positions._find_spin_locations(self.spinPositionsT1m, 
-                                                                                         self.fiberCenters, 
-                                                                                         self.cellCenters, 
-                                                                                         self.fiberRotationReference,
-                                                                                         self.path_to_save,
-                                                                                         self.cfg_path)
+        self.spinInFiber1_i, self.spinInFiber2_i, self.spinInCell_i = spin_init_positions._find_spin_locations(self.spinPositionsT1m, self.fiberCenters, self.cellCenters, self.fiberRotationReference, self.path_to_save, self.cfg_path)
 
     def _set_params_from_config(self, path_to_configuration_file):
+        
         self.cfg_path = path_to_configuration_file
         ## Simulation Parameters
         config = configparser.ConfigParser()
@@ -220,13 +194,11 @@ class dmri_simulation:
         dt = literal_eval(config['Scanning Parameters']['dt'])
         voxel_dims = literal_eval(config['Scanning Parameters']['voxelDim'])
         buffer = literal_eval(config['Scanning Parameters']['buffer'])
-        #bvals_path = config['Scanning Parameters']['path_to_bvals']
-        #bvecs_path = config['Scanning Parameters']['path_to_bvecs']
-        bvals_path = r"C:\MCSIM\Repo\simulation_data\DBSI\DBSI-99\bval-99.bval"
-        bvecs_path = r"C:\MCSIM\Repo\simulation_data\DBSI\DBSI-99\bvec-99.bvec"
+        bvals_path = r"C:\MCSIM\Repo\diffusion_schemes\DBSI\DBSI-99\bval-99.bval"
+        bvecs_path = r"C:\MCSIM\Repo\diffusion_schemes\DBSI\DBSI-99\bvec-99.bvec"
+        
         ## Saving Parameters
-        #self.path_to_save = config['Saving Parameters']['path_to_save_file_dir']
-        self.path_to_save = r"C:\MCSIM\6x6serverSave"
+        self.path_to_save = r"C:\Users\kainen.utt\Documents\Research\MosaicProject\intraVoxelTest\cellEdge\MergedVoxel"
 
         self.set_parameters(
             num_spins=num_spins,
@@ -234,7 +206,7 @@ class dmri_simulation:
             fiber_radius=fiber_radii,
             thetas=thetas,
             fiber_diffusions=fiber_diffusions,
-            cell_fraction=cell_fraction,
+            cell_fraction=cell_fraction/9,
             cell_radii=cell_radii,
             fiber_configuration=fiber_configuration,
             Delta=Delta,
@@ -247,17 +219,7 @@ class dmri_simulation:
 
     def from_config(self, path_to_configuration_file):
         self._set_params_from_config(path_to_configuration_file)    
-        spin_positions_t2p,spin_positions_t1m = diffusion._simulate_diffusion(self.spinPositionsT1m, 
-                                                                              self.spinInFiber1_i,
-                                                                              self.spinInFiber2_i, 
-                                                                              self.spinInCell_i,
-                                                                              self.fiberCenters,
-                                                                              self.cellCenters,
-                                                                              self.Delta,
-                                                                              self.dt,
-                                                                              self.fiberCofiguration,
-                                                                              self.fiberRotationReference)
-        
+        spin_positions_t2p,spin_positions_t1m = diffusion._simulate_diffusion(self.spinPositionsT1m, self.spinInFiber1_i, self.spinInFiber2_i, self.spinInCell_i, self.fiberCenters, self.cellCenters, self.Delta, self.dt, self.fiberCofiguration, self.fiberRotationReference)
         self.fiber1PositionsT1m = spin_positions_t1m[np.where(self.spinInFiber1_i > -1)]
         self.fiber1PositionsT2p = spin_positions_t2p[np.where(self.spinInFiber1_i > -1)]
         self.fiber2PositionsT1m = spin_positions_t1m[np.where(self.spinInFiber2_i > -1)]
@@ -278,9 +240,7 @@ class dmri_simulation:
         sys.stdout.write('\n\nProceeding to save results...')
         sys.stdout.write('\n')
         
-        save_simulated_data._save_data(self, 
-                                       self.path_to_save, 
-                                       plot_xyz=False)
+        save_simulated_data._save_data(self, self.path_to_save, plot_xyz=False)
         return
 
     def spins_in_voxel(self, trajectoryT1m, trajectoryT2p):
@@ -321,7 +281,7 @@ class dmri_simulation:
                 traj2_vox.append(trajectoryT2p[i,:])
         return np.array(traj1_vox), np.array(traj2_vox) 
 
-def dmri_sim_wrapper(arg):
+def merged_voxel(arg):
     path, file = os.path.split(arg)
     simObj = dmri_simulation()
     simObj.from_config(arg)
@@ -338,13 +298,12 @@ def main():
                     + "https://numba.pydata.org/numba-doc/dev/cuda/overview.html"
                 )
 
-    configs = glob.glob(r"C:\MCSIM\6x6server\*.ini")
-    for cfg in configs:
-        print('\nNow simulating:' + str(cfg))
-        p = Process(target=dmri_sim_wrapper, args = (cfg,))
+    mergedConfigs = glob.glob(r"C:\Users\kainen.utt\Documents\Research\MosaicProject\intraVoxelTest\cellEdge\MergedVoxel\Merged_Config.ini")
+    for mCfg in mergedConfigs:
+        print('\nNow merging:' + str(mCfg))
+        p = Process(target=merged_voxel, args = (mCfg,))
         p.start()
         p.join()
-
 
 if __name__ == "__main__":
     #mp.set_start_method('forkserver')

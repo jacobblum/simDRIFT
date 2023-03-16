@@ -41,7 +41,7 @@ def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
     sys.stdout.write('\n   --------------- \n   {} cells with R = {} um\n   {} cells with R = {} um\n'.format(str(num_cells[0]),str(cell_radii[0]),str(num_cells[1]),str(cell_radii[1])))
     return num_cells
 
-def _place_fiber_grid(fiber_fractions, num_fibers, fiber_radius, fiber_diffusions, voxel_dimensions, buffer, void_distance, rotation_matrix, fiber_configuration,savePath,cfg_path):
+def _place_fiber_grid(fiber_fractions, num_fibers, fiber_radius, fiber_diffusions, voxel_dimensions, buffer, void_distance, rotation_matrix, fiber_configuration, savePath, cfg_path):
     data_dir = savePath + os.sep + "R=" + str(cfg_path).split('_',1)[0][-2] + "_C=" + str(cfg_path).split('_',1)[0][-1]
     if not os.path.exists(data_dir): os.mkdir(data_dir)
     path, file = os.path.split(cfg_path)  

@@ -5,7 +5,7 @@ from multiprocessing.sharedctypes import Value
 from scipy.io import savemat
 import numpy as np 
 import numba 
-from numba import jit, cuda
+from numba import jit, njit, cuda
 from numba.cuda import random 
 from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128p_states
 import math
@@ -87,7 +87,7 @@ def _find_spin_locations_kernel(spinInFiber1_i, spinInFiber2_i, spinInCell_i, in
     return
 
 def _find_spin_locations(initial_spin_positions, fiber_centers, cell_centers, rotation_reference, savePath, cfg_path):
-    data_dir = savePath + os.sep + "R=" + str(cfg_path).split('_',1)[0][-2] + "_C=" + str(cfg_path).split('_',1)[0][-1]
+    data_dir = savePath
     if not os.path.exists(data_dir): os.mkdir(data_dir)
     path, file = os.path.split(cfg_path)  
     if not os.path.exists(data_dir + os.sep + file): shutil.move(cfg_path, data_dir + os.sep + file)

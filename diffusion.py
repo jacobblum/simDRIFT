@@ -3,7 +3,7 @@ import multiprocessing as mp
 from multiprocessing.sharedctypes import Value
 import numpy as np 
 import numba 
-from numba import jit, cuda
+from numba import jit, njit, cuda
 from numba.cuda import random 
 from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128p_states
 import math
@@ -39,22 +39,12 @@ def _simulate_diffusion(spin_positions_t1m,
     dt_gpu = cuda.to_device(np.array([dt]).astype(np.float32))
     N_iter = int(Delta/dt)
     Start = time.time()
-    threads_per_block = 64
+    threads_per_block = 320
     blocks_per_grid = (spin_positions_t1m_cpy.shape[0] + (threads_per_block-1)) // threads_per_block
     for i in range(N_iter):
         sys.stdout.write('\r' + 'Step: ' +  str(i+1) + '/' + str(N_iter))
         sys.stdout.flush()
-        _diffusion_context_manager[blocks_per_grid,threads_per_block](rng_states_gpu, 
-                                            spin_positions_t1m_gpu, 
-                                            spin_in_fiber1_at_index_gpu,
-                                            spin_in_fiber2_at_index_gpu,
-                                            fiber_centers_gpu,
-                                            spin_in_cell_at_index_gpu,
-                                            cell_centers_gpu,
-                                            rotation_reference_gpu,
-                                            dt_gpu,
-                                            (fiber_configuration == 'Void')
-                                             )
+        _diffusion_context_manager[blocks_per_grid,threads_per_block](rng_states_gpu, spin_positions_t1m_gpu, spin_in_fiber1_at_index_gpu, spin_in_fiber2_at_index_gpu, fiber_centers_gpu, spin_in_cell_at_index_gpu, cell_centers_gpu, rotation_reference_gpu, dt_gpu, (fiber_configuration == 'Void'))
         cuda.synchronize()
     End = time.time()
     sys.stdout.write('\nSimulation elapsed in: {} seconds'.format(round((End-Start)),3))
@@ -67,7 +57,7 @@ def _simulate_diffusion(spin_positions_t1m,
     return spin_positions_t2p, spin_positions_t1m_cpy
 
 
-@cuda.jit(fastmath=True)
+@numba.cuda.jit(fastmath=True)
 def _diffusion_context_manager(rng_states, spin_positions, spin_in_fiber1_key, spin_in_fiber2_key, fiber_centers, spin_in_cell_key, cell_centers, fiber_rotation_reference, dt, void):
     """
     Parameters:
