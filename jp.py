@@ -34,7 +34,20 @@ def euclidean_distance(an_array1, an_array2, rotation_reference, fiber):
         return math.sqrt(dist)
 
 @cuda.jit(device = True)
-def test_func(an_array):
-    for i in range(an_array.shape[0]):
-        for j in range(an_array.shape[1]):
-            k = 0.0
+def diffusion_step(an_array, step):
+    i = cuda.grid(1)
+    if i > an_array.shape[0]:
+        return
+    
+    D = numba.float32(3.0)
+    Step = numba.float32(D)
+    prevPosition = cuda.local.array(shape = 3, dtype = numba.float32)
+    newPosition = cuda.local.array(shape = 3, dtype = numba.float32)
+    for j in range(prevPosition.shape[0]): 
+        prevPosition[j] = an_array[i,j]
+        newPosition[j] = prevPosition[j]+Step
+        for _ in range(1000): 3.8*math.sqrt(_)
+        an_array[i,j] = newPosition[j]
+
+    
+    

@@ -4,7 +4,7 @@ import multiprocessing as mp
 from multiprocessing.sharedctypes import Value
 import numpy as np 
 import numba 
-from numba import jit, njit, cuda, int32, float32
+from numba import jit, cuda, int32, float32
 from numba.cuda import random 
 from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128p_states
 import math
@@ -18,7 +18,6 @@ import configparser
 from ast import literal_eval
 from multiprocessing import Process
 import shutil
-import jp as jp
 import walk_in_fiber
 import walk_in_cell
 import walk_in_extra_environ
@@ -27,8 +26,6 @@ import sys
 import diffusion
 import set_voxel_configuration
 import save_simulated_data
-import pandas as pd
-
 
 class dmri_simulation:
     def __init__(self):
@@ -43,16 +40,13 @@ class dmri_simulation:
         cellFraction =              0.0
         cellRadii =                 0.0 #um
         spinPositionsT1m =          0.0
-        fiber1PositionsT1m =         0.0
-        fiber1PositionsT2p =         0.0
-        fiber2PositionsT1m =         0.0
-        fiber2PositionsT2p =         0.0
+        fiberPositionsT1m =         0.0
+        fiberPositionsT2p =         0.0
         cellPositionsT1m =          0.0
         cellPositionsT2p =          0.0
         extraPositionsT1m =         0.0
         extraPositionsT2p =         0.0
-        spinInFiber1_i =            0.0
-        spinInFiber2_i =            0.0
+        spinInFiber_i =             0.0
         spinInCell_i =              0.0
         fiberRotationReference =    0.0
         Thetas =                    0.0
@@ -68,10 +62,8 @@ class dmri_simulation:
         random_state =              0.0
 
         return
-    
     def set_parameters(self,**kwargs):
-        sys.stdout.write('\nChecking input validity...')
-
+        
         num_spins = kwargs.pop('num_spins',                     None)
         fiber_fraction = kwargs.pop('fiber_fraction',           None)
         fiber_radii = kwargs.pop('fiber_radius',                None)
@@ -128,27 +120,25 @@ class dmri_simulation:
 
         if not isinstance(dt, float):
             raise ValueError("Inccorect Data Type for dt. To run the simulation,"
-                    +" make sure dt is a float")
+                    +" make sure cellFraction is a float")
 
         if not isinstance(voxel_dims, float):
             raise ValueError("Incorect Data Type for voxelDim. To run the simulation,"
-                    +" make sure voxel_dims is a float")
+                    +" make sure cellFraction is a float")
 
         if not isinstance(buffer, float):
             raise ValueError("Incorrect Data Type for buffer. To run the simulation,"
-                    +" make sure buffer is a float")
+                    +" make sure cellFraction is a float")
 
         if not os.path.exists(path_to_bvals):
             raise ValueError("Path to bval files does not exist. To run the simulation,"
                              +" make sure you have entered a valid path to the bval file")
+        if not os.path.exists(path_to_bvecs):
+            raise ValueError("Path to bvec files does not exist. To run the simulation,"
+                             +" make sure you have entered a valid path to the bvec file")
         if not os.path.exists(self.path_to_save):
-            os.mkdir(self.path_to_save)
-        path, file = os.path.split(self.cfg_path)  
-        if not os.path.exists(self.path_to_save + os.sep + file): 
-            shutil.copy(self.cfg_path, self.path_to_save + os.sep + file)
-        
-        sys.stdout.write('\n    Inputs are valid!\n    Proceeding to simulation step.')
-        np.random.seed(random_state)
+            raise ValueError("Path to data directory does not exist. To run the simulation,"
+                             +" make sure you have entered a valid path to the data directory")
         self.bvals = np.loadtxt(path_to_bvals) 
         self.bvecs = np.loadtxt(path_to_bvecs)
         self.voxelDims = voxel_dims      
@@ -158,35 +148,15 @@ class dmri_simulation:
         self.fiberRadius = fiber_radii
         self.Thetas = thetas
         self.fiberDiffusions = fiber_diffusions
-        self.cellFraction = cell_fraction
-        self.cellRadii = cell_radii
-        self.fiberCofiguration = fiber_configuration
-        self.voidDist = .30*self.voxelDims
         self.Delta = Delta
         self.dt = dt
         self.delta = dt
+        self.cellFraction = cell_fraction
+        return 
 
-        if os.path.exists(self.path_to_save + os.sep + 'rotMatrix.npy') and os.path.exists(self.path_to_save + os.sep + 'rotReference.npy'):
-            self.rotMat = np.load(self.path_to_save + os.sep + 'rotMatrix.npy')
-            self.fiberRotationReference = np.load(self.path_to_save + os.sep + 'rotReference.npy')
-        else:
-            self.fiberRotationReference, self.rotMat = set_voxel_configuration._generate_rot_mat(thetas,self.path_to_save,self.cfg_path)        
-
-        if os.path.exists(self.path_to_save + os.sep + 'cellsCenters.npy') and os.path.exists(self.path_to_save + os.sep + 'fiberCenters.npy'):
-            self.fiberCenters = np.load(self.path_to_save + os.sep + 'fiberCenters.npy')
-            self.cellCenters = np.load(self.path_to_save + os.sep + 'cellsCenters.npy')
-            self.numFibers = set_voxel_configuration._set_num_fibers(self.fiberFraction, self.fiberRadius, self.voxelDims, self.buffer)
-            self.numCells = set_voxel_configuration._set_num_cells(self.cellFraction, self.cellRadii, self.voxelDims, self.buffer)
-        else:
-            self.numFibers = set_voxel_configuration._set_num_fibers(self.fiberFraction, self.fiberRadius, self.voxelDims, self.buffer)
-            self.numCells = set_voxel_configuration._set_num_cells(self.cellFraction, self.cellRadii, self.voxelDims, self.buffer)
-            self.fiberCenters = set_voxel_configuration._place_fiber_grid(self.fiberFraction, self.numFibers, self.fiberRadius, self.fiberDiffusions, self.voxelDims, self.buffer, self.voidDist, self.rotMat, self.fiberCofiguration, self.path_to_save, self.cfg_path)
-            self.cellCenters = set_voxel_configuration._place_cells(self.numCells, self.cellRadii, self.fiberCofiguration, self.voxelDims, self.buffer, self.voidDist, self.path_to_save, self.cfg_path)
-        
-        self.spinPositionsT1m = np.random.uniform(low = 0 , high = self.voxelDims, size = (int(self.numSpins),3))
-        self.spinInFiber1_i, self.spinInFiber2_i, self.spinInCell_i = spin_init_positions._find_spin_locations(self.spinPositionsT1m, self.fiberCenters, self.cellCenters, self.fiberRotationReference, self.path_to_save, self.cfg_path)
 
     def _set_params_from_config(self, path_to_configuration_file):
+        
         self.cfg_path = path_to_configuration_file
         ## Simulation Parameters
         config = configparser.ConfigParser()
@@ -205,11 +175,14 @@ class dmri_simulation:
         dt = literal_eval(config['Scanning Parameters']['dt'])
         voxel_dims = literal_eval(config['Scanning Parameters']['voxelDim'])
         buffer = literal_eval(config['Scanning Parameters']['buffer'])
-        bvals_path = config['Scanning Parameters']['path_to_bvals']
-        bvecs_path = config['Scanning Parameters']['path_to_bvecs']
+        #bvals_path = config['Scanning Parameters']['path_to_bvals']
+        #bvecs_path = config['Scanning Parameters']['path_to_bvecs']
+        bvals_path = r"C:\Users\kainen.utt\Documents\Research\MosaicProject\diffusion_schemes\N=25+b0\bval_025+b0.bval"
+        bvecs_path = r"C:\Users\kainen.utt\Documents\Research\MosaicProject\diffusion_schemes\N=25+b0\bvec_025+b0.bvec"
         
         ## Saving Parameters
-        self.path_to_save = config['Saving Parameters']['path_to_save_file_dir']
+        #self.path_to_save = config['Saving Parameters']['path_to_save_file_dir']
+        self.path_to_save = r"C:\Users\kainen.utt\Documents\Research\MosaicProject\6x6\VersionB\SimOutput"
 
         self.set_parameters(
             num_spins=num_spins,
@@ -226,36 +199,6 @@ class dmri_simulation:
             buffer=buffer,
             path_to_bvals= bvals_path, 
             path_to_bvecs= bvecs_path)
-        return
-
-    def from_config(self, path_to_configuration_file):
-        self._set_params_from_config(path_to_configuration_file)    
-        spin_positions_t2p,spin_positions_t1m = diffusion._simulate_diffusion(self.spinPositionsT1m, self.spinInFiber1_i, self.spinInFiber2_i, self.spinInCell_i, self.fiberCenters, self.cellCenters, self.Delta, self.dt, self.fiberCofiguration, self.fiberRotationReference)
-        self.fiber1PositionsT1m = spin_positions_t1m[np.where(self.spinInFiber1_i > -1)]
-        self.fiber1PositionsT2p = spin_positions_t2p[np.where(self.spinInFiber1_i > -1)]
-        self.fiber2PositionsT1m = spin_positions_t1m[np.where(self.spinInFiber2_i > -1)]
-        self.fiber2PositionsT2p = spin_positions_t2p[np.where(self.spinInFiber2_i > -1)]
-        self.cellPositionsT1m   = spin_positions_t1m[np.where((self.spinInCell_i > -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))]
-        self.cellPositionsT2p   = spin_positions_t2p[np.where((self.spinInCell_i > -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))] 
-        self.extraPositionsT1m  = spin_positions_t1m[np.where((self.spinInCell_i == -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))] 
-        self.extraPositionsT2p  = spin_positions_t2p[np.where((self.spinInCell_i == -1) & (self.spinInFiber1_i == -1) & (self.spinInFiber2_i == -1))] 
-        
-        sys.stdout.write('\n----------------------------------')
-        sys.stdout.write('\n    Empirical Volume Fractions')
-        sys.stdout.write('\n----------------------------------')
-        sys.stdout.write('\n    Fiber 1 Volume: {}'.format(self.fiber1PositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\n    Fiber 2 Volume: {}'.format(self.fiber2PositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\nTotal Fiber Volume: {}'.format((self.fiber1PositionsT1m.shape[0] + self.fiber2PositionsT1m.shape[0])/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\n       Cell Volume: {}'.format(self.cellPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\n      Water Volume: {}'.format(self.extraPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]))
-        sys.stdout.write('\n\nProceeding to save results...')
-        sys.stdout.write('\n')
-        
-        empiricalData = pd.DataFrame()
-        empiricalList = pd.Series([self.fiber1PositionsT1m.shape[0]/self.spinPositionsT1m.shape[0],self.fiber2PositionsT1m.shape[0]/self.spinPositionsT1m.shape[0],(self.fiber1PositionsT1m.shape[0] + self.fiber2PositionsT1m.shape[0])/self.spinPositionsT1m.shape[0],self.cellPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0],self.extraPositionsT1m.shape[0]/self.spinPositionsT1m.shape[0]],index=['Fiber 1 Volume', 'Fiber 2 Volume', 'Total Fiber Volume', 'Cell Volume', 'Water Volume'])
-        empiricalData = empiricalData.append(empiricalList,ignore_index=True)
-        empiricalData.to_csv(self.path_to_save + os.sep + 'empiricalVolumeFractions.csv')
-        save_simulated_data._save_data(self, self.path_to_save, plot_xyz=False)
         return
 
     def spins_in_voxel(self, trajectoryT1m, trajectoryT2p):
@@ -291,17 +234,84 @@ class dmri_simulation:
         traj2_vox = []
 
         for i in range(trajectoryT1m.shape[0]):
-            if np.amin(trajectoryT2p[i,0:2]) >= 0 + 0.5*self.buffer and np.amax(trajectoryT2p[i,0:2]) <= self.voxelDims + 0.5*self.buffer:
+            if np.amin(trajectoryT2p[i,0:2]) >= 0 - 0.5*self.buffer and np.amax(trajectoryT2p[i,0:2]) <= self.voxelDims + 0.5*self.buffer:
                 traj1_vox.append(trajectoryT1m[i,:])
                 traj2_vox.append(trajectoryT2p[i,:])
         return np.array(traj1_vox), np.array(traj2_vox) 
 
-def dmri_sim_wrapper(arg):
-    path, file = os.path.split(arg)
-    simObj = dmri_simulation()
-    simObj.from_config(arg)
+    def _signal_from_trajectory_data(self,trajectory_dir):
+        run_xyz = False
+        finite  = True
+        trajectory_t1ms = glob.glob(trajectory_dir + os.sep + '*T1m*.npy')
+        for trajectory_file in trajectory_t1ms:
+                traj_dir, fname = os.path.split(trajectory_file)
+                compartment = (fname[0:6])
+                                
+                traj1 = np.load(trajectory_file)
+                traj2 = np.load(trajectory_file.replace('T1m', 'T2p'))
+                if compartment == 'cellPo':
+                    compartment = 'cells'
+                    self.cellPositionsT1m = traj1
+                    self.cellPositionsT2p = traj2
+                elif compartment == 'cellsP':
+                    compartment = 'cells'
+                    self.cellPositionsT1m = traj1
+                    self.cellPositionsT2p = traj2
 
-def main():
+                if compartment == 'fiber1':
+                    self.fiber1PositionsT1m = traj1
+                    self.fiber1PositionsT2p = traj2
+
+                if compartment == 'fiber2':
+                    self.fiber2PositionsT1m = traj1
+                    self.fiber2PositionsT2p = traj2
+
+                if compartment == 'fiberP' or compartment == 'allFib':
+                    compartment = 'comboFiber'
+
+                if compartment == 'waterP':
+                    compartment = 'water'
+                    self.extraPositionsT1m = traj1
+                    self.extraPositionsT2p = traj2
+
+                signal, bvals = save_simulated_data._signal(self, traj1, traj2, run_xyz, finite)
+                dwi = nb.Nifti1Image(signal.reshape(1,1,1,-1), affine = np.eye(4))
+                if run_xyz:
+                    nb.save(dwi, traj_dir + os.sep  + compartment + "Signal_XYZ.nii")
+                else:
+                    nb.save(dwi, traj_dir + os.sep  + compartment + "Signal_25+b0_dir.nii")
+
+        if (self.cellFraction > 0):
+            if (self.fiberFraction[0] > 0) and (self.fiberFraction[1] > 0):
+                expSignal, bvals = save_simulated_data._signal(self, np.vstack([self.fiber1PositionsT1m, self.fiber2PositionsT1m, self.cellPositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.fiber2PositionsT2p, self.cellPositionsT2p, self.extraPositionsT2p]), run_xyz, finite)
+            elif (self.fiberFraction[0] > 0) and (self.fiberFraction[1] <= 0):
+                expSignal, bvals = save_simulated_data._signal(self, np.vstack([self.fiber1PositionsT1m, self.cellPositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.cellPositionsT2p, self.extraPositionsT2p]), run_xyz, finite)
+            elif (self.fiberFraction[0] <= 0) and (self.fiberFraction[1] <= 0):
+                expSignal, bvals = save_simulated_data._signal(self, np.vstack([self.cellPositionsT1m, self.extraPositionsT1m]), np.vstack([self.cellPositionsT2p, self.extraPositionsT2p]), run_xyz, finite)
+        elif (self.cellFraction <= 0):
+            if (self.fiberFraction[0] > 0) and (self.fiberFraction[1] > 0):
+                expSignal, bvals = save_simulated_data._signal(self, np.vstack([self.fiber1PositionsT1m, self.fiber2PositionsT1m,self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.fiber2PositionsT2p, self.extraPositionsT2p]), run_xyz, finite)
+            elif (self.fiberFraction[0] > 0) and (self.fiberFraction[1] <= 0):
+                expSignal, bvals = save_simulated_data._signal(self, np.vstack([self.fiber1PositionsT1m, self.extraPositionsT1m]), np.vstack([self.fiber1PositionsT2p, self.extraPositionsT2p]), run_xyz, finite)
+            elif (self.fiberFraction[0] <= 0) and (self.fiberFraction[1] <= 0):
+                expSignal, bvals = save_simulated_data._signal(self, self.extraPositionsT1m, self.extraPositionsT2p, run_xyz, finite)
+        
+        dwiTotal = nb.Nifti1Image(expSignal.reshape(1,1,1,-1), affine = np.eye(4))
+        if run_xyz:
+            nb.save(dwiTotal,traj_dir + os.sep + "totalSignal_XYZ.nii")
+        else:
+            nb.save(dwiTotal,traj_dir + os.sep + "totalSignal_25+b0_dir.nii")
+        
+
+        return
+
+def sig_from_traj(arg):
+    path, file = os.path.split(arg)
+    genSig = dmri_simulation()
+    genSig._set_params_from_config(arg)
+    genSig._signal_from_trajectory_data(path)
+
+def main():       
     with open(os.devnull, "w") as f, contextlib.redirect_stdout(f): 
         try:
             numba.cuda.detect()
@@ -313,19 +323,11 @@ def main():
                     + "https://numba.pydata.org/numba-doc/dev/cuda/overview.html"
                 )
 
-    configs = glob.glob(r"C:\MCSIM\development\testCases\*.ini")
+    configs = glob.glob(r"C:\Users\kainen.utt\Documents\Research\MosaicProject\6x6\VersionB\SimOutput\*\*_ConfigB.ini")
     for cfg in configs:
-        print('\nNow simulating:' + str(cfg))
-        p = Process(target=dmri_sim_wrapper, args = (cfg,))
-        p.start()
-        p.join()
+        print('\nNow generating signal from trajectory data for: ' + str(cfg).split(r'SimOutput',1)[1][1:8])
+        sig_from_traj(cfg,)
 
 
 if __name__ == "__main__":
-    #mp.set_start_method('forkserver')
     main()
-    
- 
-
-
-
