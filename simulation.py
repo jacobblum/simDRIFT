@@ -10,7 +10,7 @@ import sys
 import diffusion
 import save
 from jp import linalg
-
+import logging
 
 class dmri_simulation:
     def __init__(self):
@@ -42,7 +42,7 @@ class dmri_simulation:
 
     def set_voxel(self):
 
-        self.numCells = set_voxel_configuration._set_num_cells(self.parameters['cell_fractions'],
+        self.num_cells = set_voxel_configuration._set_num_cells(self.parameters['cell_fractions'],
                                                                self.parameters['cell_radii'],
                                                                self.parameters['voxel_dims'],
                                                                self.parameters['buffer']
@@ -58,9 +58,9 @@ class dmri_simulation:
                                                                 self.parameters['fiber_configuration']
                                                                 )
 
-        self.cells = set_voxel_configuration._place_cells(self.parameters['cell_fractions'],
-                                                          self.parameters['cell_radii'],
+        self.cells = set_voxel_configuration._place_cells(self.num_cells,
                                                           self.fibers,
+                                                          self.parameters['cell_radii'],
                                                           self.parameters['fiber_configuration'],
                                                           self.parameters['voxel_dims'],
                                                           self.parameters['buffer'],
@@ -82,6 +82,17 @@ class dmri_simulation:
         return
 
     def run(self, args):
+        log_file = os.path.join(os.getcwd() + os.sep + 'log')
+        logging.basicConfig(level = logging.INFO,
+                            format = 'dmri-sim: %(message)s',
+                            filename = log_file,
+                            filemode = 'w')
+        console = logging.StreamHandler()
+        formatter = logging.Formatter("dmri-sim: %(message)s")
+        console.setFormatter(formatter)
+        logging.getLogger('').addHandler(console)
+        logging.info('Running dmri-sim')
+
         try:
             self.set_parameters(args)
             self.set_voxel()
@@ -93,59 +104,19 @@ class dmri_simulation:
                                           self.parameters['dt'],
                                         )
             
-            save._save_data(self.spins,
+            save._save_data(self,
+                            self.spins,
                             self.parameters['Delta'],
                             self.parameters['dt'],
-                            )
+                            'DBSI_99')
         
 
         except KeyboardInterrupt:
-            sys.stdout.write('Keyboard interupt. Terminated without saving. \n')
+            sys.stdout.write('\n')
+            logging.info('Keyboard interupt. Terminated without saving.')
+            exit()
 
     
-    
-    
-   
-
-    def spins_in_voxel(self, trajectoryT1m, trajectoryT2p):
-        """
-         Helper function to ensure that the spins at time T2p are wtihin the self.voxelDims x self.voxelDims x inf imaging voxel
-
-        Parameters
-        ----------
-        trajectoryT1m: N_{spins} x 3 ndarray
-            The initial spin position at time t1m
-
-        trajectoryT2p: N_{spins} x 3 ndarray
-            The spin position at time t2p
-
-        Returns
-        -------
-        traj1_vox: (N, 3) ndarray
-            Position at T1m of the spins which stay within the voxel
-        traj2_vox: (N, 3) ndarray
-            Position at T2p of the spins which stay within the voxel
-
-        Notes
-        -----
-        None
-
-        References
-        ----------
-        None
-
-        """
-
-        traj1_vox = []
-        traj2_vox = []
-
-        for i in range(trajectoryT1m.shape[0]):
-            if np.amin(trajectoryT2p[i, 0:2]) >= 0 + 0.5*self.buffer and np.amax(trajectoryT2p[i, 0:2]) <= self.voxelDims + 0.5*self.buffer:
-                traj1_vox.append(trajectoryT1m[i, :])
-                traj2_vox.append(trajectoryT2p[i, :])
-        return np.array(traj1_vox), np.array(traj2_vox)
-
-
 def dmri_sim_wrapper(arg):
     path, file = os.path.split(arg)
     simObj = dmri_simulation()

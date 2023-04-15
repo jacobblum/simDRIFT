@@ -4,7 +4,7 @@ import sys
 from jp import linalg
 import objects
 import matplotlib.pyplot as plt
-
+import logging
 
 def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer):
     num_fibers = []
@@ -12,9 +12,11 @@ def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer):
         num_fiber = int(np.sqrt(
             (fiber_fractions[i] * (voxel_dimensions + buffer)**2)/(np.pi*fiber_radii[i]**2)))
         num_fibers.append(num_fiber)
-    sys.stdout.write('\n      Num Fibers   ')
-    sys.stdout.write('\n   --------------- \n   {} fibers of type 1\n   {} fibers of type 2\n'.format(
-        str(num_fibers[0]), str(num_fibers[1])))
+    logging.info('------------------------------')
+    logging.info('Num Fibers')
+    logging.info('------------------------------') 
+    logging.info('{} fibers of type 1'.format(str(num_fibers[0])))
+    logging.info('{} fibers of type 2'.format(str(num_fibers[1])))
     return num_fibers
 
 
@@ -26,9 +28,11 @@ def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
                 (0.5*cell_fraction[i]*((voxel_dimensions+buffer)**3)/((4.0/3.0)*np.pi*cell_radii[i]**3))))
         else:
             num_cells.append(int(0))
-    sys.stdout.write('\n      Num Cells   ')
-    sys.stdout.write('\n   --------------- \n   {} cells with radius = {} um\n   {} cells with radius = {} um\n'.format(
-        str(num_cells[0]), str(cell_radii[0]), str(num_cells[1]), str(cell_radii[1])))
+    logging.info('------------------------------')
+    logging.info('Num Cells')
+    logging.info('------------------------------')    
+    logging.info('{} cells with radius = {} um'.format(str(num_cells[0]), str(cell_radii[0])))   
+    logging.info('{} cells with radius = {} um'.format(str(num_cells[1]), str(cell_radii[1])))
     return num_cells
 
 
@@ -61,16 +65,11 @@ def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, vo
                                                     diffusivity=fiber_diffusions[i],
                                                     radius=fiber_radii[i]))
 
-    sys.stdout.write('\n    Fibers placed!\n')
-    sys.stdout.write('\n')
-
     return fibers
 
 
-def _place_cells(cell_fractions, cell_radii, fibers, fiber_configuration, voxel_dimensions, buffer, void_dist):
+def _place_cells(num_cells, fibers, cell_radii, fiber_configuration, voxel_dimensions, buffer, void_dist):
 
-    num_cells = _set_num_cells(cell_fractions, cell_radii, voxel_dimensions, buffer)
-    
     cell_centers_total = []
 
     zmin = min([fiber._get_center()[2] for fiber in fibers])
@@ -83,16 +82,17 @@ def _place_cells(cell_fractions, cell_radii, fibers, fiber_configuration, voxel_
         regions = np.array([[0, voxel_dimensions+buffer, 0, 0.5*(voxel_dimensions+buffer), zmin, zmax],
                             [0, voxel_dimensions+buffer, 0.5*(voxel_dimensions+buffer), voxel_dimensions+buffer, zmin, zmax]])
 
+    logging.info('------------------------------')
+    logging.info('Placing Cells...')
+    logging.info('------------------------------')
     for i in (range(len(num_cells))):
         cellCenters = np.zeros((num_cells[i], 4))
         for j in range(cellCenters.shape[0]):
             if i == 0:
-                sys.stdout.write('    \r   ' + str(j+1) + '/' +
-                                 str(num_cells[0]+num_cells[1]) + ' cells placed')
+                sys.stdout.write('\r' + 'dmri-sim: ' + str(j+1) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
                 sys.stdout.flush()
             else:
-                sys.stdout.write('    \r    ' + str(num_cells[0]+(j+1)) + '/' + str(
-                    num_cells[0]+num_cells[1]) + ' cells placed')
+                sys.stdout.write('\r' + 'dmri-sim: ' + str(num_cells[0]+(j+1)) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
                 sys.stdout.flush()
             if j == 0:
                 invalid = True
@@ -155,7 +155,6 @@ def _place_cells(cell_fractions, cell_radii, fibers, fiber_configuration, voxel_
     
     for i in range(output_arg.shape[0]):
         cells.append(objects.cell(cell_center = output_arg[i,0:3], cell_radius=2))
-
     sys.stdout.write('\n')
     return cells
 

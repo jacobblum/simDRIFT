@@ -11,7 +11,7 @@ import time
 from physics import walk_in_fiber, walk_in_cell, walk_in_water
 import sys
 import operator
-
+import logging
 
 
 
@@ -22,29 +22,18 @@ def _caclulate_volumes(spins):
     fiber2 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 2 else -1 for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
 
-    sys.stdout.write('\n----------------------------------')
-    sys.stdout.write('\n    Empirical Volume Fractions')
-    sys.stdout.write('\n----------------------------------')
-    sys.stdout.write('\n    Fiber 1 Volume: {}'.format(
+    logging.info('------------------------------')  
+    logging.info('Empirical Volume Fractions')
+    logging.info('------------------------------')   
+    
+    
+    logging.info('Fiber 1 Volume: {}'.format(
         len(fiber1[fiber1 > -1]) / len(spins)))
-    sys.stdout.write('\n    Fiber 2 Volume: {}'.format(
+    logging.info('Fiber 2 Volume: {}'.format(
         len(fiber2[fiber2 > -1]) / len(spins)))
-    sys.stdout.write('\n    Cell Volume: {} \n'.format(
+    logging.info('Cell Volume: {} '.format(
         len(cells[cells > -1]) / len(spins)))
         
-    return
-
-    sys.stdout.write('\nTotal Fiber Volume: {}'.format(
-        (self.fiber1PositionsT1m.shape[0] + self.fiber2PositionsT1m.shape[0])/self.spin_positions_t1m.shape[0]))
-    sys.stdout.write('\n       Cell Volume: {}'.format(
-        self.cellPositionsT1m.shape[0]/self.spin_positions_t1m.shape[0]))
-    sys.stdout.write('\n      Water Volume: {}'.format(
-        self.extraPositionsT1m.shape[0]/self.spin_positions_t1m.shape[0]))
-    sys.stdout.write('\n\nProceeding to save results...')
-    sys.stdout.write('\n')
-
-
-
 def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : float, dt : float) -> None:
 
     """
@@ -104,8 +93,11 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
     Start = time.time()
     threads_per_block = 320
     blocks_per_grid = (len(spins) + (threads_per_block-1)) // threads_per_block
+    logging.info('------------------------------')  
+    logging.info('Begining Simulation...')
+    logging.info('------------------------------')    
     for i in range(int(Delta/dt)):
-        sys.stdout.write('\r' + 'Step: ' +  str(i+1) + '/' + str(int(Delta/dt)))
+        sys.stdout.write('\r' + 'dmri-sim: Step: ' +  str(i+1) + '/' + str(int(Delta/dt)))
         sys.stdout.flush()
         _diffusion_context_manager[blocks_per_grid,threads_per_block](random_states_cuda, 
                                                                       spin_positions_cuda, 
@@ -124,19 +116,11 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
         
         cuda.synchronize()
 
-
-
-    
     End = time.time()
-    sys.stdout.write('\nSimulation elapsed in: {} seconds'.format(round((End-Start)),3))
-        
-    Start = time.time()
-    sys.stdout.write('\nTransfering trajectory data to the host device...')
+    sys.stdout.write('\n')
+    logging.info('------------------------------')  
+    logging.info('Simulation elapsed in: {} seconds'.format(round((End-Start)),3))         
     spin_positions_t2p = spin_positions_cuda.copy_to_host()
-    End = time.time()
-    sys.stdout.write('\nTrajectory data transfered to host device in: {} sec \n'.format(round(End-Start),3)) 
-
-
     for ii, spin in enumerate(spins):
         spin._set_position_t2p(spin_positions_t2p[ii,:])
     

@@ -7,9 +7,11 @@ from numba.cuda import random
 from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128p_states
 import math
 import sys
+import logging
 
 
 def Ry(thetas):
+    np.set_printoptions(precision=4, suppress=True, linewidth=120)
    
     rotation_matricies = np.zeros((len(thetas),3,3))
     for i, theta in enumerate(thetas):
@@ -18,8 +20,11 @@ def Ry(thetas):
         s, c = np.sin(theta), np.cos(theta)
         Ry = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
         rotation_matricies[i,:,:] = Ry
-    sys.stdout.write('\n   Rotation Matrix ')
-    sys.stdout.write('\n   --------------- \n{}\n'.format(str(rotation_matricies)))
+    logging.info('------------------------------')
+    logging.info('Rotation Matrices ')
+    logging.info('------------------------------')
+    logging.info('\n{}'.format(rotation_matricies[0,:,:]))
+    logging.info('\n{}'.format(rotation_matricies[1,:,:]))
     return rotation_matricies
 
 def affine_transformation(xv: np.ndarray, x: float, y: float, thetas, i):

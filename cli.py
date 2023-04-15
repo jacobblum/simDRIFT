@@ -19,7 +19,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            "to run NEO as a .nii or .nii.gz file"
                            )
     subparser.add_argument("--fiber_fractions", nargs=None, type=str,
-                  dest='fiber_fractions', default='0.8, 0.8',
+                  dest='fiber_fractions', default='0.5, 0.5',
                   required=False,
                   help="The volume fractions of each of the fiber bundles"
                   "separated by a comma")
@@ -45,7 +45,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                   help="The Volume of the Cells")
 
     subparser.add_argument("--cell_radii", nargs=None, type=str,
-                  dest='cell_radii', default='10., 10.',
+                  dest='cell_radii', default='5., 5.',
                   required=False,
                   help="The Radii of the Cells")
 
@@ -72,7 +72,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
     """  Scanning Parameters """
 
     subparser.add_argument("--Delta", nargs=None, type=float,
-                           dest='Delta', default=0.001,
+                           dest='Delta', default=0.10,
                            required=False,
                            help="The Diffusion Time"
                            )
