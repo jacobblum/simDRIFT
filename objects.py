@@ -110,6 +110,9 @@ class spin():
     def _get_position_t1m(self):
         return self.position_t1m
     
+    def _get_position_t2p(self):
+        return self.position_t2p
+    
     def _get_fiber_index(self):
         return self.in_fiber_index
     

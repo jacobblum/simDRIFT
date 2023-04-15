@@ -86,16 +86,17 @@ class dmri_simulation:
             self.set_parameters(args)
             self.set_voxel()
             diffusion._simulate_diffusion(self,
-                                        self.spins,
-                                        self.cells,
-                                        self.fibers,
-                                        self.parameters['Delta'],
-                                        self.parameters['dt'],
+                                          self.spins,
+                                          self.cells,
+                                          self.fibers,
+                                          self.parameters['Delta'],
+                                          self.parameters['dt'],
                                         )
             
-            save._save_data(self,
-                        self.path_to_save,
-                        plot_xyz=False)
+            save._save_data(self.spins,
+                            self.parameters['Delta'],
+                            self.parameters['dt'],
+                            )
         
 
         except KeyboardInterrupt:
