@@ -43,7 +43,7 @@ def affine_transformation(xv: np.ndarray, x: float, y: float, thetas, i):
     Ax  = np.array([np.cos(np.deg2rad(thetas[i]))*x, y, -np.sin(np.deg2rad(thetas[i]))*x])  
     b   = np.array([dM_x, 0., dM_z + dZ])
  
-    return Ax+b
+    return Ax + b
 
 
 @cuda.jit(device = True)

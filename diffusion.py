@@ -192,7 +192,7 @@ def _diffusion_context_manager(random_states,
         
         return
         
-    if spin_in_cell_at_index[i] == -1 & (spin_in_fiber_1_at_index[i] == -1 & spin_in_fiber_2_at_index[i] == -1):
+    else:
         walk_in_water._diffusion_in_water(i,
                                           random_states,
                                           fiber_centers,

@@ -12,14 +12,14 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
     """  Simulation Parameters """
 
     subparser.add_argument("--n_walkers", nargs=None, type=int,
-                           dest='n_walkers', default= 1000 * 1e3,
+                           dest='n_walkers', default= 256 * 1e3,
                            required=False,
                            help="Please enter the relative"
                            "path for the diffusion data file on which"
                            "to run NEO as a .nii or .nii.gz file"
                            )
     subparser.add_argument("--fiber_fractions", nargs=None, type=str,
-                  dest='fiber_fractions', default='0.5, 0.5',
+                  dest='fiber_fractions', default='0.7, 0.7',
                   required=False,
                   help="The volume fractions of each of the fiber bundles"
                   "separated by a comma")
@@ -30,7 +30,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                   help="The Fiber_Radii")
 
     subparser.add_argument("--thetas", nargs=None, type=str,
-                  dest='thetas', default='0, 90',
+                  dest='thetas', default='0, 30',
                   required=False,
                   help="The Fiber Orientations")
 
@@ -45,7 +45,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                   help="The Volume of the Cells")
 
     subparser.add_argument("--cell_radii", nargs=None, type=str,
-                  dest='cell_radii', default='5., 5.',
+                  dest='cell_radii', default='10.0, 10.0',
                   required=False,
                   help="The Radii of the Cells")
 
@@ -72,7 +72,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
     """  Scanning Parameters """
 
     subparser.add_argument("--Delta", nargs=None, type=float,
-                           dest='Delta', default=0.10,
+                           dest='Delta', default=10.0,
                            required=False,
                            help="The Diffusion Time"
                            )
@@ -90,7 +90,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            )
 
     subparser.add_argument("--buffer", nargs=None, type=float,
-                           dest='buffer', default=5.,
+                           dest='buffer', default=10.,
                            required=False,
                            help="Voxel Buffer"
                            )
@@ -108,7 +108,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            )
     
     subparser.add_argument("--void_dist", nargs = None, type = float,
-                           dest = 'void_dist', default = 0.,
+                           dest = 'void_dist', default = 10.,
                            required = False,
                            help = "void distance for void configuration"
                            )

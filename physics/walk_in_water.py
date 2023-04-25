@@ -32,8 +32,7 @@ def _diffusion_in_water(i,
         stepped_into_cell = False
         proposed_new_position = random.random_on_S2(random_states,
                                                     proposed_new_position,
-                                                    i
-                                                    )
+                                                    i)
 
         for k in range(proposed_new_position.shape[0]):
             previous_position[k] = spin_positions[i, k]

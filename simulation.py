@@ -77,6 +77,21 @@ class dmri_simulation:
                                                  self.spins, 
                                                  self.cells, 
                                                  self.fibers)
+        
+        import matplotlib.pyplot as plt
+        #fig = plt.figure()
+        #ax = fig.add_subplot(projection='3d')
+
+        #for spin in self.spins:
+        #    ax.scatter(spin._get_position_t1m()[0], spin._get_position_t1m()[1], color = 'red')
+
+        #for fiber in self.fibers:
+        #    if fiber._get_bundle() == 1:
+        #        ax.scatter(fiber._get_center()[0], fiber._get_center()[1], fiber._get_center()[2], color = 'blue')
+        #    else:
+        #        ax.scatter(fiber._get_center()[0], fiber._get_center()[1], fiber._get_center()[2], color = 'orange')
+       
+        #plt.show()
 
 
         return
@@ -96,6 +111,7 @@ class dmri_simulation:
         try:
             self.set_parameters(args)
             self.set_voxel()
+            
             diffusion._simulate_diffusion(self,
                                           self.spins,
                                           self.cells,
@@ -103,6 +119,8 @@ class dmri_simulation:
                                           self.parameters['Delta'],
                                           self.parameters['dt'],
                                         )
+            
+         
             
             save._save_data(self,
                             self.spins,
