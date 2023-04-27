@@ -106,6 +106,7 @@ class spin():
             return True
         else:
             return False
+            
     
     def _get_position_t1m(self):
         return self.position_t1m
@@ -121,6 +122,9 @@ class spin():
     
     def _get_cell_index(self):
         return self.in_cell_index
+    
+    def _get_water_index(self):
+        return self.in_water_index
     
 
 

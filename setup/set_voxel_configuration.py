@@ -10,7 +10,7 @@ def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer):
     num_fibers = []
     for i in range(len(fiber_fractions)):
         num_fiber = int(np.sqrt(
-            (fiber_fractions[i] * (voxel_dimensions + buffer)**2)/(np.pi*fiber_radii[i]**2)))
+            (fiber_fractions[i] * (voxel_dimensions**2))/(np.pi*fiber_radii[i]**2)))
         num_fibers.append(num_fiber)
     logging.info('------------------------------')
     logging.info('Num Fibers')
@@ -25,7 +25,7 @@ def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
     for i in range(len(cell_radii)):
         if cell_fraction[i] > 0:
             num_cells.append(int(
-                (0.5*cell_fraction[i]*((voxel_dimensions+buffer)**3)/((4.0/3.0)*np.pi*cell_radii[i]**3))))
+                (0.5*cell_fraction[i]*(voxel_dimensions**3)/((4.0/3.0)*np.pi*cell_radii[i]**3))))
         else:
             num_cells.append(int(0))
     logging.info('------------------------------')
@@ -46,8 +46,8 @@ def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, vo
     fibers = []
     for i in range(len(fiber_fractions)):
 
-        yv, xv = np.meshgrid(np.linspace(-0.5*buffer+max(fiber_radii), voxel_dimensions+0.5*buffer-max(fiber_radii), num_fibers[i]),
-                             np.linspace(-0.5*buffer+max(fiber_radii), voxel_dimensions+0.5*buffer-max(fiber_radii), num_fibers[i]))
+        yv, xv = np.meshgrid(np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[i]),
+                             np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[i]))
 
 
 
@@ -86,11 +86,12 @@ def _place_cells(num_cells, fibers, cell_radii, fiber_configuration, voxel_dimen
     zmax = zmin + voxel_dimensions
 
     if fiber_configuration == 'Void':
-        regions = np.array([[0, voxel_dimensions+buffer, 0.5*(voxel_dimensions+buffer)-0.5*void_dist, 0.5*(voxel_dimensions+buffer)+0.5*void_dist, zmin, zmax],
-                            [0, voxel_dimensions+buffer, 0.5*(voxel_dimensions+buffer)-0.5*void_dist, 0.5*(voxel_dimensions+buffer)+0.5*void_dist, zmin, zmax]])
+        ## Note[KLU]: Adjusted the regions below to be symmetric about the middle of the voxel 
+        regions = np.array([[0-(buffer/2), voxel_dimensions+(buffer/2), 0.5*(voxel_dimensions - void_dist), 0.5*(voxel_dimensions + void_dist), zmin, zmax],
+                            [0-(buffer/2), voxel_dimensions+(buffer/2), 0.5*(voxel_dimensions - void_dist), 0.5*(voxel_dimensions + void_dist), zmin, zmax]])
     else:
-        regions = np.array([[0, voxel_dimensions+buffer, 0, 0.5*(voxel_dimensions+buffer), zmin, zmax],
-                            [0, voxel_dimensions+buffer, 0.5*(voxel_dimensions+buffer), voxel_dimensions+buffer, zmin, zmax]])
+        regions = np.array([[0-(buffer/2), voxel_dimensions+(buffer/2), 0-(buffer/2), 0.5*voxel_dimensions, zmin, zmax],
+                            [0-(buffer/2), voxel_dimensions+(buffer/2), 0.5*voxel_dimensions, voxel_dimensions+(buffer/2), zmin, zmax]])
 
     logging.info('------------------------------')
     logging.info('Placing Cells...')
@@ -99,10 +100,10 @@ def _place_cells(num_cells, fibers, cell_radii, fiber_configuration, voxel_dimen
         cellCenters = np.zeros((num_cells[i], 4))
         for j in range(cellCenters.shape[0]):
             if i == 0:
-                sys.stdout.write('\r' + 'dmri-sim: ' + str(j+1) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
+                sys.stdout.write('\r' + 'dMRI-SIM: ' + str(j+1) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
                 sys.stdout.flush()
             else:
-                sys.stdout.write('\r' + 'dmri-sim: ' + str(num_cells[0]+(j+1)) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
+                sys.stdout.write('\r' + 'dMRI-SIM: ' + str(num_cells[0]+(j+1)) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
                 sys.stdout.flush()
             if j == 0:
                 invalid = True

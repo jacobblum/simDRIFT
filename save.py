@@ -55,9 +55,9 @@ def _add_noise(signal, snr):
    
 def _signal(spins: list, bvals: np.ndarray, bvecs: np.ndarray, Delta: float, dt: float, SNR = None) -> np.ndarray:
    
-    """ use CuPy to execute the einstein summations on the gpu """
+    """ Use CuPy to execute the einstein summations on the GPU """
     
-    gamma = 42.58 # MHz/T - The Gyromatnetic Ratio of a Proton
+    gamma = 42.58 # MHz/T - The proton gyromagnetic ratio
     delta = dt    # ms - From the narrow pulse approximation. More convient for GPU memory managment 
 
     trajectory_t1m = cp.array([spin._get_position_t1m() for spin in spins])
@@ -86,7 +86,15 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     fiber1 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 1 else -1 for spin in spins])
     fiber2 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 2 else -1 for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
-
+    iSpin = 0
+    water = np.empty(len(spins))
+    for spin in spins:
+        if spin._in_water:
+            watInd[iSpin] = iSpin
+        else:
+            watInd[iSpin] = -1
+        iSpin = iSpin + 1
+    
     """ fiber 1 signal """
     logging.info('------------------------------')
     logging.info('Computing fiber 1 signal...')  
@@ -98,7 +106,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                              Delta, 
                                                                              dt)
     End = time.time()
-    logging.info('fiber 1 signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('Fiber 1 signal computed in {} sec'.format(round(End-Start),4))
     logging.info('------------------------------')  
     signals_dict['fiber_1_signal'] = fiber_1_signal
     trajectories_dict['fiber_1_trajectories'] = (fiber_1_trajectory_t1m, fiber_1_trajectory_t2p)
@@ -113,7 +121,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                              Delta, 
                                                                              dt)
     End = time.time()
-    logging.info('fiber 2 signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('Fiber 2 signal computed in {} sec'.format(round(End-Start),4))
     logging.info('------------------------------')
     signals_dict['fiber_2_signal'] = fiber_2_signal
     trajectories_dict['fiber_2_trajectories'] = (fiber_2_trajectory_t1m, fiber_2_trajectory_t2p)
@@ -129,12 +137,12 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                                          Delta, 
                                                                                          dt) 
     End = time.time()
-    logging.info('total fiber signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('Total fiber signal computed in {} sec'.format(round(End-Start),4))
     logging.info('------------------------------')  
     signals_dict['total_fiber_signal'] = total_fiber_signal
     trajectories_dict['total_fiber_trajectories'] = (total_fiber_trajectory_t1m, total_fiber_trajectory_t2p)
 
-    """ Cell Spins """
+    """ Cell Signal """
     logging.info('Computing cell signal...')
     Start = time.time()
     cell_spins = np.array(spins)[cells > -1]
@@ -145,10 +153,28 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                         dt)
     
     End = time.time()
-    logging.info('cell signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('Cell signal computed in {} sec'.format(round(End-Start),4))
     logging.info('------------------------------')  
     signals_dict['cell_signal'] = cell_signal
     trajectories_dict['cell_trajectories'] = (cell_trajectory_t1m, cell_trajectory_t2p)
+
+
+    """ Water Signal (Added KLU 04.26.23)"""
+    
+    logging.info('Computing water signal...')
+    Start = time.time()
+    water_spins = np.array(spins)[water > -1]
+    water_signal, water_trajectory_t1m, water_trajectory_t2p = _signal(water_spins,
+                                                                        bvals,
+                                                                        bvecs,
+                                                                        Delta, 
+                                                                        dt)
+    
+    End = time.time()
+    logging.info('Water signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('------------------------------')  
+    signals_dict['water_signal'] = water_signal
+    trajectories_dict['water_trajectories'] = (water_trajectory_t1m, water_trajectory_t2p)
                                                     
     """ Total Signal """
     logging.info('Computing total signal...')
@@ -160,7 +186,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                        dt)
     
     End = time.time()
-    logging.info('total signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('Total signal computed in {} sec'.format(round(End-Start),4))
     logging.info('------------------------------')  
     signals_dict['total_signal'] = total_signal
     trajectories_dict['total_trajectories'] = (total_fiber_trajectory_t1m, total_fiber_trajectory_t2p)
@@ -172,7 +198,7 @@ def _save_data(self, spins: list, Delta: float, dt: float, diff_scheme: str):
                                                                          self.parameters['Delta'],
                                                                          self.parameters['dt'],
                                                                          diff_scheme)
-    logging.info('saving outputs to {} ...'.format(os.getcwd()))
+    logging.info('Saving outputs to {} ...'.format(os.getcwd()))
     if not os.path.exists(r'./signals'): os.mkdir(r'./signals')
     for key in signals_dict.keys():        
         Nifti = nb.Nifti1Image(signals_dict[key].get(), affine = np.eye(4))
@@ -182,6 +208,6 @@ def _save_data(self, spins: list, Delta: float, dt: float, diff_scheme: str):
     for key in trajectories_dict.keys():        
         np.save(r'./trajectories/{}_t1m.npy'.format(key), trajectories_dict[key][0].get())
         np.save(r'./trajectories/{}_t2p.npy'.format(key), trajectories_dict[key][1].get())
-    logging.info('Simulation Complete')
+    logging.info('Simulation Complete!')
     logging.info('------------------------------')
     return

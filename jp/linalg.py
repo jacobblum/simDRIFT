@@ -23,8 +23,8 @@ def Ry(thetas):
     logging.info('------------------------------')
     logging.info('Rotation Matrices ')
     logging.info('------------------------------')
-    logging.info('\n{}'.format(rotation_matricies[0,:,:]))
-    logging.info('\n{}'.format(rotation_matricies[1,:,:]))
+    logging.info('\n           {}'.format(rotation_matricies[0,:,:]))
+    logging.info('\n           {}'.format(rotation_matricies[1,:,:]))
     return rotation_matricies
 
 def affine_transformation(xv: np.ndarray, x: float, y: float, thetas, i):

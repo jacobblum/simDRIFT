@@ -11,7 +11,7 @@ from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128
 from jp import linalg
 import math
 
-@numba.cuda.jit(fastmath=True)
+@numba.cuda.jit
 def _find_spin_locations_kernel(resident_fiber_indxs_cuda: numba.cuda.cudadrv.devicearray.DeviceNDArray, 
                                 resident_cell_indxs_cuda:  numba.cuda.cudadrv.devicearray.DeviceNDArray , 
                                 fiber_centers_cuda:        numba.cuda.cudadrv.devicearray.DeviceNDArray,

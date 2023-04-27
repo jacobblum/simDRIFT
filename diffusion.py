@@ -91,13 +91,13 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
 
 
     Start = time.time()
-    threads_per_block = 320
+    threads_per_block = 384
     blocks_per_grid = (len(spins) + (threads_per_block-1)) // threads_per_block
     logging.info('------------------------------')  
     logging.info('Begining Simulation...')
     logging.info('------------------------------')    
     for i in range(int(Delta/dt)):
-        sys.stdout.write('\r' + 'dmri-sim: Step: ' +  str(i+1) + '/' + str(int(Delta/dt)))
+        sys.stdout.write('\r' + 'dMRI-SIM: Step ' +  str(i+1) + '/' + str(int(Delta/dt)))
         sys.stdout.flush()
         _diffusion_context_manager[blocks_per_grid,threads_per_block](random_states_cuda, 
                                                                       spin_positions_cuda, 
@@ -128,7 +128,7 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
     return 
 
 
-@numba.cuda.jit(fastmath=True)
+@numba.cuda.jit
 def _diffusion_context_manager(random_states, 
                                spin_positions, 
                                spin_in_fiber_1_at_index, 

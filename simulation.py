@@ -99,14 +99,14 @@ class dmri_simulation:
     def run(self, args):
         log_file = os.path.join(os.getcwd() + os.sep + 'log')
         logging.basicConfig(level = logging.INFO,
-                            format = 'dmri-sim: %(message)s',
+                            format = 'dMRI-SIM: %(message)s',
                             filename = log_file,
                             filemode = 'w')
         console = logging.StreamHandler()
-        formatter = logging.Formatter("dmri-sim: %(message)s")
+        formatter = logging.Formatter("dMRI-SIM: %(message)s")
         console.setFormatter(formatter)
         logging.getLogger('').addHandler(console)
-        logging.info('Running dmri-sim')
+        logging.info('Running dMRI-SIM')
 
         try:
             self.set_parameters(args)
