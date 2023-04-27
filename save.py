@@ -90,9 +90,9 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     water = np.empty(len(spins))
     for spin in spins:
         if spin._in_water:
-            watInd[iSpin] = iSpin
+            water[iSpin] = iSpin
         else:
-            watInd[iSpin] = -1
+            water[iSpin] = -1
         iSpin = iSpin + 1
     
     """ fiber 1 signal """
@@ -189,7 +189,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     logging.info('Total signal computed in {} sec'.format(round(End-Start),4))
     logging.info('------------------------------')  
     signals_dict['total_signal'] = total_signal
-    trajectories_dict['total_trajectories'] = (total_fiber_trajectory_t1m, total_fiber_trajectory_t2p)
+    trajectories_dict['total_trajectories'] = (total_trajectory_t1m, total_trajectory_t2p)
     return signals_dict, trajectories_dict
 
 def _save_data(self, spins: list, Delta: float, dt: float, diff_scheme: str):
