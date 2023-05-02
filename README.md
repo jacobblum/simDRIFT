@@ -6,7 +6,7 @@
 To sample the diffusion propogator in realistic manner on complex biological domains, we developed a Python 3.9 library to simulate the molecular self diffusion processes of spins and PGSE signal aquisition thereof. The spin diffusion process is modelled by an ensemble of random walkers, 
 uniformly distrubted within the computational domain (an image voxel),   that are allowed to step within their local environment (Fibers, Cells, or the Extracellular/Extrafiber Matrix). Because the echo times of typical diffusion experiments are shorter than the intercellular preexchange lifetime of water, we are able to neglect any flux between the local environments. In particular, spins intially placed into fibers (cells, extracelluar/extrafiber matrix) cannot walk outside of fiber (cell, extracellular/extrafiber matrix), which is ensured by rejection sampling of steps in a random direction,  $\mathbf{u} \in S^{2}$, from the xoroshiro128+ psudorandom number generator:
 
-$$\mathbf{r}_{i} = \mathbf{r}_{i-1} + \sqrt{6 \cdot \mathbf{D}_{0}^{\text{local}} \mathrm{d} t }  \cdot \mathbf{u}$$
+$\mathbf{r}_{i} = \mathbf{r}_{i-1} + \sqrt{6 \cdot \mathbf{D}_{0}^{\text{local}} \mathrm{d} t }  \cdot \mathbf{u}$
 
 Given the large number of spins required for convergence of the simulated PGSE signal, our code was developed with considerable 
 attention towards preformance. In particular, individual spin trajectories are computed on a signle thread of the 
