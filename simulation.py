@@ -118,6 +118,7 @@ class dmri_simulation:
                                           self.fibers,
                                           self.parameters['Delta'],
                                           self.parameters['dt'],
+                                          self.parameters['water_diffusivity']
                                         )
             
          

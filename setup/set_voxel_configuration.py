@@ -6,17 +6,18 @@ import objects
 import matplotlib.pyplot as plt
 import logging
 
-def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer):
+def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fiber_configuration):
     num_fibers = []
     for i in range(len(fiber_fractions)):
         num_fiber = int(np.sqrt(
             (fiber_fractions[i] * (voxel_dimensions**2))/(np.pi*fiber_radii[i]**2)))
         num_fibers.append(num_fiber)
     logging.info('------------------------------')
-    logging.info('Num Fibers')
+    logging.info(' Fiber Setup')
     logging.info('------------------------------') 
-    logging.info('{} fibers of type 1'.format(str(num_fibers[0])))
-    logging.info('{} fibers of type 2'.format(str(num_fibers[1])))
+    logging.info(' {} fibers of type 1 (R1 = {})'.format(int(0.5*(num_fibers[0]**2)),fiber_radii[0]))
+    logging.info(' {} fibers of type 2 (R2 = {})'.format(int(0.5*(num_fibers[1]**2)),fiber_radii[0]))
+    logging.info(' Fiber geometry: {}'.format(fiber_configuration))
     return num_fibers
 
 
@@ -29,17 +30,16 @@ def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
         else:
             num_cells.append(int(0))
     logging.info('------------------------------')
-    logging.info('Num Cells')
+    logging.info(' Cells Setup')
     logging.info('------------------------------')    
-    logging.info('{} cells with radius = {} um'.format(str(num_cells[0]), str(cell_radii[0])))   
-    logging.info('{} cells with radius = {} um'.format(str(num_cells[1]), str(cell_radii[1])))
+    logging.info(' {} cells with radius = {} um'.format(num_cells[0], cell_radii[0]))   
+    logging.info(' {} cells with radius = {} um'.format(num_cells[1], cell_radii[1]))
     return num_cells
-
 
 def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, voxel_dimensions, buffer, void_distance, fiber_configuration):
 
     num_fibers = _set_num_fibers(
-        fiber_fractions, fiber_radii, voxel_dimensions, buffer)
+        fiber_fractions, fiber_radii, voxel_dimensions, buffer,fiber_configuration)
 
     rotation_matrices = linalg.Ry(thetas)
 
@@ -94,16 +94,16 @@ def _place_cells(num_cells, fibers, cell_radii, fiber_configuration, voxel_dimen
                             [0-(buffer/2), voxel_dimensions+(buffer/2), 0.5*voxel_dimensions, voxel_dimensions+(buffer/2), zmin, zmax]])
 
     logging.info('------------------------------')
-    logging.info('Placing Cells...')
+    logging.info(' Placing Cells...')
     logging.info('------------------------------')
     for i in (range(len(num_cells))):
         cellCenters = np.zeros((num_cells[i], 4))
         for j in range(cellCenters.shape[0]):
             if i == 0:
-                sys.stdout.write('\r' + 'dMRI-SIM: ' + str(j+1) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
+                sys.stdout.write('\r' + 'dMRI-SIM:  ' + str(j+1) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
                 sys.stdout.flush()
             else:
-                sys.stdout.write('\r' + 'dMRI-SIM: ' + str(num_cells[0]+(j+1)) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
+                sys.stdout.write('\r' + 'dMRI-SIM:  ' + str(num_cells[0]+(j+1)) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
                 sys.stdout.flush()
             if j == 0:
                 invalid = True

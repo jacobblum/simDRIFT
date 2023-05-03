@@ -21,10 +21,15 @@ def Ry(thetas):
         Ry = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
         rotation_matricies[i,:,:] = Ry
     logging.info('------------------------------')
-    logging.info('Rotation Matrices ')
+    logging.info(' Rotation Matrices ')
     logging.info('------------------------------')
-    logging.info('\n           {}'.format(rotation_matricies[0,:,:]))
-    logging.info('\n           {}'.format(rotation_matricies[1,:,:]))
+    logging.info(' +{: .2f}, {: .2f}, {: .2f}+'.format(rotation_matricies[0,0,0],rotation_matricies[0,0,1],rotation_matricies[0,0,2]))
+    logging.info(' ¦{: .2f}, {: .2f}, {: .2f}¦'.format(rotation_matricies[0,1,0],rotation_matricies[0,1,1],rotation_matricies[0,1,2]))
+    logging.info(' +{: .2f}, {: .2f}, {: .2f}+\n'.format(rotation_matricies[0,2,0],rotation_matricies[0,2,1],rotation_matricies[0,2,2]))
+    logging.info(' +{: .2f}, {: .2f}, {: .2f}+'.format(rotation_matricies[1,0,0],rotation_matricies[1,0,1],rotation_matricies[1,0,2]))
+    logging.info(' ¦{: .2f}, {: .2f}, {: .2f}¦'.format(rotation_matricies[1,1,0],rotation_matricies[1,1,1],rotation_matricies[1,1,2]))
+    logging.info(' +{: .2f}, {: .2f}, {: .2f}+'.format(rotation_matricies[1,2,0],rotation_matricies[1,2,1],rotation_matricies[1,2,2]))
+    
     return rotation_matricies
 
 def affine_transformation(xv: np.ndarray, x: float, y: float, thetas, i):
