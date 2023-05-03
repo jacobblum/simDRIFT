@@ -64,7 +64,8 @@ class dmri_simulation:
                                                           self.parameters['fiber_configuration'],
                                                           self.parameters['voxel_dims'],
                                                           self.parameters['buffer'],
-                                                          self.parameters['void_dist']
+                                                          self.parameters['void_dist'],
+                                                          self.parameters['water_diffusivity']
                                                           )
         
 

@@ -78,7 +78,7 @@ def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, vo
     return fibers
 
 
-def _place_cells(num_cells, fibers, cell_radii, fiber_configuration, voxel_dimensions, buffer, void_dist):
+def _place_cells(num_cells, fibers, cell_radii, fiber_configuration, voxel_dimensions, buffer, void_dist, water_diffusivity):
 
     cell_centers_total = []
 
@@ -165,7 +165,7 @@ def _place_cells(num_cells, fibers, cell_radii, fiber_configuration, voxel_dimen
     cells = []
     
     for i in range(output_arg.shape[0]):
-        cells.append(objects.cell(cell_center = output_arg[i,0:3], cell_radius=2))
+        cells.append(objects.cell(cell_center = output_arg[i,0:3], cell_radius=cell_radii[0], cell_diffusivity = water_diffusivity))
     sys.stdout.write('\n')
     return cells
 

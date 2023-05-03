@@ -34,15 +34,15 @@ class fiber():
 
 
 class cell():
-    def __init__(self, cell_center, cell_radius = 1.0, cell_diffusivitiy = 3.0) -> None:
+    def __init__(self, cell_center, cell_radius: float, cell_diffusivity: float) -> None:
                 
-        self.center = cell_center
-        self.diffusivity = cell_diffusivitiy
+        self.center      = cell_center
+        self.diffusivity = cell_diffusivity
         self.radius      = cell_radius
 
     """ Setters """     
-    def _set_center(self, fiber_center: np.ndarray):
-        self.center = fiber_center
+    def _set_center(self, cell_center: np.ndarray):
+        self.center = cell_center
         return
     
     def _set_diffusivity(self, D0: float):

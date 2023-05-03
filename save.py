@@ -109,7 +109,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                              Delta, 
                                                                              dt)
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['fiber_1_signal'] = fiber_1_signal
     trajectories_dict['fiber_1_trajectories'] = (fiber_1_trajectory_t1m, fiber_1_trajectory_t2p)
 
@@ -123,7 +123,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                              Delta, 
                                                                              dt)
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['fiber_2_signal'] = fiber_2_signal
     trajectories_dict['fiber_2_trajectories'] = (fiber_2_trajectory_t1m, fiber_2_trajectory_t2p)
 
@@ -138,8 +138,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                                          Delta, 
                                                                                          dt) 
     End = time.time()
-    logging.info('                                Done!') 
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['total_fiber_signal'] = total_fiber_signal
     trajectories_dict['total_fiber_trajectories'] = (total_fiber_trajectory_t1m, total_fiber_trajectory_t2p)
 
@@ -154,7 +153,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                         dt)
     
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['cell_signal'] = cell_signal
     trajectories_dict['cell_trajectories'] = (cell_trajectory_t1m, cell_trajectory_t2p)
 
@@ -171,13 +170,13 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                         dt)
     
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['water_signal'] = water_signal
     trajectories_dict['water_trajectories'] = (water_trajectory_t1m, water_trajectory_t2p)
 
     """ Fiber 1 Plus Water Signal (Added KLU 05.03.23)"""
     
-    logging.info(' Done! Computing fiber 1 + water signal...')
+    logging.info('     Done! Computing fiber 1 + water signal...')
     Start = time.time()
     f1_water_spins = np.hstack([fiber_1_spins, water_spins])
     f1_water_signal, f1_water_trajectory_t1m, f1_water_trajectory_t2p = _signal(f1_water_spins,
@@ -187,7 +186,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                         dt)
     
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['f1_water_signal'] = f1_water_signal
     trajectories_dict['f1_water_trajectories'] = (f1_water_trajectory_t1m, f1_water_trajectory_t2p)
 
@@ -203,7 +202,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                         dt)
     
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['f1_cell_signal'] = f1_cell_signal
     trajectories_dict['f1_cell_trajectories'] = (f1_cell_trajectory_t1m, f1_cell_trajectory_t2p)
 
@@ -219,7 +218,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                         dt)
     
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['f1_cell_water_signal'] = f1_cell_water_signal
     trajectories_dict['f1_cell_water_trajectories'] = (f1_cell_water_trajectory_t1m, f1_cell_water_trajectory_t2p)
 
@@ -235,7 +234,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                         dt)
     
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['f2_water_signal'] = f2_water_signal
     trajectories_dict['f2_water_trajectories'] = (f2_water_trajectory_t1m, f2_water_trajectory_t2p)
 
@@ -252,7 +251,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                         dt)
     
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['f2_cell_signal'] = f2_cell_signal
     trajectories_dict['f2_cell_trajectories'] = (f2_cell_trajectory_t1m, f2_cell_trajectory_t2p)
 
@@ -268,7 +267,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                         dt)
     
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['f2_cell_water_signal'] = f2_cell_water_signal
     trajectories_dict['f2_cell_water_trajectories'] = (f2_cell_water_trajectory_t1m, f2_cell_water_trajectory_t2p)
 
@@ -282,7 +281,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                                          Delta, 
                                                                                          dt) 
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['total_fiber_water_signal'] = total_fiber_water_signal
     trajectories_dict['total_fiber_water_trajectories'] = (total_fiber_water_trajectory_t1m, total_fiber_water_trajectory_t2p)
 
@@ -296,7 +295,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                                          Delta, 
                                                                                          dt) 
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['total_fiber_cell_signal'] = total_fiber_cell_signal
     trajectories_dict['total_fiber_cell_trajectories'] = (total_fiber_cell_trajectory_t1m, total_fiber_cell_trajectory_t2p)
 
@@ -310,7 +309,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                                          Delta, 
                                                                                          dt) 
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['water_cell_signal'] = water_cell_signal
     trajectories_dict['water_cell_trajectories'] = (water_cell_trajectory_t1m, water_cell_trajectory_t2p)
                                                     
@@ -324,7 +323,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
                                                                        dt)
     
     End = time.time()
-    logging.info(' Done! Signal computed in {} sec'.format(round(End-Start),4))
+    logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
     signals_dict['total_signal'] = total_signal
     trajectories_dict['total_trajectories'] = (total_trajectory_t1m, total_trajectory_t2p)
     return signals_dict, trajectories_dict

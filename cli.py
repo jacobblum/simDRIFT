@@ -16,7 +16,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            required=False,
                            help="The number of spins to populate within the voxel, entered as an integer value. To obtain reliable results, use enough spins to acheive a minimal spin volume density of 1 per cubic micron.")
     subparser.add_argument("--fiber_fractions", nargs=None, type=str,
-                  dest='fiber_fractions', default='0.6, 0.6',
+                  dest='fiber_fractions', default='0.8, 0.8',
                   required=False,
                   help="The desired volume fraction of each fiber type within its region of the voxel, entered as a comma-separated string of values between 0 and 1 (e.g., ''0.5, 0.7'')")
 
@@ -26,7 +26,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                   help="The radii (in units of micrometers) of each fiber type, entered as a comma-separated string (e.g., ''1.5, 2.0'')")
 
     subparser.add_argument("--thetas_Y", nargs=None, type=str,
-                  dest='thetas', default='0, 30',
+                  dest='thetas', default='0, 90',
                   required=False,
                   help="Rotation angle (with respect to the Y axis, in degrees) for each fiber type, entered as a comma-separated string (e.g., ''0, 30'')")
 
@@ -36,7 +36,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                   help="Diffusivity within each fiber type (in units of micrometers^2 per ms), entered as a comma-separated string (e.g., ''1.0, 2.5'')")
 
     subparser.add_argument("--cell_fractions", nargs=None, type=str,
-                  dest='cell_fractions', default='0.05, 0.05',
+                  dest='cell_fractions', default='0.25, 0.25',
                   required=False,
                   help="The desired volume fraction of each cell type, entered as a comma-separated string of values between 0 and 1 (e.g., ''0.05, 0.20'')")
 
