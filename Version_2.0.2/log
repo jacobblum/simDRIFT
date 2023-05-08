@@ -1,0 +1,34 @@
+dMRI-SIM: Running dMRI-SIM
+dMRI-SIM: ------------------------------
+dMRI-SIM:  Cells Setup
+dMRI-SIM: ------------------------------
+dMRI-SIM:  12 cells with radius = 10.0 um
+dMRI-SIM:  12 cells with radius = 10.0 um
+dMRI-SIM: ------------------------------
+dMRI-SIM:  Fiber Setup
+dMRI-SIM: ------------------------------
+dMRI-SIM:  312 fibers of type 1 (R1 = 1.5)
+dMRI-SIM:  312 fibers of type 2 (R2 = 1.5)
+dMRI-SIM:  Fiber geometry: Penetrating
+dMRI-SIM: ------------------------------
+dMRI-SIM:  Rotation Matrices 
+dMRI-SIM: ------------------------------
+dMRI-SIM:  [[ 1.00,  0.00,  0.00],
+dMRI-SIM:   [ 0.00,  1.00,  0.00],
+dMRI-SIM:   [-0.00,  0.00,  1.00]]
+
+dMRI-SIM:  [[ 0.00,  0.00,  1.00],
+dMRI-SIM:   [ 0.00,  1.00,  0.00],
+dMRI-SIM:   [-1.00,  0.00,  0.00]]
+dMRI-SIM: ------------------------------
+dMRI-SIM:  Placing Cells...
+dMRI-SIM: ------------------------------
+dMRI-SIM: ------------------------------
+dMRI-SIM:  Empirical Volume Fractions
+dMRI-SIM: ------------------------------
+dMRI-SIM:  Fiber 1 Volume: 0.340995
+dMRI-SIM:  Fiber 2 Volume: 0.309805
+dMRI-SIM:     Cell Volume: 0.083038 
+dMRI-SIM: ------------------------------
+dMRI-SIM:  Beginning Simulation...
+dMRI-SIM: ------------------------------
