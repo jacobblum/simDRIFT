@@ -349,6 +349,7 @@ class SetParameterScreen(tk.Tk):
 
 top = SetParameterScreen()
 top.title("dMRI-MCSIM (v2.1.0-dev)")
+top.iconbitmap(__file__.split(r'launch',1)[0] + r'GUI_Icon2.ico')
 
 top.mainloop()
 
