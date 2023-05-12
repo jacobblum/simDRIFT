@@ -73,6 +73,7 @@ class spin():
         self.in_fiber_index = None
         self.fiber_bundle = None
         self.in_cell_index = None
+        self.in_water_index = None
         
         return 
     
@@ -101,11 +102,13 @@ class spin():
         else:
             self.in_cell_index = index
         return
-    def _in_water(self):
-        if np.logical_and(self.in_cell_index == None, self.in_fiber_index == None):
-            return True
+    def _set_water_index(self, index : int):
+        if index < 0:
+            self.in_water_index = -1
+            return 
         else:
-            return False
+            self.in_water_index = index
+        return
             
     
     def _get_position_t1m(self):

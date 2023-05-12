@@ -26,7 +26,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                   help="The radii (in units of micrometers) of each fiber type, entered as a comma-separated string (e.g., ''1.5, 2.0'')")
 
     subparser.add_argument("--thetas_Y", nargs=None, type=str,
-                  dest='thetas', default='0, 90',
+                  dest='thetas', default='0, 0',
                   required=False,
                   help="Rotation angle (with respect to the Y axis, in degrees) for each fiber type, entered as a comma-separated string (e.g., ''0, 30'')")
 
@@ -113,7 +113,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            )
     
     subparser.add_argument("--void_dist", nargs = None, type = float,
-                           dest = 'void_dist', default = 0.,
+                           dest = 'void_dist', default = 0,
                            required = False,
                            help = "Size (in units of micrometers) of a region in middle of voxel, aka void, excluded from fiber placement. (optional except when fiber_configuration = ''Void'') "
                            )

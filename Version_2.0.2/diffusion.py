@@ -21,6 +21,7 @@ def _caclulate_volumes(spins):
     fiber1 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 1 else -1 for spin in spins])
     fiber2 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 2 else -1 for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
+    water  = np.array([spin._get_water_index() for spin in spins])
 
     logging.info('------------------------------')  
     logging.info(' Empirical Volume Fractions')
@@ -33,6 +34,10 @@ def _caclulate_volumes(spins):
         len(fiber2[fiber2 > -1]) / len(spins)))
     logging.info('    Cell Volume: {} '.format(
         len(cells[cells > -1]) / len(spins)))
+    logging.info('   Water Volume: {} '.format(
+        len(water[water > -1]) / len(spins)))
+    logging.info('          TOTAL: {} '.format(
+        (len(water[water > -1])+len(cells[cells > -1])+len(fiber1[fiber1 > -1])+len(fiber2[fiber2 > -1]))/len(spins)))
         
 def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : float, dt : float, water_diffusivity : float) -> None:
 
@@ -167,7 +172,7 @@ def _diffusion_context_manager(random_states,
     
     
     
-    if spin_in_fiber_2_at_index[i] > -1:
+    elif spin_in_fiber_2_at_index[i] > -1:
         walk_in_fiber._diffusion_in_fiber(i, 
                                           random_states,
                                           fiber_centers[spin_in_fiber_2_at_index[i],:],
@@ -178,7 +183,7 @@ def _diffusion_context_manager(random_states,
         
         return
 
-    if spin_in_cell_at_index[i] > -1:
+    elif spin_in_cell_at_index[i] > -1:
         walk_in_cell._diffusion_in_cell(i, 
                                         random_states, 
                                         cell_centers[spin_in_cell_at_index[i], :], 
