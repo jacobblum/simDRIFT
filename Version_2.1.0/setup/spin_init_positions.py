@@ -80,8 +80,7 @@ def _find_spin_locations(self, spins, cells, fibers):
     cell_centers_cuda         = cuda.to_device(np.array([cell._get_center() for cell in cells], dtype= np.float32))
     cell_radii_cuda           = cuda.to_device(np.array([cell._get_radius() for cell in cells], dtype=np.float32))
     spin_positions_cuda       = cuda.to_device(np.array([spin._get_position_t1m() for spin in spins], dtype= np.float32))
-
-    threads_per_block = 64
+    threads_per_block = 128
     blocks_per_grid = (len(spins) + (threads_per_block-1)) // threads_per_block
 
     _find_spin_locations_kernel[blocks_per_grid,threads_per_block](resident_fiber_indxs_cuda,
@@ -97,33 +96,16 @@ def _find_spin_locations(self, spins, cells, fibers):
 
     resident_fiber_indxs = resident_fiber_indxs_cuda.copy_to_host()
     resident_cell_indxs  = resident_cell_indxs_cuda.copy_to_host()
-
+    spinInds = range(len(spins))
+    negSpinInds = -1 * np.ones(shape = (len(spins),), dtype= np.int32)
+    resident_water_indxs = np.where(np.logical_and(resident_fiber_indxs < 0, resident_cell_indxs < 0),spinInds,negSpinInds)
     
     for i, spin in enumerate(spins):
         spin._set_fiber_index(resident_fiber_indxs[i])
         spin._set_fiber_bundle(fibers[resident_fiber_indxs[i]]._get_bundle())
         spin._set_cell_index(resident_cell_indxs[i])
+        spin._set_water_index(resident_water_indxs[i])
 
     self.spins = spins
 
     return
-
-    import matplotlib.pyplot as plt
-    fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
-    
-    for fiber in cells:
-        ax.scatter(fiber._get_center()[0], fiber._get_center()[1], fiber._get_center()[2], color = 'blue')
-
-    for fiber in fibers: 
-        ax.scatter(fiber._get_center()[0], fiber._get_center()[1], fiber._get_center()[2], color = 'black')
-
-    for spin in spins:
-        ax.scatter(spin._get_position_t1m()[0], spin._get_position_t1m()[1], spin._get_position_t1m()[2], color = 'orange')
-    
-    plt.show()
-
-
-    self.spins = spins
-    return 
-

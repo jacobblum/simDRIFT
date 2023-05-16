@@ -2,7 +2,7 @@ import numpy as np
 import jp as jp
 import sys
 from jp import linalg
-from setup import objects
+import objects
 import matplotlib.pyplot as plt
 import logging
 
@@ -26,7 +26,7 @@ def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
     for i in range(len(cell_radii)):
         if cell_fraction[i] > 0:
             num_cells.append(int(
-                (cell_fraction[i]*(voxel_dimensions**3))/((4.0/3.0)*np.pi*cell_radii[i]**3)))
+                (0.5*cell_fraction[i]*(voxel_dimensions**3)/((4.0/3.0)*np.pi*cell_radii[i]**3))))
         else:
             num_cells.append(int(0))
     logging.info('------------------------------')

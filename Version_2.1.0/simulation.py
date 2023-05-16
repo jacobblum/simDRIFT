@@ -7,7 +7,7 @@ import configparser
 import contextlib
 from setup import spin_init_positions, set_voxel_configuration
 import sys
-from physics import diffusion
+import diffusion
 import save
 from jp import linalg
 import logging

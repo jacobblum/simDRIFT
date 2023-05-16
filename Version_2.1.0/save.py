@@ -88,14 +88,8 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     fiber1 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 1 else -1 for spin in spins])
     fiber2 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 2 else -1 for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
-    iSpin = 0
-    water = np.empty(len(spins))
-    for spin in spins:
-        if spin._in_water:
-            water[iSpin] = iSpin
-        else:
-            water[iSpin] = -1
-        iSpin = iSpin + 1
+    water  = np.array([spin._get_water_index() for spin in spins])
+
 
     logging.info('------------------------------')
     logging.info(' Signal Generation') 

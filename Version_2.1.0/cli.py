@@ -26,7 +26,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                   help="The radii (in units of micrometers) of each fiber type, entered as a comma-separated string (e.g., ''1.5, 2.0'')")
 
     subparser.add_argument("--thetas_Y", nargs=None, type=str,
-                  dest='thetas', default='0, 90',
+                  dest='thetas', default='0, 60',
                   required=False,
                   help="Rotation angle (with respect to the Y axis, in degrees) for each fiber type, entered as a comma-separated string (e.g., ''0, 30'')")
 
@@ -36,12 +36,12 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                   help="Diffusivity within each fiber type (in units of micrometers^2 per ms), entered as a comma-separated string (e.g., ''1.0, 2.5'')")
 
     subparser.add_argument("--cell_fractions", nargs=None, type=str,
-                  dest='cell_fractions', default='0.05, 0.05',
+                  dest='cell_fractions', default='0.2, 0.2',
                   required=False,
                   help="The desired volume fraction of each cell type, entered as a comma-separated string of values between 0 and 1 (e.g., ''0.05, 0.20'')")
 
     subparser.add_argument("--cell_radii", nargs=None, type=str,
-                  dest='cell_radii', default='2.5, 2.5',
+                  dest='cell_radii', default='10.0, 10.0',
                   required=False,
                   help="The radii (in units of micrometers) of each cell type, entered as a comma-separated string (e.g., ''3.0, 7.5'')")
 
@@ -113,7 +113,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            )
     
     subparser.add_argument("--void_dist", nargs = None, type = float,
-                           dest = 'void_dist', default = 0.,
+                           dest = 'void_dist', default = 0,
                            required = False,
                            help = "Size (in units of micrometers) of a region in middle of voxel, aka void, excluded from fiber placement. (optional except when fiber_configuration = ''Void'') "
                            )
