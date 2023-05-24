@@ -8,10 +8,17 @@ import logging
 
 def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fiber_configuration):
     num_fibers = []
-    for i in range(len(fiber_fractions)):
-        num_fiber = int(np.sqrt(
-            (fiber_fractions[i] * (voxel_dimensions**2))/(np.pi*fiber_radii[i]**2)))
-        num_fibers.append(num_fiber)
+    if fiber_configuration != 'Interwoven':
+        for i in range(len(fiber_fractions)):
+            num_fiber = int(np.sqrt(
+                (fiber_fractions[i] * (voxel_dimensions**2))/(np.pi*fiber_radii[i]**2)))
+            num_fibers.append(num_fiber)
+    elif fiber_configuration == 'Interwoven':
+        for i in range(len(fiber_fractions)):
+            num_fiber = int(np.sqrt(
+                ((0.5*fiber_fractions[i]) * (voxel_dimensions**2))/(np.pi*fiber_radii[i]**2)))
+            num_fibers.append(num_fiber)
+
     logging.info('------------------------------')
     logging.info(' Fiber Setup')
     logging.info('------------------------------') 
@@ -44,9 +51,34 @@ def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, vo
     rotation_matrices = linalg.Ry(thetas)
 
     fibers = []
-    for i in range(len(fiber_fractions)):
+    if fiber_configuration == 'Interwoven':
+        yv1, xv1 = np.meshgrid(np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[0]),
+                            np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[0]))
+        yv2, xv2 = np.meshgrid(np.linspace((-0.5*buffer)+(1.5*max(fiber_radii)), voxel_dimensions+(0.5*buffer), num_fibers[1]),
+                            np.linspace((-0.5*buffer)+(1.5*max(fiber_radii)), voxel_dimensions+(0.5*buffer),  num_fibers[1]))
+        
+        for i in range(len(fiber_fractions)):
+            if i == 0:
+                for ii in range(yv1.shape[0]):
+                    for jj in range(yv1.shape[1]):
+                        fibers.append(objects.fiber(center=linalg.affine_transformation(xv1, xv1[ii, jj], yv1[ii, jj], thetas, i),
+                                                                direction=rotation_matrices[i, :, :].dot(np.array([0., 0., 1.])),
+                                                                bundle=i,
+                                                                diffusivity=fiber_diffusions[i],
+                                                                radius=fiber_radii[i]))
+            elif i == 1:
+                for ii in range(yv2.shape[0]):
+                    for jj in range(yv2.shape[1]):
+                        fibers.append(objects.fiber(center=linalg.affine_transformation(xv2, xv2[ii, jj], yv2[ii, jj], thetas, i),
+                                                                direction=rotation_matrices[i, :, :].dot(np.array([0., 0., 1.])),
+                                                                bundle=i,
+                                                                diffusivity=fiber_diffusions[i],
+                                                                radius=fiber_radii[i]))
 
-        yv, xv = np.meshgrid(np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[i]),
+        
+    else:
+        for i in range(len(fiber_fractions)):
+            yv, xv = np.meshgrid(np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[i]),
                              np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[i]))
 
 
@@ -55,8 +87,8 @@ def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, vo
             for jj in range(yv.shape[1]):
 
                 fiber_cfg_bools = {'Penetrating': True,
-                                   'Void': np.logical_or(yv[ii, jj] > 0.5*(voxel_dimensions + buffer - void_distance), yv[ii, jj] < 0.5 * (voxel_dimensions+buffer + void_distance))
-                                   }
+                                    'Void': np.logical_or(yv[ii, jj] > 0.5*(voxel_dimensions + buffer - void_distance), yv[ii, jj] < 0.5 * (voxel_dimensions+buffer + void_distance))
+                                    }
                 if i == 0:
                     if yv[ii,jj] <= 0.5*voxel_dimensions:
                         if fiber_cfg_bools[fiber_configuration]:
