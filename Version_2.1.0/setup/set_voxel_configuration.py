@@ -45,9 +45,10 @@ def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
 
 def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, voxel_dimensions, buffer, void_distance, fiber_configuration):
 
-    num_fibers = _set_num_fibers(
-        fiber_fractions, fiber_radii, voxel_dimensions, buffer,fiber_configuration)
-
+    num_fibers = _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer,fiber_configuration)
+    
+    print(num_fibers)
+  
     rotation_matrices = linalg.Ry(thetas)
 
     fibers = []
@@ -81,38 +82,41 @@ def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, vo
             yv, xv = np.meshgrid(np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[i]),
                              np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[i]))
 
+            for ii in range(yv.shape[0]):
+                for jj in range(yv.shape[1]):
 
+                    fiber_cfg_bools = {'Penetrating': True,
+                                        'Void': np.logical_or(yv[ii, jj] > 0.5*(voxel_dimensions + buffer - void_distance), yv[ii, jj] < 0.5 * (voxel_dimensions+buffer + void_distance))
+                                        }
+                    if i == 0:
+                        if yv[ii,jj] <= 0.5*voxel_dimensions:
+                            if fiber_cfg_bools[fiber_configuration]:
+                                fibers.append(objects.fiber(center=linalg.affine_transformation(xv, xv[ii, jj], yv[ii, jj], thetas, i),
+                                                            direction=rotation_matrices[i, :, :].dot(np.array([0., 0., 1.])),
+                                                            bundle=i,
+                                                            diffusivity=fiber_diffusions[i],
+                                                            radius=fiber_radii[i]))
+                    elif i == 1:
+                        if yv[ii,jj] > 0.5*voxel_dimensions:
+                            if fiber_cfg_bools[fiber_configuration]:
+                                fibers.append(objects.fiber(center=linalg.affine_transformation(xv, xv[ii, jj], yv[ii, jj], thetas, i),
+                                                            direction=rotation_matrices[i, :, :].dot(np.array([0., 0., 1.])),
+                                                            bundle=i,
+                                                            diffusivity=fiber_diffusions[i],
+                                                            radius=fiber_radii[i]))
+    
 
-        for ii in range(yv.shape[0]):
-            for jj in range(yv.shape[1]):
-
-                fiber_cfg_bools = {'Penetrating': True,
-                                    'Void': np.logical_or(yv[ii, jj] > 0.5*(voxel_dimensions + buffer - void_distance), yv[ii, jj] < 0.5 * (voxel_dimensions+buffer + void_distance))
-                                    }
-                if i == 0:
-                    if yv[ii,jj] <= 0.5*voxel_dimensions:
-                        if fiber_cfg_bools[fiber_configuration]:
-                            fibers.append(objects.fiber(center=linalg.affine_transformation(xv, xv[ii, jj], yv[ii, jj], thetas, i),
-                                                        direction=rotation_matrices[i, :, :].dot(np.array([0., 0., 1.])),
-                                                        bundle=i,
-                                                        diffusivity=fiber_diffusions[i],
-                                                        radius=fiber_radii[i]))
-                elif i == 1:
-                    if yv[ii,jj] > 0.5*voxel_dimensions:
-                        if fiber_cfg_bools[fiber_configuration]:
-                            fibers.append(objects.fiber(center=linalg.affine_transformation(xv, xv[ii, jj], yv[ii, jj], thetas, i),
-                                                        direction=rotation_matrices[i, :, :].dot(np.array([0., 0., 1.])),
-                                                        bundle=i,
-                                                        diffusivity=fiber_diffusions[i],
-                                                        radius=fiber_radii[i]))
-
+    
+    if not fibers:
+        fibers.append(objects.fiber(center = np.zeros(3), direction = np.zeros(3), bundle = 0, diffusivity = 0., radius = -1.))
 
     return fibers
 
 
-def _place_cells(num_cells, fibers, cell_radii, fiber_configuration, voxel_dimensions, buffer, void_dist, water_diffusivity):
+def _place_cells(fibers, cell_radii, cell_fractions, fiber_configuration, voxel_dimensions, buffer, void_dist, water_diffusivity):
 
     cell_centers_total = []
+    num_cells = _set_num_cells(cell_fractions, cell_radii, voxel_dimensions, buffer)
 
     zmin = min([fiber._get_center()[2] for fiber in fibers])
     zmax = zmin + voxel_dimensions
@@ -196,9 +200,12 @@ def _place_cells(num_cells, fibers, cell_radii, fiber_configuration, voxel_dimen
 
     cells = []
     
-    for i in range(output_arg.shape[0]):
-        cells.append(objects.cell(cell_center = output_arg[i,0:3], cell_radius=cell_radii[0], cell_diffusivity = water_diffusivity))
-    sys.stdout.write('\n')
+    if not (output_arg).any():
+        cells.append(objects.cell(cell_center=np.array([0., 0., 0.]), cell_radius=-1, cell_diffusivity=0.))
+    else:
+        for i in range(output_arg.shape[0]):
+            cells.append(objects.cell(cell_center = output_arg[i,0:3], cell_radius=cell_radii[0], cell_diffusivity = water_diffusivity))
+        sys.stdout.write('\n')
     return cells
 
 def _place_spins(n_walkers: int, voxel_dims: float, fibers: object):

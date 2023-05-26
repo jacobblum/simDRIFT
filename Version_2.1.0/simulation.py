@@ -42,12 +42,6 @@ class dmri_simulation:
 
     def set_voxel(self):
 
-        self.num_cells = set_voxel_configuration._set_num_cells(self.parameters['cell_fractions'],
-                                                               self.parameters['cell_radii'],
-                                                               self.parameters['voxel_dims'],
-                                                               self.parameters['buffer']
-                                                               )
-
         self.fibers = set_voxel_configuration._place_fiber_grid(self.parameters['fiber_fractions'],
                                                                 self.parameters['fiber_radii'],
                                                                 self.parameters['fiber_diffusions'],
@@ -58,9 +52,9 @@ class dmri_simulation:
                                                                 self.parameters['fiber_configuration']
                                                                 )
 
-        self.cells = set_voxel_configuration._place_cells(self.num_cells,
-                                                          self.fibers,
+        self.cells = set_voxel_configuration._place_cells(self.fibers,
                                                           self.parameters['cell_radii'],
+                                                          self.parameters['cell_fractions'],
                                                           self.parameters['fiber_configuration'],
                                                           self.parameters['voxel_dims'],
                                                           self.parameters['buffer'],
@@ -79,22 +73,6 @@ class dmri_simulation:
                                                  self.cells, 
                                                  self.fibers)
         
-        import matplotlib.pyplot as plt
-        #fig = plt.figure()
-        #ax = fig.add_subplot(projection='3d')
-
-        #for spin in self.spins:
-        #    ax.scatter(spin._get_position_t1m()[0], spin._get_position_t1m()[1], color = 'red')
-
-        #for fiber in self.fibers:
-        #    if fiber._get_bundle() == 1:
-        #        ax.scatter(fiber._get_center()[0], fiber._get_center()[1], fiber._get_center()[2], color = 'blue')
-        #    else:
-        #        ax.scatter(fiber._get_center()[0], fiber._get_center()[1], fiber._get_center()[2], color = 'orange')
-       
-        #plt.show()
-
-
         return
 
     def run(self, args):
@@ -121,8 +99,6 @@ class dmri_simulation:
                                           self.parameters['dt'],
                                           self.parameters['water_diffusivity']
                                         )
-            
-         
             
             save._save_data(self,
                             self.spins,

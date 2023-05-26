@@ -16,7 +16,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            required=False,
                            help="The number of spins to populate within the voxel, entered as an integer value. To obtain reliable results, use enough spins to acheive a minimal spin volume density of 1 per cubic micron.")
     subparser.add_argument("--fiber_fractions", nargs=None, type=str,
-                  dest='fiber_fractions', default='0.8, 0.8',
+                  dest='fiber_fractions', default='0.0, 0.0',
                   required=False,
                   help="The desired volume fraction of each fiber type within its region of the voxel, entered as a comma-separated string of values between 0 and 1 (e.g., ''0.5, 0.7'')")
 
@@ -36,7 +36,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                   help="Diffusivity within each fiber type (in units of micrometers^2 per ms), entered as a comma-separated string (e.g., ''1.0, 2.5'')")
 
     subparser.add_argument("--cell_fractions", nargs=None, type=str,
-                  dest='cell_fractions', default='0.2, 0.2',
+                  dest='cell_fractions', default='0.1, 0.0',
                   required=False,
                   help="The desired volume fraction of each cell type, entered as a comma-separated string of values between 0 and 1 (e.g., ''0.05, 0.20'')")
 
@@ -50,23 +50,6 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                   required=False,
                   help="Fiber configuration/geometry type. See README for addition details.")
 
-    #The below boolean arguments are not used or passed to any function in the current implementation. Suggest adding these features or removing the arguments for code hygeine. --KLU (04/27/23) 
-    """ 
-    subparser.add_argument("--simulate_fibers", nargs=None, type=bool,
-                  dest='simulate_fibers', default=True,
-                  required=False,
-                  help="Simulate diffusion of spins in fibers? ")
-
-    subparser.add_argument("--simulate_cells", nargs=None, type=bool,
-                  dest='simulate_cells', default=True,
-                  required=False,
-                  help="Simulate diffusion of spins in cells? ")
-
-    subparser.add_argument("--simulate_water", nargs=None, type=bool,
-                  dest='simulate_water', default=True,
-                  required=False,
-                  help="Simulate diffusion of spins in water? ")
-    """
 
     subparser.add_argument("--water_diffusivity", nargs=None, type=float,
                   dest='water_diffusivity', default=3.0,
@@ -77,7 +60,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
     """  Scanning Parameters """
 
     subparser.add_argument("--Delta", nargs=None, type=float,
-                           dest='Delta', default=10.0,
+                           dest='Delta', default=0.001,
                            required=False,
                            help="Diffusion time, in units of milliseconds"
                            )
