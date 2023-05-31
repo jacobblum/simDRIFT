@@ -16,7 +16,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            required=False,
                            help="The number of spins to populate within the voxel, entered as an integer value. To obtain reliable results, use enough spins to acheive a minimal spin volume density of 1 per cubic micron.")
     subparser.add_argument("--fiber_fractions", nargs=None, type=str,
-                  dest='fiber_fractions', default='0.0, 0.0',
+                  dest='fiber_fractions', default='0.2,   0.2',
                   required=False,
                   help="The desired volume fraction of each fiber type within its region of the voxel, entered as a comma-separated string of values between 0 and 1 (e.g., ''0.5, 0.7'')")
 
@@ -103,21 +103,54 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
 
     return subparsers
 
-def typing(args):
-
+def typing_and_validation(args):
+    # N_walkers
     args['n_walkers'] = int(args['n_walkers'])
+    if args['n_walkers'] <= 0:
+        raise ValueError(f"Entered: {args['n_walkers']}, but N_walkers must be positive")
+    # Fiber-Fractions
     args['fiber_fractions'] = [float(frac) for frac in str(args['fiber_fractions']).split(',')]
+    if any([ff < 0 for ff in args['fiber_fractions']]) or sum(args['fiber_fractions']) > 1:
+        raise ValueError(f"Entered: {args['fiber_fractions']}, but each fiber fraction must be non-negative and cannot sum to more than 1.0")
+    # Fiber-Radii
     args['fiber_radii'] = [float(rad) for rad in str(args['fiber_radii']).split(',')]
+    if any([radius < 0 for radius in args['fiber_radii']]):
+        raise ValueError(f"Entered: {args['fiber_radii']}, but fiber radii must be non-negative")
+    # Thetas
     args['thetas'] = [float(theta) for theta in str(args['thetas']).split(',')]
+    # Fiber Diffusions
     args['fiber_diffusions'] = [float(D0) for D0 in str(args['fiber_diffusions']).split(',')]
+    if any([D0 < 0 for D0 in args['fiber_diffusions']]):
+        raise ValueError(f"Entered: {args['fiber_diffusions']}, but each fiber diffusion must be non-negative")
+    # Cell Fractions
     args['cell_fractions'] = [float(frac) for frac in str(args['cell_fractions']).split(',')]
+    if any(cf < 0 for cf in args['cell_fractions']) or sum(args['cell_fractions']) > 1:
+        raise ValueError(f"Entered: {args['cell_fractions']}, but each cell fraction must be non-negative and cannot sum to more than 1.0")
+    # Cell Radii 
     args['cell_radii'] = [float(rad) for rad in str(args['cell_radii']).split(',')]
+    if any(cr < 0 for cr in args['cell_radii']):
+        raise ValueError(f"Entered: {args['cell_radii']}, but each cell radius must be non-negative")
+    # Water Diffusivity
+    args['water_diffusivity'] = float(args['water_diffusivity'])
+    if args['water_diffusivity'] <= 0:
+        raise ValueError(f"Entered {args['water_diffusivity']}, but water diffusivity must be non-negative")
+    # Delta
     args['Delta'] = float(args['Delta'])
+    if args['Delta'] < 0:
+        raise ValueError(f"Entered: {args['Delta']}, but Delta must be positive")
+    # delta / dt
     args['dt'] = float(args['dt'])
+    if args['dt'] <= 0:
+        raise ValueError(f"Entered: {args['dt']}, but dt must be positive")
+    # Voxel Dims
     args['voxel_dims'] = float(args['voxel_dims'])
+    if args['voxel_dims'] <= 0:
+        raise ValueError(f"Entered: {args['voxel_dims']}, but voxel_dims must be positive")
+    # Void Distance
     args['void_dist'] = float(args['void_dist'])
+    if args['void_dist'] < 0:
+        raise ValueError(f"Entered: {args['void_dist']}, but void_dist must be non-negative")
     return args
-
 
 def main():
 
@@ -129,7 +162,7 @@ def main():
     subparsers = add_subgparser_args(subparsers)
     args = vars(parser.parse_args())
 
-    args = typing(args)
+    args = typing_and_validation(args)
 
     simulation.run(args)
 
