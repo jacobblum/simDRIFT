@@ -4,7 +4,16 @@ import numpy as np
 
 class fiber():
     def __init__(self, center: np.ndarray, direction: np.ndarray, bundle: int, diffusivity: float, radius: float) -> None:
-                
+        r"""
+        fiber information
+
+        Attributes:
+            center (np.ndarray): (x,y,z) coordinates of the fiber center
+            bundle (int): constituent bundle index
+            direction (np.ndarray): unit vector pointed in the fiber direction
+            diffusivity (float): intrinsic fiber diffusivity
+            radius (float): fiber radius
+        """
         self.center = center
         self.bundle = bundle + 1
         self.direction = direction
@@ -35,6 +44,14 @@ class fiber():
 
 class cell():
     def __init__(self, cell_center, cell_radius: float, cell_diffusivity: float) -> None:
+        r"""
+        cell information
+
+        Attributes:
+            center (np.ndarray): (x,y,z) coordinates of the cell center 
+            diffusivity (float): intrinsic fiber diffusivity
+            radius (float): fiber radius
+        """
                 
         self.center      = cell_center
         self.diffusivity = cell_diffusivity
@@ -68,11 +85,23 @@ class cell():
 class spin():
     def __init__(self, spin_position_t1m : np.ndarray) -> None:
 
+        r"""
+        spin information
+
+        Attributes:
+            position_t1m (np.ndarray): initial spin position
+            position_t2p (np.ndarray): final spin position
+            in_fiber_index (int): index of resident fiber (if the spin resides in a fiber)
+            in_cell_index (int): index of the resident cell (if the spin resides in a cell) 
+            in_water_index (int): spin index if in water
+        """
+
         self.position_t1m = spin_position_t1m
         self.position_t2p = np.empty(shape=(3,), dtype=np.float32)
         self.in_fiber_index = None
         self.fiber_bundle = None
         self.in_cell_index = None
+        self.in_water_index = None
         
         return 
     
@@ -101,11 +130,13 @@ class spin():
         else:
             self.in_cell_index = index
         return
-    def _in_water(self):
-        if np.logical_and(self.in_cell_index == None, self.in_fiber_index == None):
-            return True
+    def _set_water_index(self, index : int):
+        if index < 0:
+            self.in_water_index = -1
+            return 
         else:
-            return False
+            self.in_water_index = index
+        return
             
     
     def _get_position_t1m(self):

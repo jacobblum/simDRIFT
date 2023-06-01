@@ -48,13 +48,57 @@ def spins_in_voxel(trajectoryT1m, trajectoryT2p):
 
 
 def _add_noise(signal, snr):
+    r"""
+    Add Gaussian Noise to the forward simulated signal
+
+    Args:
+        signal (np.ndarray): The forward simulated signal
+        snr (float): The signal to noise ratio of the b0 image
+
+    Shapes:
+        signal: (n_bvals,) where n_bvals is the number of b-values in the supplied bval file
+
+    Returns:
+        noised_signal (np.ndarray): The noised signal
+    
+    References:
+        [1] Garyfallidis E, Brett M, Amirbekian B, Rokem A, van der Walt S, Descoteaux M, Nimmo-Smith I and Dipy Contributors (2014). DIPY, a library for the analysis of diffusion MRI data. Frontiers in Neuroinformatics, vol.8, no.8.
+    
+    
+    """
     sigma = 1.0/snr 
     real_channel_noise = np.random.normal(0, sigma, signal.shape[0])
     return signal + real_channel_noise
 
    
 def _signal(spins: list, bvals: np.ndarray, bvecs: np.ndarray, Delta: float, dt: float, SNR = None) -> np.ndarray:
-   
+    r"""
+    Calculates the PGSE signal from the forward simulated spin trajectories. Note that this computation is executed on the GPU using CuPy.
+    
+    Args:
+        spins (list): A list of each objects.spin instance corresponding to a spin in the ensemble of random walkers
+        bvals (np.ndarray): The supplied b-values (diffusion weighting factors)
+        bvecs (np.ndarray): The supplied diffusion gradients 
+        Delta (float): The diffusion time (ms)
+        dt (float): The time step parameter, also equal to delta because of the narrow pulse approximation
+        SNR (float, optional): The snr of the b0 image. If a value is not entered, the snr of the signal is infinite. 
+
+    Shapes:
+        spins: (n_walkers,) where n_walkers is an input parameter denoting the n umber of spins in the ensemble
+        bvals: (n_bvals,) where n_bvals is the number of b-values in the supplied bval file
+        bvecs: (n_bvals, 3) where n_bvals is the number of b-values in the supplied bval file)I
+
+    Returns:
+        signal (np.ndarray): the forward simulated PGSE signal
+        trajectory_t1m (np.ndarray): the initial spin positions 
+        trajectory_t2p (np.ndarray): the final spin positions
+
+    References:
+        [1] Hall, M. G., and Alexander, D. C. (2009). Convergence and parameter choice for monte-carlo simulations of diffusion MRI. IEEE Trans. Med. Imaging 28, 1354–1364. doi: 10.1109/TMI.2009.2015756
+    """    
+
+
+
     """ Use CuPy to execute the einstein summations on the GPU """
     
     gamma = 42.58 # MHz/T - The proton gyromagnetic ratio
@@ -80,6 +124,10 @@ def _signal(spins: list, bvals: np.ndarray, bvecs: np.ndarray, Delta: float, dt:
 
 
 def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, diff_schemes: str, SNR = None):
+    r"""
+    Helper function to organize and store compartment specific and combined trajectories and their incident signals
+    """
+    
     signals_dict = {}
     trajectories_dict = {}
 
@@ -344,6 +392,10 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     return signals_dict, trajectories_dict
 
 def _save_data(self, spins: list, Delta: float, dt: float, diff_scheme: str):
+    r"""
+    Helper function that saves signals and trajectories
+    """
+
 
     signals_dict, trajectories_dict = _generate_signals_and_trajectories(self.spins,
                                                                          self.parameters['Delta'],

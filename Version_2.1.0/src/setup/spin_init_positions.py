@@ -21,6 +21,19 @@ def _find_spin_locations_kernel(resident_fiber_indxs_cuda: numba.cuda.cudadrv.de
                                 cell_radii_cuda:           numba.cuda.cudadrv.devicearray.DeviceNDArray,
                                 spin_positions_cuda:       numba.cuda.cudadrv.devicearray.DeviceNDArray
                                 ) -> None:
+    r"""
+    Locate spins within resident microstructural elements
+    
+    Args:
+        resident_fiber_indxs_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): Array to write resident fiber indices to
+        resident_cell_indxs_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): Array to write resident cell indicies to
+        fiber_centers_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): coordinates of the fiber centers
+        fiber_directions_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): directions of the fibers
+        fiber_radii_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): fiber radii
+        cell_centers_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): coordinates of the cell centers
+        cell_radii_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): cell radii
+        spin_positions_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): initial spin positions
+    """
     i = cuda.grid(1)
   
     if i > spin_positions_cuda.shape[0]:
@@ -45,33 +58,9 @@ def _find_spin_locations_kernel(resident_fiber_indxs_cuda: numba.cuda.cudadrv.de
     return
 
 def _find_spin_locations(self, spins, cells, fibers):
-   
-    """ Unfortunately it is not possible to pass python objects to the GPU. This function will make the relevant arrays for the GPU to operate on 
-        and then update the python object classes accordingly
-
-        Fiber Attributes
-         - self._center: (3,) np.ndarray
-         - self._direction: (3,) np.ndarray
-         - self._radius: float
-
-        Cell Attributes
-         - None Currently
-
-        Spin Attributes: 
-         - self._position_t1m: (3,) np.ndarray
-        
-        the _find_spin_locations_kernel will compute: 
-                                        
-         - d(spin[i]._position_t1m(), fiber[j]._center()) =  || spin[i]._position_t1m() - fiber[j]._center() ||_{L2} 
-                                                                                           -  proj_{fiber[j]._direction()} || spin[i]._position_t1m() - fiber[j]._center() ||_{L2} for i = 1,2,... n_walkers, j = 1,2,... n_fibers
-
-         - d(spin[i]._position_t1m(), cell[j]._center()) = || spin[i]._position_t1m() - cell[j]._center() ||_{L2} for i = 1,2,... n_walkers, j = 1,2,... n_cells
-                                        
-        """
-    
-    
-    """ Declare Cuda Device Arrays """
-
+    r"""
+    helper function to find initial spin locations
+    """
     resident_fiber_indxs_cuda = cuda.to_device( -1 * np.ones(shape = (len(spins),), dtype= np.int32))
     resident_cell_indxs_cuda  = cuda.to_device( -1 * np.ones(shape = (len(spins),), dtype= np.int32))
     fiber_centers_cuda        = cuda.to_device(np.array([fiber._get_center() for fiber in fibers], dtype= np.float32))
