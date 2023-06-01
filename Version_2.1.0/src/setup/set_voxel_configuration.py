@@ -9,15 +9,12 @@ import logging
 def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fiber_configuration):
     r"""Calculates the number of fibers that achieves the supplied fiber densities (fractions).
 
-    
     Args:
     in_features (int): The size of each input sample.
     out_features (int): The size of each output sample.
     bias (bool, optional): If set to ``False``, the layer will not learn an
         additive bias. Default: ``True``.
 
-    
-    
     """
 
     num_fibers = []
@@ -70,9 +67,7 @@ def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
 def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, voxel_dimensions, buffer, void_distance, fiber_configuration):
 
     num_fibers = _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer,fiber_configuration)
-    
-    print(num_fibers)
-  
+ 
     rotation_matrices = linalg.Ry(thetas)
 
     fibers = []
@@ -233,11 +228,15 @@ def _place_cells(fibers, cell_radii, cell_fractions, fiber_configuration, voxel_
     return cells
 
 def _place_spins(n_walkers: int, voxel_dims: float, fibers: object):
+    
+    zmin = min([fiber._get_center()[2] for fiber in fibers])
+    zmax = zmin + voxel_dims
+
+    print(zmin, zmax)
+
     spin_positions_t1m = np.vstack([np.random.uniform(low=0, high=voxel_dims, size=n_walkers),
                                     np.random.uniform(low=0, high=voxel_dims, size=n_walkers),
-                                    np.random.uniform(low=min([fiber._get_center()[2] for fiber in fibers ]),
-                                                      high =min([fiber._get_center()[2] for fiber in fibers ]) + voxel_dims, 
-                                                      size = n_walkers)])
+                                    np.random.uniform(low=zmin, high=zmax, size = n_walkers)])
     
     spins = [objects.spin(spin_positions_t1m[:,ii]) for ii in range(spin_positions_t1m.shape[1])]
 

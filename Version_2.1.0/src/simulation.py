@@ -83,7 +83,31 @@ class dmri_simulation:
             self.set_parameters(args)
             
             self.set_voxel()
-            
+
+            import matplotlib.pyplot as plt
+
+            ax = plt.figure().add_subplot(projection='3d')
+
+            for spin in self.spins:
+                if spin.fiber_bundle == 1:
+                    ax.scatter(spin.position_t1m[0],spin.position_t1m[1], spin.position_t1m[2], color = 'blue', s = 1)
+                if spin.fiber_bundle == 2:
+                    ax.scatter(spin.position_t1m[0],spin.position_t1m[1], spin.position_t1m[2], color = 'red', s = 1)
+                if spin.in_cell_index > -1:
+                     ax.scatter(spin.position_t1m[0],spin.position_t1m[1], spin.position_t1m[2], color = 'green', s = 1)   
+
+            ax.view_init(elev=10., azim=145)
+          
+
+            ax.set_xlabel(r'$\mu m$')
+            ax.set_ylabel(r'$\mu m$')
+            ax.set_zlabel(r'$\mu m$')
+
+            plt.show()
+
+            plt.savefig(r"C:\Users\Jacob\Desktop\dMRI-MCSIM-Jacob-s-Version-Updated\Version_2.1.0\joss\figs\0_90_Void.png")
+
+            exit()
             diffusion._simulate_diffusion(self,
                                           self.spins,
                                           self.cells,
