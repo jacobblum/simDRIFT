@@ -1,5 +1,5 @@
 ---
-title: 'Title HERE'
+title: 'Simulated Diffusion in Realistic Imagaing Features of Tissue (Sim-DRIFT)'
 tags:
   - Python
   - Diffusion MRI
@@ -26,9 +26,9 @@ This library implements a forward simulation of diffusion-weighted Magnetic Reso
 
 # Statement of need
 
-The self-diffusion processes of Nuclear Magnetic Resonance (NMR) spins is modeled by the phenomonlogical Bloch-Torrey Equation:
+The self-diffusion process of water spins, as measured by nuclear magnetic resonance (NMR), is modeled by the phenomonlogical Bloch-Torrey Equation:
 $$\partial_{t} \text{ } \mathbf{M}(\mathbf{r} , t) = \gamma \text{ } \mathbf{M} \times \mathbf{B} -  \frac{\mathbf{M_{x}}\mathbf{\hat{i}} - \mathbf{M_{y}}\mathbf{\hat{j}} }{T_{2}} -\frac{\mathbf{M_{z}}-\mathbf{M_{0}}}{T_{1}}\mathbf{\hat{k}} + \nabla \cdot \mathbf{D}(\mathbf{r})\nabla \mathbf{M}$$
-However, for complex, bioloigcally relevant domains, analytic solutions to Bloch-Torrey do not exist. This library was developed to implement Monte-Carlo simulation of molecular self diffusion processes in complex biological domains.
+However, for complex, bioloigcally relevant domains, analytic solutions to Bloch-Torrey do not exist. This library was therefore developed to implement a physically-accurate Monte-Carlo simulation of molecular self-diffusion in complex biological domains.
 
 
 
