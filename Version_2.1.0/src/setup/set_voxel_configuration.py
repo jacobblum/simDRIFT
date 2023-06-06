@@ -4,10 +4,11 @@ import sys
 from jp import linalg
 import objects
 import matplotlib.pyplot as plt
+import random
 import logging
 
 def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fiber_configuration):
-    r"""Calculates the number of fibers that achieves the supplied fiber densities (fractions).
+    """Calculates the number of fibers that achieves the supplied fiber densities (fractions).
 
     Args:
     in_features (int): The size of each input sample.
@@ -17,39 +18,27 @@ def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fibe
 
     """
 
-    num_fibers = []
-    if fiber_configuration != 'Interwoven':
-        for i in range(len(fiber_fractions)):
-            num_fiber = int(np.sqrt(
-                (fiber_fractions[i] * (voxel_dimensions**2))/(np.pi*fiber_radii[i]**2)))
-            num_fibers.append(num_fiber)
-    elif fiber_configuration == 'Interwoven':
-        for i in range(len(fiber_fractions)):
-            num_fiber = int(np.sqrt(
-                ((0.5*fiber_fractions[i]) * (voxel_dimensions**2))/(np.pi*fiber_radii[i]**2)))
-            num_fibers.append(num_fiber)
-
     logging.info('------------------------------')
     logging.info(' Fiber Setup')
     logging.info('------------------------------') 
-    logging.info(' {} fibers of type 1 (R1 = {})'.format(int(0.5*(num_fibers[0]**2)),fiber_radii[0]))
-    logging.info(' {} fibers of type 2 (R2 = {})'.format(int(0.5*(num_fibers[1]**2)),fiber_radii[0]))
+
+    num_fibers = []
+    for i in range(len(fiber_fractions)):
+        num_fiber = int(np.sqrt(
+            (fiber_fractions[i] * (voxel_dimensions**2))/(np.pi*fiber_radii[i]**2)))
+        num_fibers.append(num_fiber)
+        logging.info(' {} fibers of type {} (R{} = {})'.format(int(num_fibers[i]**2),int(i),int(i),fiber_radii[i]))
     logging.info(' Fiber geometry: {}'.format(fiber_configuration))
     return num_fibers
 
 
 def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
-    r""" Calculates the number of cells required to acheive the supplied cell densities (fractions)
-    
-    
-    
-    
+    """ Calculates the number of cells required to acheive the supplied cell densities (fractions)
     """
 
-
-
-
-
+    logging.info('------------------------------')
+    logging.info(' Cells Setup')
+    logging.info('------------------------------')    
     num_cells = []
     for i in range(len(cell_radii)):
         if cell_fraction[i] > 0:
@@ -57,11 +46,7 @@ def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
                 (0.5*cell_fraction[i]*(voxel_dimensions**3)/((4.0/3.0)*np.pi*cell_radii[i]**3))))
         else:
             num_cells.append(int(0))
-    logging.info('------------------------------')
-    logging.info(' Cells Setup')
-    logging.info('------------------------------')    
-    logging.info(' {} cells with radius = {} um'.format(num_cells[0], cell_radii[0]))   
-    logging.info(' {} cells with radius = {} um'.format(num_cells[1], cell_radii[1]))
+        logging.info(' {} cells with radius = {} um'.format(num_cells[i], cell_radii[i]))
     return num_cells
 
 def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, voxel_dimensions, buffer, void_distance, fiber_configuration):
@@ -72,28 +57,27 @@ def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, vo
 
     fibers = []
     if fiber_configuration == 'Interwoven':
-        yv1, xv1 = np.meshgrid(np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[0]),
-                            np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[0]))
-        yv2, xv2 = np.meshgrid(np.linspace((-0.5*buffer)+(1.5*max(fiber_radii)), voxel_dimensions+(0.5*buffer), num_fibers[1]),
-                            np.linspace((-0.5*buffer)+(1.5*max(fiber_radii)), voxel_dimensions+(0.5*buffer),  num_fibers[1]))
-        
+        # Currently, the interwoven configuration is the only fiber configuration that utilizes a hexagonal close packing (hcp) arrangement of fibers rather than a square grid
+        hcp_x1 = np.linspace((-0.5*buffer)+max(fiber_radii),voxel_dimensions+(0.5*buffer)-max(fiber_radii),np.floor(0.5*np.sum(num_fibers)))
+        hcp_y1 = hcp_x1
+        row1_spacing = (voxel_dimensions + buffer - (2*max(fiber_radii)))/np.floor(0.5*np.sum(num_fibers))
+        hcp_x2 = np.linspace((-0.5*buffer)+max(fiber_radii)+(0.5*row1_spacing),voxel_dimensions+(0.5*buffer)-max(fiber_radii)+(0.5*row1_spacing),np.floor(0.5*np.sum(num_fibers)))
+        hcp_y2 = hcp_x2
+        hcp_yv, hcp_xv = np.meshgrid(hcp_y1.append(hcp_y2),
+                            hcp_x1.append(hcp_x2))
         for i in range(len(fiber_fractions)):
-            if i == 0:
-                for ii in range(yv1.shape[0]):
-                    for jj in range(yv1.shape[1]):
-                        fibers.append(objects.fiber(center=linalg.affine_transformation(xv1, xv1[ii, jj], yv1[ii, jj], thetas, i),
-                                                                direction=rotation_matrices[i, :, :].dot(np.array([0., 0., 1.])),
-                                                                bundle=i,
-                                                                diffusivity=fiber_diffusions[i],
-                                                                radius=fiber_radii[i]))
-            elif i == 1:
-                for ii in range(yv2.shape[0]):
-                    for jj in range(yv2.shape[1]):
-                        fibers.append(objects.fiber(center=linalg.affine_transformation(xv2, xv2[ii, jj], yv2[ii, jj], thetas, i),
-                                                                direction=rotation_matrices[i, :, :].dot(np.array([0., 0., 1.])),
-                                                                bundle=i,
-                                                                diffusivity=fiber_diffusions[i],
-                                                                radius=fiber_radii[i]))
+            fib_x_inds = []
+            fib_y_inds = []
+            for j in range(num_fibers[i]):
+                fib_x_inds[j] = random.randint(0,np.sum(num_fibers))
+                fib_y_inds[j] = random.randint(0,np.sum(num_fibers))
+                for ii in range(len(fib_x_inds)):
+                    for jj in range(len(fib_y_inds)):
+                        fibers.append(objects.fiber(center=linalg.affine_transformation(hcp_xv, hcp_xv[fib_x_inds[ii], fib_y_inds[jj]], hcp_yv[fib_x_inds[ii], fib_y_inds[jj]], thetas, i),
+                                                            direction=rotation_matrices[i, :, :].dot(np.array([0., 0., 1.])),
+                                                            bundle=i,
+                                                            diffusivity=fiber_diffusions[i],
+                                                            radius=fiber_radii[i]))
 
         
     else:
@@ -134,6 +118,10 @@ def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, vo
 
 def _place_cells(fibers, cell_radii, cell_fractions, fiber_configuration, voxel_dimensions, buffer, void_dist, water_diffusivity):
 
+    logging.info('------------------------------')
+    logging.info(' Placing Cells...')
+    logging.info('------------------------------')
+
     cell_centers_total = []
     num_cells = _set_num_cells(cell_fractions, cell_radii, voxel_dimensions, buffer)
 
@@ -148,9 +136,6 @@ def _place_cells(fibers, cell_radii, cell_fractions, fiber_configuration, voxel_
         regions = np.array([[0-(buffer/2), voxel_dimensions+(buffer/2), 0-(buffer/2), 0.5*voxel_dimensions, zmin, zmax],
                             [0-(buffer/2), voxel_dimensions+(buffer/2), 0.5*voxel_dimensions, voxel_dimensions+(buffer/2), zmin, zmax]])
 
-    logging.info('------------------------------')
-    logging.info(' Placing Cells...')
-    logging.info('------------------------------')
     for i in (range(len(num_cells))):
         cellCenters = np.zeros((num_cells[i], 4))
         for j in range(cellCenters.shape[0]):

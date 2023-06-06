@@ -113,7 +113,7 @@ def typing_and_validation(args):
     
     # N_walkers
     args['n_walkers'] = int(args['n_walkers'])
-    assert args['n_walkers'] > 0," --n_walkers must be positive"
+    assert args['n_walkers']/(args['voxel_dims']**3) > 1.0," --Simulation requires spin densities > 1.0 per cubic micron"
     
     # Fiber-Fractions
     args['fiber_fractions'] = [float(frac) for frac in str(args['fiber_fractions']).split(',')]

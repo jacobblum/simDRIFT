@@ -25,27 +25,23 @@ def _caclulate_volumes(spins):
         spins: (n_walkers,) where n_walkers is an input parameter
     
     """
-    
-    fiber1 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 1 else -1 for spin in spins])
-    fiber2 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 2 else -1 for spin in spins])
-    cells  = np.array([spin._get_cell_index() for spin in spins])
-    water  = np.array([spin._get_water_index() for spin in spins])
 
     logging.info('------------------------------')  
     logging.info(' Empirical Volume Fractions')
     logging.info('------------------------------')   
+
+    fibers = np.array([spin._get_fiber_index() if spin._get_bundle_index() >= 1 else -1 for spin in spins])
+    cells  = np.array([spin._get_cell_index() for spin in spins])
+    water  = np.array([spin._get_water_index() for spin in spins])
     
-    
-    logging.info(' Fiber 1 Volume: {}'.format(
-        len(fiber1[fiber1 > -1]) / len(spins)))
-    logging.info(' Fiber 2 Volume: {}'.format(
-        len(fiber2[fiber2 > -1]) / len(spins)))
+    logging.info(' Fiber Volume: {}'.format(
+        len(fibers[fibers > -1]) / len(spins)))
     logging.info('    Cell Volume: {} '.format(
         len(cells[cells > -1]) / len(spins)))
     logging.info('   Water Volume: {} '.format(
         len(water[water > -1]) / len(spins)))
     logging.info('          TOTAL: {} '.format(
-        (len(water[water > -1])+len(cells[cells > -1])+len(fiber1[fiber1 > -1])+len(fiber2[fiber2 > -1]))/len(spins)))
+        (len(water[water > -1])+len(cells[cells > -1])+len(fibers[fibers > -1]))/len(spins)))
         
 def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : float, dt : float, water_diffusivity : float) -> None:
     r"""
@@ -66,7 +62,9 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
     
     """
     
-    
+    logging.info('------------------------------')  
+    logging.info(' Beginning Simulation...')
+    logging.info('------------------------------')  
     _caclulate_volumes(spins)
     random_states_cuda            = cuda.to_device(create_xoroshiro128p_states(len(spins), seed = 42))    
     fiber_centers_cuda            = cuda.to_device(np.array([fiber._get_center() for fiber in fibers], dtype= np.float32))
@@ -74,6 +72,8 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
     fiber_step_cuda               = cuda.to_device(np.array([math.sqrt(6*fiber._get_diffusivity()*dt) for fiber in fibers], dtype= np.float32))
     fiber_radii_cuda              = cuda.to_device(np.array([fiber._get_radius() for fiber in fibers], dtype= np.float32))
     spin_positions_cuda           = cuda.to_device(np.array([spin._get_position_t1m() for spin in spins], dtype= np.float32))
+    # The following two lines should be changed to avoid explicit definition of a specific number of fibers. Should modify to allow for 0 to N fiber types
+    # Maybe we store the `spins_in_fiber_i_at_index` as a 2D array where the indicies for the ith fiber are stored in the ith column?
     spin_in_fiber_1_at_index_cuda = cuda.to_device(np.array([spin._get_fiber_index() if spin._get_bundle_index() == 1 else -1 for spin in spins]))
     spin_in_fiber_2_at_index_cuda = cuda.to_device(np.array([spin._get_fiber_index() if spin._get_bundle_index() == 2 else -1 for spin in spins]))
 
@@ -86,10 +86,7 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
 
     Start = time.time()
     threads_per_block = 320
-    blocks_per_grid = (len(spins) + (threads_per_block-1)) // threads_per_block
-    logging.info('------------------------------')  
-    logging.info(' Beginning Simulation...')
-    logging.info('------------------------------')    
+    blocks_per_grid = (len(spins) + (threads_per_block-1)) // threads_per_block  
     for i in range(int(Delta/dt)):
         sys.stdout.write('\r' + 'dMRI-SIM:  Step ' +  str(i+1) + '/' + str(int(Delta/dt)))
         sys.stdout.flush()
