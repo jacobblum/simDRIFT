@@ -131,10 +131,12 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     signals_dict = {}
     trajectories_dict = {}
 
-    bvals, bvecs = diffusion_schemes.get('DBSI_99')
+    bvals, bvecs = diffusion_schemes.get(diff_schemes)
 
     fiber1 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 1 else -1 for spin in spins])
     fiber2 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 2 else -1 for spin in spins])
+    fiber3 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 3 else -1 for spin in spins])
+    fiber4 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 4 else -1 for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
     water  = np.array([spin._get_water_index() for spin in spins])
 
@@ -143,7 +145,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     logging.info(' Signal Generation') 
     logging.info('------------------------------')
     
-    """ fiber 1 signal """
+    """ Fiber 1 Signal """
   
     fiber_1_spins = np.array(spins)[fiber1 > -1]
 
@@ -160,7 +162,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
         signals_dict['fiber_1_signal'] = fiber_1_signal
         trajectories_dict['fiber_1_trajectories'] = (fiber_1_trajectory_t1m, fiber_1_trajectory_t2p)
 
-    """ fiber 2 signal """
+    """ Fiber 2 Signal """
 
     fiber_2_spins = np.array(spins)[fiber2 > -1]
     
@@ -177,12 +179,45 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
         signals_dict['fiber_2_signal'] = fiber_2_signal
         trajectories_dict['fiber_2_trajectories'] = (fiber_2_trajectory_t1m, fiber_2_trajectory_t2p)
 
-
-    """ total fiber signal """ 
+    """ Fiber 3 Signal """
   
-    total_fiber_spins = np.hstack([fiber_1_spins, fiber_2_spins])
+    fiber_3_spins = np.array(spins)[fiber3 > -1]
+
+    if any(fiber_3_spins):
+        logging.info(' Computing fiber 3 signal...') 
+        Start = time.time()
+        fiber_3_signal, fiber_3_trajectory_t1m, fiber_3_trajectory_t2p = _signal(fiber_3_spins,
+                                                                                bvals,
+                                                                                bvecs,
+                                                                                Delta, 
+                                                                                dt)
+        End = time.time()
+        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+        signals_dict['fiber_3_signal'] = fiber_3_signal
+        trajectories_dict['fiber_3_trajectories'] = (fiber_3_trajectory_t1m, fiber_3_trajectory_t2p)
+
+    """ Fiber 4 Signal """
+
+    fiber_4_spins = np.array(spins)[fiber4 > -1]
+    
+    if any(fiber_4_spins):
+        logging.info(' Computing fiber 4 signal...')
+        Start = time.time()
+        fiber_4_signal, fiber_4_trajectory_t1m, fiber_4_trajectory_t2p = _signal(fiber_4_spins,
+                                                                                bvals,
+                                                                                bvecs,
+                                                                                Delta, 
+                                                                                dt)
+        End = time.time()
+        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+        signals_dict['fiber_4_signal'] = fiber_4_signal
+        trajectories_dict['fiber_4_trajectories'] = (fiber_4_trajectory_t1m, fiber_4_trajectory_t2p)
+
+    """ Total Fiber Signal """ 
+  
+    total_fiber_spins = np.hstack([fiber_1_spins, fiber_2_spins,fiber_3_spins, fiber_4_spins])
  
-    if any(total_fiber_spins) & any(fiber_1_spins) & any(fiber_2_spins):
+    if any(total_fiber_spins) & any(fiber_1_spins) & any(fiber_2_spins) & any(fiber_3_spins) & any(fiber_4_spins):
         logging.info(' Computing total fiber signal...')
         Start = time.time()
         total_fiber_signal, total_fiber_trajectory_t1m, total_fiber_trajectory_t2p = _signal(total_fiber_spins,
@@ -194,7 +229,8 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
         logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
         signals_dict['total_fiber_signal'] = total_fiber_signal
         trajectories_dict['total_fiber_trajectories'] = (total_fiber_trajectory_t1m, total_fiber_trajectory_t2p)
-    
+
+
     """ Cell Signal """
  
     cell_spins = np.array(spins)[cells > -1]
@@ -213,7 +249,11 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
         signals_dict['cell_signal'] = cell_signal
         trajectories_dict['cell_trajectories'] = (cell_trajectory_t1m, cell_trajectory_t2p)
 
+
+    """ Water Signal """
+
     water_spins = np.array(spins)[water > -1]
+    
     if any(water_spins):
         logging.info(' Computing water signal...')
         Start = time.time()
@@ -228,154 +268,6 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
         signals_dict['water_signal'] = water_signal
         trajectories_dict['water_trajectories'] = (water_trajectory_t1m, water_trajectory_t2p)
 
-    f1_water_spins = np.hstack([fiber_1_spins, water_spins])
-
-    if any(f1_water_spins) & any(fiber_1_spins) & any(water_spins):
-        logging.info(' Computing fiber 1 + water signal...')
-        Start = time.time()
-        f1_water_signal, f1_water_trajectory_t1m, f1_water_trajectory_t2p = _signal(f1_water_spins,
-                                                                            bvals,
-                                                                            bvecs,
-                                                                            Delta, 
-                                                                            dt)
-        
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['f1_water_signal'] = f1_water_signal
-        trajectories_dict['f1_water_trajectories'] = (f1_water_trajectory_t1m, f1_water_trajectory_t2p)
-
-    f1_cell_spins = np.hstack([fiber_1_spins, cell_spins])
-    if any(f1_cell_spins) & any(fiber_1_spins) & any(cell_spins):
-        logging.info(' Computing fiber 1 + cell signal...')
-        Start = time.time()
-        f1_cell_spins = np.hstack([fiber_1_spins, cell_spins])
-        f1_cell_signal, f1_cell_trajectory_t1m, f1_cell_trajectory_t2p = _signal(f1_cell_spins,
-                                                                            bvals,
-                                                                            bvecs,
-                                                                            Delta, 
-                                                                            dt)
-        
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['f1_cell_signal'] = f1_cell_signal
-        trajectories_dict['f1_cell_trajectories'] = (f1_cell_trajectory_t1m, f1_cell_trajectory_t2p)
-
-    """ Fiber 1 Plus Cell Plus Water Signal (Added KLU 05.03.23)"""
-    f1_cell_water_spins = np.hstack([fiber_1_spins, cell_spins, water_spins])
-
-    if any(f1_cell_water_spins) & any(fiber_1_spins) & any(cell_spins):
-        logging.info(' Computing fiber 1 + cell + water signal...')
-        Start = time.time()
-
-        f1_cell_water_signal, f1_cell_water_trajectory_t1m, f1_cell_water_trajectory_t2p = _signal(f1_cell_water_spins,
-                                                                            bvals,
-                                                                            bvecs,
-                                                                            Delta, 
-                                                                            dt)
-        
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['f1_cell_water_signal'] = f1_cell_water_signal
-        trajectories_dict['f1_cell_water_trajectories'] = (f1_cell_water_trajectory_t1m, f1_cell_water_trajectory_t2p)
-
-    """ Fiber 2 Plus Water Signal (Added KLU 05.03.23)"""
-    f2_water_spins = np.hstack([fiber_2_spins, water_spins])
-
-    if any(f2_water_spins) & any(fiber_2_spins):
-        logging.info(' Computing fiber 2 + water signal...')
-        Start = time.time()
-        f2_water_signal, f2_water_trajectory_t1m, f2_water_trajectory_t2p = _signal(f2_water_spins,
-                                                                            bvals,
-                                                                            bvecs,
-                                                                            Delta, 
-                                                                            dt)
-        
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['f2_water_signal'] = f2_water_signal
-        trajectories_dict['f2_water_trajectories'] = (f2_water_trajectory_t1m, f2_water_trajectory_t2p)
-
-
-    """ Fiber 2 Plus Cell Signal (Added KLU 05.03.23)"""
-    f2_cell_spins = np.hstack([fiber_2_spins, cell_spins])
-
-    if any(f2_cell_spins) & any(fiber_2_spins) & any(cell_spins):
-        logging.info(' Computing fiber 2 + cell signal...')
-        Start = time.time()
-        f2_cell_signal, f2_cell_trajectory_t1m, f2_cell_trajectory_t2p = _signal(f2_cell_spins,
-                                                                            bvals,
-                                                                            bvecs,
-                                                                            Delta, 
-                                                                            dt)
-        
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['f2_cell_signal'] = f2_cell_signal
-        trajectories_dict['f2_cell_trajectories'] = (f2_cell_trajectory_t1m, f2_cell_trajectory_t2p)
-
-    """ Fiber 2 Plus Cell Plus Water Signal (Added KLU 05.03.23)"""
-    f2_cell_water_spins = np.hstack([fiber_2_spins, cell_spins, water_spins])
-    if any(f2_cell_water_spins) & any(fiber_2_spins) & any(cell_spins):
-        logging.info(' Computing fiber 2 + cell + water signal...')
-        Start = time.time()
-        f2_cell_water_signal, f2_cell_water_trajectory_t1m, f2_cell_water_trajectory_t2p = _signal(f2_cell_water_spins,
-                                                                            bvals,
-                                                                            bvecs,
-                                                                            Delta, 
-                                                                            dt)
-        
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['f2_cell_water_signal'] = f2_cell_water_signal
-        trajectories_dict['f2_cell_water_trajectories'] = (f2_cell_water_trajectory_t1m, f2_cell_water_trajectory_t2p)
-
-    """ Both Fibers + Water signal (Added KLU 05.03.23)""" 
-
-    total_fiber_water_spins = np.hstack([total_fiber_spins, water_spins])
-    if any(total_fiber_water_spins) & any(fiber_1_spins) & any(fiber_2_spins):
-        logging.info(' Computing total fiber + water signal...')
-        Start = time.time()
-        total_fiber_water_signal, total_fiber_water_trajectory_t1m, total_fiber_water_trajectory_t2p = _signal(total_fiber_water_spins,
-                                                                                            bvals,
-                                                                                            bvecs,
-                                                                                            Delta, 
-                                                                                            dt) 
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['total_fiber_water_signal'] = total_fiber_water_signal
-        trajectories_dict['total_fiber_water_trajectories'] = (total_fiber_water_trajectory_t1m, total_fiber_water_trajectory_t2p)
-
-    """ Both Fibers + Cell signal (Added KLU 05.03.23)""" 
-    total_fiber_cell_spins = np.hstack([total_fiber_spins, cell_spins])
-    if any(total_fiber_cell_spins) & any(fiber_1_spins) & any(fiber_2_spins) & any(cell_spins):
-        logging.info(' Computing total fiber + cell signal...')
-        Start = time.time()
-        total_fiber_cell_signal, total_fiber_cell_trajectory_t1m, total_fiber_cell_trajectory_t2p = _signal(total_fiber_cell_spins,
-                                                                                            bvals,
-                                                                                            bvecs,
-                                                                                            Delta, 
-                                                                                            dt) 
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['total_fiber_cell_signal'] = total_fiber_cell_signal
-        trajectories_dict['total_fiber_cell_trajectories'] = (total_fiber_cell_trajectory_t1m, total_fiber_cell_trajectory_t2p)
-
-    """ Cell + Water signal (Added KLU 05.03.23)""" 
-    water_cell_spins = np.hstack([total_fiber_spins, cell_spins])
-    if any(water_cell_spins) & any(cell_spins):
-        logging.info(' Computing water + cell signal...')
-        Start = time.time()
-    
-        water_cell_signal, water_cell_trajectory_t1m, water_cell_trajectory_t2p = _signal(water_cell_spins,
-                                                                                            bvals,
-                                                                                            bvecs,
-                                                                                            Delta, 
-                                                                                            dt) 
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['water_cell_signal'] = water_cell_signal
-        trajectories_dict['water_cell_trajectories'] = (water_cell_trajectory_t1m, water_cell_trajectory_t2p)
-                                                    
     """ Total Signal """
     logging.info(' Computing total signal...')
     Start = time.time()
@@ -390,6 +282,107 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     signals_dict['total_signal'] = total_signal
     trajectories_dict['total_trajectories'] = (total_trajectory_t1m, total_trajectory_t2p)
     return signals_dict, trajectories_dict
+
+    # """ Fiber 1 Plus Water Signal"""
+    # f1_water_spins = np.hstack([fiber_1_spins, water_spins])
+    # if any(f1_water_spins) & any(fiber_1_spins) & any(water_spins):
+    #     logging.info(' Computing fiber 1 + water signal...')
+    #     Start = time.time()
+    #     f1_water_signal, f1_water_trajectory_t1m, f1_water_trajectory_t2p = _signal(f1_water_spins, bvals, bvecs, Delta, dt)
+    #     End = time.time()
+    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+    #     signals_dict['f1_water_signal'] = f1_water_signal
+    #     trajectories_dict['f1_water_trajectories'] = (f1_water_trajectory_t1m, f1_water_trajectory_t2p)
+
+    # """ Fiber 1 Plus Cell Signal"""
+    # f1_cell_spins = np.hstack([fiber_1_spins, cell_spins])
+    # if any(f1_cell_spins) & any(fiber_1_spins) & any(cell_spins):
+    #     logging.info(' Computing fiber 1 + cell signal...')
+    #     Start = time.time()
+    #     f1_cell_spins = np.hstack([fiber_1_spins, cell_spins])
+    #     f1_cell_signal, f1_cell_trajectory_t1m, f1_cell_trajectory_t2p = _signal(f1_cell_spins, bvals, bvecs, Delta, dt)
+    #     End = time.time()
+    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+    #     signals_dict['f1_cell_signal'] = f1_cell_signal
+    #     trajectories_dict['f1_cell_trajectories'] = (f1_cell_trajectory_t1m, f1_cell_trajectory_t2p)
+
+    # """ Fiber 1 Plus Cell Plus Water Signal"""
+    # f1_cell_water_spins = np.hstack([fiber_1_spins, cell_spins, water_spins])
+    # if any(f1_cell_water_spins) & any(fiber_1_spins) & any(cell_spins):
+    #     logging.info(' Computing fiber 1 + cell + water signal...')
+    #     Start = time.time()
+    #     f1_cell_water_signal, f1_cell_water_trajectory_t1m, f1_cell_water_trajectory_t2p = _signal(f1_cell_water_spins, bvals, bvecs, Delta, dt)
+    #     End = time.time()
+    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+    #     signals_dict['f1_cell_water_signal'] = f1_cell_water_signal
+    #     trajectories_dict['f1_cell_water_trajectories'] = (f1_cell_water_trajectory_t1m, f1_cell_water_trajectory_t2p)
+
+    # """ Fiber 2 Plus Water Signal"""
+    # f2_water_spins = np.hstack([fiber_2_spins, water_spins])
+    # if any(f2_water_spins) & any(fiber_2_spins):
+    #     logging.info(' Computing fiber 2 + water signal...')
+    #     Start = time.time()
+    #     f2_water_signal, f2_water_trajectory_t1m, f2_water_trajectory_t2p = _signal(f2_water_spins, bvals, bvecs, Delta, dt)
+    #     End = time.time()
+    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+    #     signals_dict['f2_water_signal'] = f2_water_signal
+    #     trajectories_dict['f2_water_trajectories'] = (f2_water_trajectory_t1m, f2_water_trajectory_t2p)
+
+
+    # """ Fiber 2 Plus Cell Signal"""
+    # f2_cell_spins = np.hstack([fiber_2_spins, cell_spins])
+    # if any(f2_cell_spins) & any(fiber_2_spins) & any(cell_spins):
+    #     logging.info(' Computing fiber 2 + cell signal...')
+    #     Start = time.time()
+    #     f2_cell_signal, f2_cell_trajectory_t1m, f2_cell_trajectory_t2p = _signal(f2_cell_spins, bvals, bvecs, Delta, dt)
+    #     End = time.time()
+    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+    #     signals_dict['f2_cell_signal'] = f2_cell_signal
+    #     trajectories_dict['f2_cell_trajectories'] = (f2_cell_trajectory_t1m, f2_cell_trajectory_t2p)
+
+    # """ Fiber 2 Plus Cell Plus Water Signal"""
+    # f2_cell_water_spins = np.hstack([fiber_2_spins, cell_spins, water_spins])
+    # if any(f2_cell_water_spins) & any(fiber_2_spins) & any(cell_spins):
+    #     logging.info(' Computing fiber 2 + cell + water signal...')
+    #     Start = time.time()
+    #     f2_cell_water_signal, f2_cell_water_trajectory_t1m, f2_cell_water_trajectory_t2p = _signal(f2_cell_water_spins, bvals, bvecs, Delta, dt)
+    #     End = time.time()
+    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+    #     signals_dict['f2_cell_water_signal'] = f2_cell_water_signal
+    #     trajectories_dict['f2_cell_water_trajectories'] = (f2_cell_water_trajectory_t1m, f2_cell_water_trajectory_t2p)
+
+    # """ Both Fibers + Water Signal""" 
+    # total_fiber_water_spins = np.hstack([total_fiber_spins, water_spins])
+    # if any(total_fiber_water_spins) & any(fiber_1_spins) & any(fiber_2_spins):
+    #     logging.info(' Computing total fiber + water signal...')
+    #     Start = time.time()
+    #     total_fiber_water_signal, total_fiber_water_trajectory_t1m, total_fiber_water_trajectory_t2p = _signal(total_fiber_water_spins, bvals, bvecs, Delta, dt) 
+    #     End = time.time()
+    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+    #     signals_dict['total_fiber_water_signal'] = total_fiber_water_signal
+    #     trajectories_dict['total_fiber_water_trajectories'] = (total_fiber_water_trajectory_t1m, total_fiber_water_trajectory_t2p)
+
+    # """ Both Fibers + Cell Signal""" 
+    # total_fiber_cell_spins = np.hstack([total_fiber_spins, cell_spins])
+    # if any(total_fiber_cell_spins) & any(fiber_1_spins) & any(fiber_2_spins) & any(cell_spins):
+    #     logging.info(' Computing total fiber + cell signal...')
+    #     Start = time.time()
+    #     total_fiber_cell_signal, total_fiber_cell_trajectory_t1m, total_fiber_cell_trajectory_t2p = _signal(total_fiber_cell_spins, bvals, bvecs, Delta, dt)
+    #     End = time.time()
+    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+    #     signals_dict['total_fiber_cell_signal'] = total_fiber_cell_signal
+    #     trajectories_dict['total_fiber_cell_trajectories'] = (total_fiber_cell_trajectory_t1m, total_fiber_cell_trajectory_t2p)
+
+    # """ Cell + Water Signal""" 
+    # water_cell_spins = np.hstack([total_fiber_spins, cell_spins])
+    # if any(water_cell_spins) & any(cell_spins):
+    #     logging.info(' Computing water + cell signal...')
+    #     Start = time.time()
+    #     water_cell_signal, water_cell_trajectory_t1m, water_cell_trajectory_t2p = _signal(water_cell_spins, bvals, bvecs, Delta, dt)
+    #     End = time.time()
+    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+    #     signals_dict['water_cell_signal'] = water_cell_signal
+    #     trajectories_dict['water_cell_trajectories'] = (water_cell_trajectory_t1m, water_cell_trajectory_t2p)
 
 def _save_data(self, spins: list, Delta: float, dt: float, diff_scheme: str):
     r"""
