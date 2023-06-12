@@ -12,7 +12,7 @@ The self-diffusion process of water spins, as measured by nuclear magnetic reson
 
 .. math::
 
-   \pdv{\mathbf{M}(\va{r}, t)}{t} = \gamma \left( \mathbf{M} \cp \mathbf{B} \right) - \frac{\mathbf{M}_{x} \vu{i} - \mathbf{M}_{y} \vu{j}}{T_{2}} -\frac{(\mathbf{M}_{z} - M_{0}) \vu{k}}{T_{1}} + \div{\mathbf{D}(\va{r})}\grad{\mathbf{M}}
+   \[\pdv{\mathbf{M}(\va{r}, t)}{t} = \gamma \left( \mathbf{M} \cp \mathbf{B} \right) - \frac{\mathbf{M}_{x} \vu{i} - \mathbf{M}_{y} \vu{j}}{T_{2}} -\frac{(\mathbf{M}_{z} - M_{0}) \vu{k}}{T_{1}} + \div{\mathbf{D}(\va{r})}\grad{\mathbf{M}}\]
    
 However, analytic solutions to the Bloch-Torrey equation do not exist for complex biophysical systems. To address this problem, we developed this library to provide a framework for biophysically-accurate Monte-Carlo simulations of molecular self-diffusion within biological tissues.
 
