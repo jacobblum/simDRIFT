@@ -30,8 +30,8 @@ Owing to its ability to generate synthetic dMRI data admitted by complex, biophy
 # Features
 Given the coarse-graining of detailed microstructural features (fiber bending, etc...) observed at experimentally realistic diffusion times and voxel sizes (Novikov et. al., 2018), `simDRIFT` represents fibers as narrow cylinders, or "sticks", and cells as isotropic spheres, or "balls" (Behrens et. al., 2003). We allow users to construct voxel geometries featuring $n$ oriented fiber bundles with chosen intrinsic diffusivities $(D_{0})$ and $m$ cells of various sizes. For each time step ($dt$), each tissue compartment’s resident spins are displaced along a randomly chosen direction with a compartment-dependent distance $dL = \sqrt{6D_{0}dt}$. This process is repeated until the target diffusion time of Δ is reached. For diffusion times shorter than the expected pre-exchange lifetime of intracellular water, it is safe to assume no exchange between tissue microstructures. The inter-compartmental exchange of water is computationally forbidden via within-timestep rejection of proposed moves beyond the boundaries of each spin’s domain.
 
-![Running time of the ADRT for several image sizes with asymptotic trendline. Tests were run single-threaded on an Intel Xeon Platinum 8268 processor.\label{fig:timing}](figs/simulation_configuration.png){ width=60% }
-
+![\label{fig:geometry}](figs/simulation_configuration.png)
+*Figure 1: Simulated spin trajectories from an imaging voxel featuring two fiber bundles (red, blue) with various orientations, along with cells (green).*
 
 # Acknowledgments
 
