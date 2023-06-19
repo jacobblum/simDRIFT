@@ -33,53 +33,50 @@ class dmri_simulation:
         return
 
     def set_voxel(self):
-        if self.parameters['fiber_configuration'] == 'Penetrating':
-            self.cells = set_voxel_configuration._place_cells(self.fibers,
-                                                            self.parameters['cell_radii'],
-                                                            self.parameters['cell_fractions'],
-                                                            self.parameters['fiber_configuration'],
-                                                            self.parameters['voxel_dims'],
-                                                            self.parameters['buffer'],
-                                                            self.parameters['void_dist'],
-                                                            self.parameters['water_diffusivity']
-                                                            )
-            self.fibers = set_voxel_configuration._place_fiber_grid(self.parameters['fiber_fractions'],
-                                                            self.parameters['fiber_radii'],
-                                                            self.parameters['fiber_diffusions'],
-                                                            self.parameters['thetas'],
-                                                            self.parameters['voxel_dims'],
-                                                            self.parameters['buffer'],
-                                                            self.parameters['void_dist'],
-                                                            self.parameters['fiber_configuration']
-                                                            )
 
-        else:
-            self.fibers = set_voxel_configuration._place_fiber_grid(self.parameters['fiber_fractions'],
-                                                            self.parameters['fiber_radii'],
-                                                            self.parameters['fiber_diffusions'],
-                                                            self.parameters['thetas'],
-                                                            self.parameters['voxel_dims'],
-                                                            self.parameters['buffer'],
-                                                            self.parameters['void_dist'],
-                                                            self.parameters['fiber_configuration']
-                                                            )
-
-            self.cells = set_voxel_configuration._place_cells(self.fibers,
-                                                            self.parameters['cell_radii'],
-                                                            self.parameters['cell_fractions'],
-                                                            self.parameters['fiber_configuration'],
-                                                            self.parameters['voxel_dims'],
-                                                            self.parameters['buffer'],
-                                                            self.parameters['void_dist'],
-                                                            self.parameters['water_diffusivity']
-                                                            )
-        
-
+        self.fibers = set_voxel_configuration._place_fiber_grid(self.parameters['fiber_fractions'],
+                                                    self.parameters['fiber_radii'],
+                                                    self.parameters['fiber_diffusions'],
+                                                    self.parameters['thetas'],
+                                                    self.parameters['voxel_dims'],
+                                                    self.parameters['buffer'],
+                                                    self.parameters['void_dist'],
+                                                    self.parameters['fiber_configuration']
+                                                    )
+    
+        self.cells = set_voxel_configuration._place_cells(self.fibers,
+                                                        self.parameters['cell_radii'],
+                                                        self.parameters['cell_fractions'],
+                                                        self.parameters['fiber_configuration'],
+                                                        self.parameters['voxel_dims'],
+                                                        self.parameters['buffer'],
+                                                        self.parameters['void_dist'],
+                                                        self.parameters['water_diffusivity']
+                                                        )
+    
+    
         self.spins = set_voxel_configuration._place_spins(self.parameters['n_walkers'],
-                                                          self.parameters['voxel_dims'],
-                                                          self.fibers
-                                                          )
+                                                        self.parameters['voxel_dims'],
+                                                        self.fibers)
+    
+        import matplotlib.pyplot as plt 
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='3d')
+ 
         
+        colors = ['red', 'green', 'blue']
+
+        for fiber in self.fibers:
+            
+            ax.scatter(fiber.center[0], fiber.center[1], fiber.center[2], color = colors[int(fiber.bundle - 1)])
+        
+        plt.show()
+        print('END')
+
+        print(self.parameters)
+
+
+        return 
         spin_init_positions._find_spin_locations(self, 
                                                  self.spins, 
                                                  self.cells, 
@@ -102,33 +99,7 @@ class dmri_simulation:
 
         try:
             self.set_parameters(args)
-            
             self.set_voxel()
-
-            # import matplotlib.pyplot as plt
-
-            # ax = plt.figure().add_subplot(projection='3d')
-
-            # for spin in self.spins:
-            #     if spin.fiber_bundle == 1:
-            #         ax.scatter(spin.position_t1m[0],spin.position_t1m[1], spin.position_t1m[2], color = 'blue', s = 1)
-            #     if spin.fiber_bundle == 2:
-            #         ax.scatter(spin.position_t1m[0],spin.position_t1m[1], spin.position_t1m[2], color = 'red', s = 1)
-            #     if spin.in_cell_index > -1:
-            #          ax.scatter(spin.position_t1m[0],spin.position_t1m[1], spin.position_t1m[2], color = 'green', s = 1)   
-
-            # ax.view_init(elev=10., azim=145)
-          
-
-            # ax.set_xlabel(r'$\mu m$')
-            # ax.set_ylabel(r'$\mu m$')
-            # ax.set_zlabel(r'$\mu m$')
-
-            # plt.show()
-
-            # plt.savefig(r"D:\dMRI-MCSIM-dev\Version_2.1.0\figs\test_trajectories.png")
-
-            # exit()
             diffusion._simulate_diffusion(self,
                                           self.spins,
                                           self.cells,
