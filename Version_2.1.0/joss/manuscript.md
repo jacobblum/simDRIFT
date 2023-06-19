@@ -21,13 +21,11 @@ date: 01 June 2023
 
 # Summary
 
-This library implements a forward simulation of signal acquisition for diffusion-weighted magnetic resonance imaging (dMRI)  complex, biophysically-relevant domains.
-
+This library, simDRIFT, aims to implement a forward simulation of the modelular self-diffusion processes of Nuclear Magtnetic Resonance (NMR) active spins in complex, biophysical tissue systems of various, customizable, configurations. Given the coarse-graining of the fine details microstuctural features (fiber undulation, cell shape, etc...) observed at experimentally realistic diffusion times and voxel sizes [Novikov] , simDRIFT represents fibers as narrow cylinders, or "sticks", and cells as isotropic spheres, or "balls" [Behrens et al., 2003], allowing users to construct voxel configurations featuring $n$ oriented fiber bundles with chosen intrinsic diffusivities and $m$ cells of various size.
+In general, simDRIFT provides for rapid and flexible diffusion-weighted Magnetic Resonance Imaging (dMRI) simulations, which we expect to be useful in dMRI signal processing model development and validation.   
 
 # Statement of need
 
-The self-diffusion process of water spins, as measured by nuclear magnetic resonance (NMR), is modeled by the phenomonlogical Bloch-Torrey Equation:
-$$\partial_{t} \text{ } \mathbf{M}(\mathbf{r} , t) = \gamma \text{ } \mathbf{M} \times \mathbf{B} -  \frac{\mathbf{M_{x}}\mathbf{\hat{i}} - \mathbf{M_{y}}\mathbf{\hat{j}} }{T_{2}} -\frac{\mathbf{M_{z}}-\mathbf{M_{0}}}{T_{1}}\mathbf{\hat{k}} + \nabla \cdot \mathbf{D}(\mathbf{r})\nabla \mathbf{M}$$
 However, analytic solutions to the Bloch-Torrey equation do not exist for complex biophysical systems. To address this problem, we developed this library to provide a framework for biophysically-accurate Monte-Carlo simulations of molecular self-diffusion within biological tissues.
 
 
