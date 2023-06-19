@@ -26,9 +26,13 @@ def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fibe
     for i in range(len(fiber_fractions)):
         num_fiber = int(np.sqrt(
             (fiber_fractions[i] * (voxel_dimensions**2))/(np.pi*fiber_radii[i]**2)))
+        
+        
+        
         num_fibers.append(num_fiber)
         logging.info(' {} fibers of type {} (R{} = {})'.format(int(num_fibers[i]**2),int(i),int(i),fiber_radii[i]))
     logging.info(' Fiber geometry: {}'.format(fiber_configuration))
+    
     return num_fibers
 
 
@@ -59,14 +63,13 @@ def _place_fiber_grid(fiber_fractions, fiber_radii, fiber_diffusions, thetas, vo
     for i in range(len(fiber_fractions)):
         yv, xv = np.meshgrid(np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[i]),
                              np.linspace((-0.5*buffer)+max(fiber_radii), voxel_dimensions+(0.5*buffer)-max(fiber_radii), num_fibers[i]))
-
-
+        
         for ii in range(yv.shape[0]):
             for jj in range(yv.shape[1]):
                 fiber_cfg_bools = {'Penetrating': True,
                                    'Void': np.logical_or(xv[ii, jj] <= np.median(yv[0,:]) - 0.5 * void_distance, xv[ii, jj] > np.median(yv[0,:]) + 0.5 * void_distance)}    
                 
-                if np.logical_and((i)*(yv[0,:].max()-yv[0,:].min())/len(fiber_fractions) <= yv[ii,jj], yv[ii,jj] <= (i+1)*(yv[0,:].max()-yv[0,:].min())/len(fiber_fractions)):
+                if np.logical_and((i)*(yv[0,:].max()-yv[0,:].min())/len(fiber_fractions) <= yv[ii,jj], yv[ii,jj] <= (i+1)*(yv[0,:].max()-yv[0,:].min())/len(fiber_fractions)):         
                     if fiber_cfg_bools[fiber_configuration]:
                             fibers.append(objects.fiber(center=linalg.affine_transformation(xv, xv[ii, jj], yv[ii, jj], thetas, i),
                                                         direction=rotation_matrices[i, :, :].dot(np.array([0., 0., 1.])),

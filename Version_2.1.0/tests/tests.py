@@ -83,8 +83,8 @@ def test_water_physics(input, expected):
     tenfit = tenmodel.fit(signal)
     assert np.isclose(1e3 * tenfit.ad, expected, atol = .1) 
     assert np.isclose(1e3 * tenfit.ad, 1e3 * tenfit.rd, atol=.1)
-    
-@pytest.mark.parametrize("input, expected", [((1.0,2.0), (1.0,2.0)), ((1.0,1.5), (1.0,1.5)), ((1.0,1.0), (1.0,1.0))])
+
+@pytest.mark.parametrize("input, expected", [((1.0,2.0,3.0), (1.0,2.0,3.0)), ((1.0,1.5,2.0), (1.0,1.5,2.0)), ((1.0,1.0,1.5), (1.0,1.0,1.5))])
 def test_fiber_physics(input, expected):
     """
     1. Check that the forward simulated fiber-only signal corresponds to a diffusion tensor matching the input fiber diffusivities
@@ -94,15 +94,18 @@ def test_fiber_physics(input, expected):
     tenmodel = dti.TensorModel(gtab)
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     cmd = r"C:\Users\Jacob\Desktop\dMRI-MCSIM-Jacob-s-Version-Updated\Version_2.1.0\src\cli.py" 
-    cmd += f" simulate --n_walkers 256000 --fiber_fractions .4,.4 --fiber_diffusions {input[0]},{input[1]} --cell_fractions 0,0 --Delta 1 --voxel_dims 10 --buffer 0 --verbose no" 
+    cmd += f" simulate --n_walkers 256000 --fiber_fractions .30,.30,.30 --fiber_diffusions {input[0]},{input[1]},{input[2]} --cell_fractions 0,0 --Delta 1 --voxel_dims 30 --buffer 0 --verbose no" 
     os.system(cmd)
+
     fiber_1_signal = nb.load(os.getcwd() + os.sep + 'signals' + os.sep + 'fiber_1_signal.nii').get_fdata()
-    fiber_2_signal = nb.load(os.getcwd() + os.sep + 'signals' + os.sep + 'fiber_2_signal.nii').get_fdata()   
+    fiber_2_signal = nb.load(os.getcwd() + os.sep + 'signals' + os.sep + 'fiber_2_signal.nii').get_fdata()
+    fiber_3_signal = nb.load(os.getcwd() + os.sep + 'signals' + os.sep + 'fiber_3_signal.nii').get_fdata()   
     tenfit_1 = tenmodel.fit(fiber_1_signal)
     tenfit_2 = tenmodel.fit(fiber_2_signal)
+    tenfit_3 = tenmodel.fit(fiber_3_signal)
 
-    assert (np.isclose(1e3 * np.array([tenfit_1.ad, tenfit_2.ad]), np.array(expected), atol = 0.1).all())
-    assert (np.array([tenfit_1.fa, tenfit_2.fa]) > .20).all()
+    assert (np.isclose(1e3 * np.array([tenfit_1.ad, tenfit_2.ad, tenfit_3.ad]), np.array(expected), atol = 0.1).all())
+    assert (np.array([tenfit_1.fa, tenfit_2.fa, tenfit_3.fa]) > .20).all()
 
 @pytest.mark.parametrize("input", [(1.0,1.0), (1.5,1.5), (2.0,2.0)])
 def test_cell_physics(input):
@@ -129,3 +132,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

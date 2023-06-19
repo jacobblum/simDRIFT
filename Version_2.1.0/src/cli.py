@@ -17,12 +17,12 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            required=False,
                            help="The number of spins to populate within the voxel, entered as an integer value. To obtain reliable results, use enough spins to acheive a minimal spin volume density of 1 per cubic micron.")
     subparser.add_argument("--fiber_fractions", nargs=None, type=str,
-                  dest='fiber_fractions', default='0.2, .2, 0.2',
+                  dest='fiber_fractions', default='0.5, 0.3, 0.19',
                   required=False,
                   help="The desired volume fraction of each fiber type within its region of the voxel, entered as a comma-separated string of values between 0 and 1 (e.g., ''0.5, 0.7'')")
 
     subparser.add_argument("--fiber_radii", nargs=None, type=str,
-                  dest='fiber_radii', default='1.5, 1.5, 1.5',
+                  dest='fiber_radii', default='1.0, 1.0, 1.0',
                   required=False,
                   help="The radii (in units of micrometers) of each fiber type, entered as a comma-separated string (e.g., ''1.5, 2.0'')")
 
@@ -32,7 +32,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                   help="Rotation angle (with respect to the Y axis, in degrees) for each fiber type, entered as a comma-separated string (e.g., ''0, 30'')")
 
     subparser.add_argument("--fiber_diffusions", nargs=None, type=str,
-                  dest='fiber_diffusions', default='1.0, 2.0,1.5',
+                  dest='fiber_diffusions', default='1.0,2.0,1.5',
                   required=False,
                   help="Diffusivity within each fiber type (in units of micrometers^2 per ms), entered as a comma-separated string (e.g., ''1.0, 2.5'')")
 
@@ -79,7 +79,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            )
 
     subparser.add_argument("--buffer", nargs=None, type=float,
-                           dest='buffer', default=10.,
+                           dest='buffer', default=0.,
                            required=False,
                            help="Additional length, in micrometers, added to each voxel dimension when populating cells and fibers. It is not recommended for buffers to exceed 15 percent of the voxel size."
                            )
@@ -97,7 +97,7 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            )
     
     subparser.add_argument("--void_dist", nargs = None, type = float,
-                           dest = 'void_dist', default = 20,
+                           dest = 'void_dist', default = 0,
                            required = False,
                            help = "Size (in units of micrometers) of a region in middle of voxel, aka void, excluded from fiber placement. (optional except when fiber_configuration = ''Void'') "
                            )
@@ -114,7 +114,7 @@ def typing_and_validation(args):
     
     # N_walkers
     args['n_walkers'] = int(args['n_walkers'])
-    assert args['n_walkers']/(args['voxel_dims']**3) > 1.0," --Simulation requires spin densities > 1.0 per cubic micron"
+    #assert args['n_walkers']/(args['voxel_dims']**3) > 1.0," --Simulation requires spin densities > 1.0 per cubic micron"
     
     # Fiber-Fractions
     args['fiber_fractions'] = [float(frac) for frac in str(args['fiber_fractions']).split(',')]
@@ -213,6 +213,9 @@ def _test_run():
               'verbose': 'yes'}
     simulation.run(args)
 
+def main():
+    args = _make_args_dict()
+    simulation.run(args)
 
-
-print(None > 1)
+if __name__ == "__main__":
+    main()

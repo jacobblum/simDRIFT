@@ -16,21 +16,21 @@ import logging
 
 
 def _caclulate_volumes(spins):
-    
-
-    fiber1 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 1 else -1 for spin in spins])
-    fiber2 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 2 else -1 for spin in spins])
+    fiber_spins = np.array([-1 if spin._get_bundle_index() is None else spin._get_bundle_index() for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
+
+    for i in range(1, int(np.amax(fiber_spins))+1):
+        print(len(fiber_spins[np.where(fiber_spins == i)]) / len(fiber_spins))
+    
+    
 
     logging.info('------------------------------')  
     logging.info(' Empirical Volume Fractions')
     logging.info('------------------------------')   
     
-    
-    logging.info(' Fiber 1 Volume: {}'.format(
-        len(fiber1[fiber1 > -1]) / len(spins)))
-    logging.info(' Fiber 2 Volume: {}'.format(
-        len(fiber2[fiber2 > -1]) / len(spins)))
+    for i in range(1, int(np.amax(fiber_spins))+1):
+        logging.info(f" Fiber {i} Volume: {len(fiber_spins[np.where(fiber_spins == i)]) / len(fiber_spins)}")
+
     logging.info('    Cell Volume: {} '.format(
         len(cells[cells > -1]) / len(spins)))
         
@@ -80,9 +80,7 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
     fiber_step_cuda               = cuda.to_device(np.array([math.sqrt(6*fiber._get_diffusivity()*dt) for fiber in fibers], dtype= np.float32))
     fiber_radii_cuda              = cuda.to_device(np.array([fiber._get_radius() for fiber in fibers], dtype= np.float32))
     spin_positions_cuda           = cuda.to_device(np.array([spin._get_position_t1m() for spin in spins], dtype= np.float32))
-    spin_in_fiber_1_at_index_cuda = cuda.to_device(np.array([spin._get_fiber_index() if spin._get_bundle_index() == 1 else -1 for spin in spins]))
-    spin_in_fiber_2_at_index_cuda = cuda.to_device(np.array([spin._get_fiber_index() if spin._get_bundle_index() == 2 else -1 for spin in spins]))
-
+    spin_in_fiber_at_index_cuda  = cuda.to_device(np.array([-1 if spin._get_bundle_index() is None else spin._get_fiber_index() for spin in spins]))
     cell_centers_cuda             = cuda.to_device(np.array([cell._get_center() for cell in cells], dtype=np.float32))
     spin_in_cell_at_index_cuda    = cuda.to_device(np.array([spin._get_cell_index() for spin in spins]))
     cell_step_cuda                = cuda.to_device(np.array([math.sqrt(6*cell._get_diffusivity()*dt) for cell in cells], dtype= np.float32))
@@ -99,10 +97,10 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
     for i in range(int(Delta/dt)):
         sys.stdout.write('\r' + 'dMRI-SIM:  Step ' +  str(i+1) + '/' + str(int(Delta/dt)))
         sys.stdout.flush()
+        
         _diffusion_context_manager[blocks_per_grid,threads_per_block](random_states_cuda, 
                                                                       spin_positions_cuda, 
-                                                                      spin_in_fiber_1_at_index_cuda, 
-                                                                      spin_in_fiber_2_at_index_cuda, 
+                                                                      spin_in_fiber_at_index_cuda, 
                                                                       fiber_centers_cuda,
                                                                       fiber_step_cuda,
                                                                       fiber_radii_cuda,
@@ -115,7 +113,6 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
                                                                       (self.parameters['fiber_configuration'] == 'Void'))
         
         cuda.synchronize()
-
     End = time.time()
     sys.stdout.write('\n')
     logging.info(' Simulation complete!')
@@ -131,8 +128,7 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
 @numba.cuda.jit
 def _diffusion_context_manager(random_states, 
                                spin_positions, 
-                               spin_in_fiber_1_at_index, 
-                               spin_in_fiber_2_at_index, 
+                               spin_in_fiber_at_index, 
                                fiber_centers,
                                fiber_step,
                                fiber_radii,
@@ -154,30 +150,17 @@ def _diffusion_context_manager(random_states,
     if i > spin_positions.shape[0]:
         return
     
-    if spin_in_fiber_1_at_index[i] > -1:
+    if spin_in_fiber_at_index[i] > -1:
         walk_in_fiber._diffusion_in_fiber(i, 
                                           random_states,
-                                          fiber_centers[spin_in_fiber_1_at_index[i],:],
-                                          fiber_radii[spin_in_fiber_1_at_index[i]],
-                                          fiber_directions[spin_in_fiber_1_at_index[i],:],
-                                          fiber_step[spin_in_fiber_1_at_index[i]], 
+                                          fiber_centers[spin_in_fiber_at_index[i],:],
+                                          fiber_radii[spin_in_fiber_at_index[i]],
+                                          fiber_directions[spin_in_fiber_at_index[i],:],
+                                          fiber_step[spin_in_fiber_at_index[i]], 
                                           spin_positions)
         
         return
     
-    
-    
-    if spin_in_fiber_2_at_index[i] > -1:
-        walk_in_fiber._diffusion_in_fiber(i, 
-                                          random_states,
-                                          fiber_centers[spin_in_fiber_2_at_index[i],:],
-                                          fiber_radii[spin_in_fiber_2_at_index[i]],
-                                          fiber_directions[spin_in_fiber_2_at_index[i],:],
-                                          fiber_step[spin_in_fiber_2_at_index[i]], 
-                                          spin_positions)
-        
-        return
-
     if spin_in_cell_at_index[i] > -1:
         walk_in_cell._diffusion_in_cell(i, 
                                         random_states, 

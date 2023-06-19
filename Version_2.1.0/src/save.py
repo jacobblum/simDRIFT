@@ -133,10 +133,8 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
 
     bvals, bvecs = diffusion_schemes.get(diff_schemes)
 
-    fiber1 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 1 else -1 for spin in spins])
-    fiber2 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 2 else -1 for spin in spins])
-    fiber3 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 3 else -1 for spin in spins])
-    fiber4 = np.array([spin._get_fiber_index() if spin._get_bundle_index() == 4 else -1 for spin in spins])
+
+    fiber_spins = np.array([-1 if spin._get_bundle_index() is None else spin._get_bundle_index() for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
     water  = np.array([spin._get_water_index() for spin in spins])
 
@@ -145,79 +143,31 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     logging.info(' Signal Generation') 
     logging.info('------------------------------')
     
-    """ Fiber 1 Signal """
+
+    for i in range(1, int(np.amax(fiber_spins))+1):
+        """ Fiber i Signal """
+
+        fiber_i_spins = np.array(spins)[fiber_spins == i]
+
+        if any(fiber_i_spins):
+            logging.info(f" Computing fiber {i} signal...") 
+            Start = time.time()
+            fiber_i_signal, fiber_i_trajectory_t1m, fiber_i_trajectory_t2p = _signal(fiber_i_spins,
+                                                                                    bvals,
+                                                                                    bvecs,
+                                                                                    Delta, 
+                                                                                    dt)
+            End = time.time()
+            logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+            signals_dict[f"fiber_{i}_signal"] = fiber_i_signal
+            trajectories_dict[f"fiber_{i}_trajectories"] = (fiber_i_trajectory_t1m, fiber_i_trajectory_t2p)
+
   
-    fiber_1_spins = np.array(spins)[fiber1 > -1]
-
-    if any(fiber_1_spins):
-        logging.info(' Computing fiber 1 signal...') 
-        Start = time.time()
-        fiber_1_signal, fiber_1_trajectory_t1m, fiber_1_trajectory_t2p = _signal(fiber_1_spins,
-                                                                                bvals,
-                                                                                bvecs,
-                                                                                Delta, 
-                                                                                dt)
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['fiber_1_signal'] = fiber_1_signal
-        trajectories_dict['fiber_1_trajectories'] = (fiber_1_trajectory_t1m, fiber_1_trajectory_t2p)
-
-    """ Fiber 2 Signal """
-
-    fiber_2_spins = np.array(spins)[fiber2 > -1]
-    
-    if any(fiber_2_spins):
-        logging.info(' Computing fiber 2 signal...')
-        Start = time.time()
-        fiber_2_signal, fiber_2_trajectory_t1m, fiber_2_trajectory_t2p = _signal(fiber_2_spins,
-                                                                                bvals,
-                                                                                bvecs,
-                                                                                Delta, 
-                                                                                dt)
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['fiber_2_signal'] = fiber_2_signal
-        trajectories_dict['fiber_2_trajectories'] = (fiber_2_trajectory_t1m, fiber_2_trajectory_t2p)
-
-    """ Fiber 3 Signal """
-  
-    fiber_3_spins = np.array(spins)[fiber3 > -1]
-
-    if any(fiber_3_spins):
-        logging.info(' Computing fiber 3 signal...') 
-        Start = time.time()
-        fiber_3_signal, fiber_3_trajectory_t1m, fiber_3_trajectory_t2p = _signal(fiber_3_spins,
-                                                                                bvals,
-                                                                                bvecs,
-                                                                                Delta, 
-                                                                                dt)
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['fiber_3_signal'] = fiber_3_signal
-        trajectories_dict['fiber_3_trajectories'] = (fiber_3_trajectory_t1m, fiber_3_trajectory_t2p)
-
-    """ Fiber 4 Signal """
-
-    fiber_4_spins = np.array(spins)[fiber4 > -1]
-    
-    if any(fiber_4_spins):
-        logging.info(' Computing fiber 4 signal...')
-        Start = time.time()
-        fiber_4_signal, fiber_4_trajectory_t1m, fiber_4_trajectory_t2p = _signal(fiber_4_spins,
-                                                                                bvals,
-                                                                                bvecs,
-                                                                                Delta, 
-                                                                                dt)
-        End = time.time()
-        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-        signals_dict['fiber_4_signal'] = fiber_4_signal
-        trajectories_dict['fiber_4_trajectories'] = (fiber_4_trajectory_t1m, fiber_4_trajectory_t2p)
-
     """ Total Fiber Signal """ 
-  
-    total_fiber_spins = np.hstack([fiber_1_spins, fiber_2_spins,fiber_3_spins, fiber_4_spins])
- 
-    if any(total_fiber_spins) & any(fiber_1_spins) & any(fiber_2_spins) & any(fiber_3_spins) & any(fiber_4_spins):
+
+    total_fiber_spins = np.array(spins)[fiber_spins > -1]
+
+    if any(total_fiber_spins):
         logging.info(' Computing total fiber signal...')
         Start = time.time()
         total_fiber_signal, total_fiber_trajectory_t1m, total_fiber_trajectory_t2p = _signal(total_fiber_spins,

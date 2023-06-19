@@ -58,25 +58,7 @@ class dmri_simulation:
         self.spins = set_voxel_configuration._place_spins(self.parameters['n_walkers'],
                                                         self.parameters['voxel_dims'],
                                                         self.fibers)
-    
-        import matplotlib.pyplot as plt 
-        fig = plt.figure()
-        ax = fig.add_subplot(projection='3d')
- 
-        
-        colors = ['red', 'green', 'blue']
-
-        for fiber in self.fibers:
-            
-            ax.scatter(fiber.center[0], fiber.center[1], fiber.center[2], color = colors[int(fiber.bundle - 1)])
-        
-        plt.show()
-        print('END')
-
-        print(self.parameters)
-
-
-        return 
+      
         spin_init_positions._find_spin_locations(self, 
                                                  self.spins, 
                                                  self.cells, 
