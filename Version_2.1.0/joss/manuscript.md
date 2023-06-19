@@ -21,8 +21,8 @@ date: 01 June 2023
 
 # Summary
 
-This library, simDRIFT, aims to implement a forward simulation of the modelular self-diffusion processes of Nuclear Magtnetic Resonance (NMR) active spins in complex, biophysical tissue systems of various, customizable, configurations. Given the coarse-graining of the fine details microstuctural features (fiber undulation, cell shape, etc...) observed at experimentally realistic diffusion times and voxel sizes [Novikov] , simDRIFT represents fibers as narrow cylinders, or "sticks", and cells as isotropic spheres, or "balls" [Behrens et al., 2003], allowing users to construct voxel configurations featuring $n$ oriented fiber bundles with chosen intrinsic diffusivities and $m$ cells of various size.
-In general, simDRIFT provides for rapid and flexible diffusion-weighted Magnetic Resonance Imaging (dMRI) simulations, which we expect to be useful in dMRI signal processing model development and validation.   
+This library, simDRIFT, aims to implement a forward simulation of the modelular self-diffusion processes of Nuclear Magtnetic Resonance (NMR) active spins in complex, biophysical tissue systems of various, customizable, configurations. Given the coarse-graining of detailed microstuctural features (fiber bending, etc...) observed at experimentally realistic diffusion times and voxel sizes [Novikov], simDRIFT represents fibers as narrow cylinders, or "sticks", and cells as isotropic spheres, or "balls" [Behrens et al., 2003]. We allow users to construct voxel geometries featuring $n$ oriented fiber bundles with chosen intrinsic diffusivities and $m$ cells of various sizes.
+In general, simDRIFT provides for rapid and flexible diffusion-weighted Magnetic Resonance Imaging (dMRI) simulations, which we expect to be useful for dMRI signal processing model development and validation purposes.   
 
 # Statement of need
 
