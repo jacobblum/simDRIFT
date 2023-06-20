@@ -54,4 +54,4 @@ To confirm that everything is working as expected, run the test suit:
 Citing simDRIFT
 -----------------
 
-If you use simDRIFT in your research, please cit our associated JOSS paper 
+If you use simDRIFT in your research, please cite our associated JOSS paper 
