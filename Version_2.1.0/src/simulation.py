@@ -9,8 +9,11 @@ import sys
 import diffusion
 import save
 import logging
+from cli import Parameters
+from typing import Dict
 
-class dmri_simulation:
+
+class dmri_simulation(Parameters):
     r"""
     Class instance of the forward simulation model of the Pulsed Gradient Spin Echo (PGSE) Experiment.
 
@@ -21,19 +24,13 @@ class dmri_simulation:
         cells: A list of objects.cell instances
     """
 
-    def __init__(self):
-        parameters = {}
+    def __init__(self, args: Dict):
+        Parameters.__init__(self, args)
         fibers = []
         spins = []
         cells = []
         return
 
-    def set_parameters(self, args):
-        self.parameters = args
-
-
-        print(self.parameters.keys())
-        return
 
     def set_voxel(self):
 
@@ -69,13 +66,13 @@ class dmri_simulation:
         
         return
 
-    def run(self, args):
+    def run(self,):
         verbose = {'yes': logging.INFO,'no': logging.WARNING}
         log_file = os.path.join(os.getcwd() + os.sep + 'log')
         
         logging.getLogger('numba').setLevel(logging.WARNING)
         logging.getLogger('numpy').setLevel(logging.WARNING)
-        logging.basicConfig(level = verbose[args['verbose']],
+        logging.basicConfig(level = verbose[self.verbose],
                             format = 'dMRI-SIM: %(message)s',
                             filename = log_file,
                             filemode = 'w')
@@ -86,23 +83,9 @@ class dmri_simulation:
         logging.info('Running dMRI-SIM')
 
         try:
-            self.set_parameters(args)
-            self.set_voxel()
-            diffusion._simulate_diffusion(self,
-                                          self.spins,
-                                          self.cells,
-                                          self.fibers,
-                                          self.parameters['Delta'],
-                                          self.parameters['dt'],
-                                          self.parameters['water_diffusivity']
-                                        )
-            
-            save._save_data(self,
-                            self.spins,
-                            self.parameters['Delta'],
-                            self.parameters['dt'],
-                            self.parameters['diff_scheme'],
-                            self.parameters['CUSTOM_DIFF_SCHEME_FLAG'])
+            set_voxel_configuration.setup(self)
+            diffusion._simulate_diffusion(self)
+            save._save_data(self)
         
         except KeyboardInterrupt:
             sys.stdout.write('\n')
@@ -118,8 +101,9 @@ def run(args):
     if args['verbose'] == 'no':
         with open(os.devnull, 'w') as devnull:
                 with contextlib.redirect_stdout(devnull):
-                    simulation_obj = dmri_simulation()
-                    simulation_obj.run(args)
+                    simulation_obj = dmri_simulation(args)
+                    simulation_obj.run()
     else:
-        simulation_obj = dmri_simulation()
-        simulation_obj.run(args)
+        simulation_obj = dmri_simulation(args)
+        simulation_obj.run()
+    

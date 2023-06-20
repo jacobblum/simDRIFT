@@ -22,7 +22,6 @@ def _DBSI_99():
 
     bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval99'))
     bvecs = np.loadtxt(os.path.join(DATA_DIR, 'bvec99')).T
-
     return bvals, normalize_bvecs(bvecs)
 
 
@@ -30,19 +29,17 @@ def _ABCD_102():
    
     bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval_ABCD'))
     bvecs = np.loadtxt(os.path.join(DATA_DIR, 'bvec_ABCD')).T
-
     return bvals, normalize_bvecs(bvecs)
 
 def _NODDI():
 
     bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval_NODDI'))
     bvecs = np.loadtxt(os.path.join(DATA_DIR, 'bvec_NODDI')).T
-
     return bvals, normalize_bvecs(bvecs)
 
 diff_scheme_opts = {'DBSI_99': _DBSI_99,
                     'ABCD_102': _ABCD_102,
-                    'NODDI': _NODDI}
+                    'NODDI_145': _NODDI}
 
 
 

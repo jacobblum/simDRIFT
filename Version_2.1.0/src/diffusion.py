@@ -29,7 +29,7 @@ def _caclulate_volumes(spins):
     logging.info('    Cell Volume: {} '.format(
         len(cells[cells > -1]) / len(spins)))
         
-def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : float, dt : float, water_diffusivity : float) -> None:
+def _simulate_diffusion(self) -> None:
 
     """
          Helper function to simulate the diffusion
@@ -67,30 +67,30 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
       
     """
 
-    _caclulate_volumes(spins)
+    _caclulate_volumes(self.spins)
 
-    random_states_cuda            = cuda.to_device(create_xoroshiro128p_states(len(spins), seed = 42))    
-    fiber_centers_cuda            = cuda.to_device(np.array([fiber._get_center() for fiber in fibers], dtype= np.float32))
-    fiber_directions_cuda         = cuda.to_device(np.array([fiber._get_direction() for fiber in fibers], dtype= np.float32))
-    fiber_step_cuda               = cuda.to_device(np.array([math.sqrt(6*fiber._get_diffusivity()*dt) for fiber in fibers], dtype= np.float32))
-    fiber_radii_cuda              = cuda.to_device(np.array([fiber._get_radius() for fiber in fibers], dtype= np.float32))
-    spin_positions_cuda           = cuda.to_device(np.array([spin._get_position_t1m() for spin in spins], dtype= np.float32))
-    spin_in_fiber_at_index_cuda  = cuda.to_device(np.array([-1 if spin._get_bundle_index() is None else spin._get_fiber_index() for spin in spins]))
-    cell_centers_cuda             = cuda.to_device(np.array([cell._get_center() for cell in cells], dtype=np.float32))
-    spin_in_cell_at_index_cuda    = cuda.to_device(np.array([spin._get_cell_index() for spin in spins]))
-    cell_step_cuda                = cuda.to_device(np.array([math.sqrt(6*cell._get_diffusivity()*dt) for cell in cells], dtype= np.float32))
-    cell_radii_cuda               = cuda.to_device(np.array([cell._get_radius() for cell in cells], dtype=np.float32)) 
-    water_step                    = cuda.to_device(np.array([math.sqrt(6*water_diffusivity*dt)])) 
+    random_states_cuda            = cuda.to_device(create_xoroshiro128p_states(len(self.spins), seed = 42))    
+    fiber_centers_cuda            = cuda.to_device(np.array([fiber._get_center() for fiber in self.fibers], dtype= np.float32))
+    fiber_directions_cuda         = cuda.to_device(np.array([fiber._get_direction() for fiber in self.fibers], dtype= np.float32))
+    fiber_step_cuda               = cuda.to_device(np.array([math.sqrt(6*fiber._get_diffusivity()*self.dt) for fiber in self.fibers], dtype= np.float32))
+    fiber_radii_cuda              = cuda.to_device(np.array([fiber._get_radius() for fiber in self.fibers], dtype= np.float32))
+    spin_positions_cuda           = cuda.to_device(np.array([spin._get_position_t1m() for spin in self.spins], dtype= np.float32))
+    spin_in_fiber_at_index_cuda  = cuda.to_device(np.array([-1 if spin._get_bundle_index() is None else spin._get_fiber_index() for spin in self.spins]))
+    cell_centers_cuda             = cuda.to_device(np.array([cell._get_center() for cell in self.cells], dtype=np.float32))
+    spin_in_cell_at_index_cuda    = cuda.to_device(np.array([spin._get_cell_index() for spin in self.spins]))
+    cell_step_cuda                = cuda.to_device(np.array([math.sqrt(6*cell._get_diffusivity()*self.dt) for cell in self.cells], dtype= np.float32))
+    cell_radii_cuda               = cuda.to_device(np.array([cell._get_radius() for cell in self.cells], dtype=np.float32)) 
+    water_step                    = cuda.to_device(np.array([math.sqrt(6*self.water_diffusivity*self.dt)])) 
 
 
     Start = time.time()
     threads_per_block = 320
-    blocks_per_grid = (len(spins) + (threads_per_block-1)) // threads_per_block
+    blocks_per_grid = (len(self.spins) + (threads_per_block-1)) // threads_per_block
     logging.info('------------------------------')  
     logging.info(' Beginning Simulation...')
     logging.info('------------------------------')    
-    for i in range(int(Delta/dt)):
-        sys.stdout.write('\r' + 'dMRI-SIM:  Step ' +  str(i+1) + '/' + str(int(Delta/dt)))
+    for i in range(int(self.Delta/self.dt)):
+        sys.stdout.write('\r' + 'dMRI-SIM:  Step ' +  str(i+1) + '/' + str(int(self.Delta/self.dt)))
         sys.stdout.flush()
         
         _diffusion_context_manager[blocks_per_grid,threads_per_block](random_states_cuda, 
@@ -105,7 +105,8 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
                                                                       cell_step_cuda,
                                                                       cell_radii_cuda,
                                                                       water_step, 
-                                                                      (self.parameters['fiber_configuration'] == 'Void'))
+                                                                      self.fiber_configuration == 'Void'
+                                                                      )
         
         cuda.synchronize()
     End = time.time()
@@ -113,10 +114,9 @@ def _simulate_diffusion(self, spins:  list, cells:  list, fibers: list, Delta : 
     logging.info(' Simulation complete!')
     logging.info(' Elapsed time: {} seconds'.format(round((End-Start)),3))
     spin_positions_t2p = spin_positions_cuda.copy_to_host()
-    for ii, spin in enumerate(spins):
+    for ii, spin in enumerate(self.spins):
         spin._set_position_t2p(spin_positions_t2p[ii,:])
     
-    self.spins = spins
     return 
 
 

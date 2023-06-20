@@ -123,7 +123,7 @@ def _signal(spins: list, bvals: np.ndarray, bvecs: np.ndarray, Delta: float, dt:
         return signal, trajectory_t1m, trajectory_t2p
 
 
-def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, diff_scheme: str, DIFF_SCHEME_FLAG: bool, SNR = None):
+def _generate_signals_and_trajectories(self):
     r"""
     Helper function to organize and store compartment specific and combined trajectories and their incident signals
     """
@@ -131,15 +131,14 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     signals_dict = {}
     trajectories_dict = {}
 
-    if not DIFF_SCHEME_FLAG:
-        bvals, bvecs = diffusion_schemes.get_from_default(diff_scheme)
-    
-    #else:
-    #    bvals, bvals = diffusion_schemes.get_from_custom()
-
-    fiber_spins = np.array([-1 if spin._get_bundle_index() is None else spin._get_bundle_index() for spin in spins])
-    cells  = np.array([spin._get_cell_index() for spin in spins])
-    water  = np.array([spin._get_water_index() for spin in spins])
+    if not self.custom_diff_scheme_flag:
+        bvals, bvecs = diffusion_schemes.get_from_default(self.diff_scheme)
+    else:
+        bvals, bvecs = diffusion_schemes.get_from_custom(self.bvals, self.bvecs)
+  
+    fiber_spins = np.array([-1 if spin._get_bundle_index() is None else spin._get_bundle_index() for spin in self.spins])
+    cells  = np.array([spin._get_cell_index() for spin in self.spins])
+    water  = np.array([spin._get_water_index() for spin in self.spins])
 
 
     logging.info('------------------------------')
@@ -150,7 +149,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     for i in range(1, int(np.amax(fiber_spins))+1):
         """ Fiber i Signal """
 
-        fiber_i_spins = np.array(spins)[fiber_spins == i]
+        fiber_i_spins = np.array(self.spins)[fiber_spins == i]
 
         if any(fiber_i_spins):
             logging.info(f" Computing fiber {i} signal...") 
@@ -158,8 +157,8 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
             fiber_i_signal, fiber_i_trajectory_t1m, fiber_i_trajectory_t2p = _signal(fiber_i_spins,
                                                                                     bvals,
                                                                                     bvecs,
-                                                                                    Delta, 
-                                                                                    dt)
+                                                                                    self.Delta, 
+                                                                                    self.dt)
             End = time.time()
             logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
             signals_dict[f"fiber_{i}_signal"] = fiber_i_signal
@@ -168,7 +167,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
   
     """ Total Fiber Signal """ 
 
-    total_fiber_spins = np.array(spins)[fiber_spins > -1]
+    total_fiber_spins = np.array(self.spins)[fiber_spins > -1]
 
     if any(total_fiber_spins):
         logging.info(' Computing total fiber signal...')
@@ -176,8 +175,8 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
         total_fiber_signal, total_fiber_trajectory_t1m, total_fiber_trajectory_t2p = _signal(total_fiber_spins,
                                                                                             bvals,
                                                                                             bvecs,
-                                                                                            Delta, 
-                                                                                            dt) 
+                                                                                            self.Delta, 
+                                                                                            self.dt) 
         End = time.time()
         logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
         signals_dict['total_fiber_signal'] = total_fiber_signal
@@ -186,7 +185,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
 
     """ Cell Signal """
  
-    cell_spins = np.array(spins)[cells > -1]
+    cell_spins = np.array(self.spins)[cells > -1]
 
     if any(cell_spins):
         logging.info(' Computing cell signal...')
@@ -194,8 +193,8 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
         cell_signal, cell_trajectory_t1m, cell_trajectory_t2p = _signal(cell_spins,
                                                                             bvals,
                                                                             bvecs,
-                                                                            Delta, 
-                                                                            dt)
+                                                                            self.Delta, 
+                                                                            self.dt)
         
         End = time.time()
         logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
@@ -205,7 +204,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
 
     """ Water Signal """
 
-    water_spins = np.array(spins)[water > -1]
+    water_spins = np.array(self.spins)[water > -1]
     
     if any(water_spins):
         logging.info(' Computing water signal...')
@@ -213,8 +212,8 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
         water_signal, water_trajectory_t1m, water_trajectory_t2p = _signal(water_spins,
                                                                             bvals,
                                                                             bvecs,
-                                                                            Delta, 
-                                                                            dt)
+                                                                            self.Delta, 
+                                                                            self.dt)
         
         End = time.time()
         logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
@@ -224,11 +223,11 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     """ Total Signal """
     logging.info(' Computing total signal...')
     Start = time.time()
-    total_signal, total_trajectory_t1m, total_trajectory_t2p = _signal(spins,
+    total_signal, total_trajectory_t1m, total_trajectory_t2p = _signal(self.spins,
                                                                        bvals,
                                                                        bvecs,
-                                                                       Delta,
-                                                                       dt)
+                                                                       self.Delta,
+                                                                       self.dt)
     
     End = time.time()
     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
@@ -337,17 +336,13 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     #     signals_dict['water_cell_signal'] = water_cell_signal
     #     trajectories_dict['water_cell_trajectories'] = (water_cell_trajectory_t1m, water_cell_trajectory_t2p)
 
-def _save_data(self, spins: list, Delta: float, dt: float, diff_scheme: str, CUSTOM_DIFF_SCHEME_FLAG: bool):
+def _save_data(self):
     r"""
     Helper function that saves signals and trajectories
     """
 
 
-    signals_dict, trajectories_dict = _generate_signals_and_trajectories(self.spins,
-                                                                         self.parameters['Delta'],
-                                                                         self.parameters['dt'],
-                                                                         diff_scheme,
-                                                                         CUSTOM_DIFF_SCHEME_FLAG)
+    signals_dict, trajectories_dict = _generate_signals_and_trajectories(self)
     logging.info('------------------------------')
     logging.info(' Saving outputs to {} ...'.format(os.getcwd()))
     if not os.path.exists(r'./signals'): os.mkdir(r'./signals')

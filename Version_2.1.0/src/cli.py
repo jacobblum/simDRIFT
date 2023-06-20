@@ -4,6 +4,88 @@ import simulation
 import numba
 import os 
 
+
+class Parameters:
+    def __init__(self, parsed_args_dict) -> None:
+        self.args_dict = parsed_args_dict
+        pass
+    @property
+    def n_walkers(self):
+        return self.args_dict['n_walkers']
+    
+    @property
+    def fiber_fractions(self):
+        return self.args_dict['fiber_fractions']
+    
+    @property
+    def fiber_radii(self):
+        return self.args_dict['fiber_radii']
+    
+    @property
+    def thetas(self):
+        return self.args_dict['thetas']
+    
+    @property
+    def fiber_diffusions(self):
+        return self.args_dict['fiber_diffusions']
+
+    @property
+    def cell_fractions(self):
+        return self.args_dict['cell_fractions']
+    
+    @property
+    def cell_radii(self):
+        return self.args_dict['cell_radii']
+    
+    @property
+    def fiber_configuration(self):
+        return self.args_dict['fiber_configuration']
+    
+    @property
+    def water_diffusivity(self):
+        return self.args_dict['water_diffusivity']
+    
+    @property
+    def Delta(self):
+        return self.args_dict['Delta']
+    
+    @property
+    def dt(self):
+        return self.args_dict['dt']
+    
+    @property
+    def voxel_dimensions(self):
+        return self.args_dict['voxel_dims']
+    
+    @property
+    def buffer(self):
+        return self.args_dict['buffer']
+    
+    @property 
+    def bvecs(self):
+        return self.args_dict['input_bvecs']
+    
+    @property
+    def bvals(self):
+        return self.args_dict['input_bvals']
+    
+    @property
+    def void_distance(self):
+        return self.args_dict['void_dist']
+
+    @property
+    def diff_scheme(self):
+        return self.args_dict['diff_scheme']
+    
+    @property
+    def verbose(self):
+        return self.args_dict['verbose']
+    
+    @property
+    def custom_diff_scheme_flag(self):
+        return self.args_dict['CUSTOM_DIFF_SCHEME_FLAG']
+
+
 def add_subgparser_args(subparsers: argparse) -> argparse:
     
     subparser = subparsers.add_parser("simulate",
