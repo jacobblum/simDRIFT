@@ -2,6 +2,7 @@ import sys
 import argparse
 import simulation
 import numba
+import os 
 
 def add_subgparser_args(subparsers: argparse) -> argparse:
     
@@ -87,13 +88,13 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
     subparser.add_argument("--bvals", nargs=None, type=str,
                            dest='input_bvals', default=None,
                            required=False,
-                           help="Gradient magnitudes (b values) used for diffusion MR signal generation."
+                           help="Path to file containing gradient magnitudes (b values) used for diffusion MR signal generation."
                            )
 
     subparser.add_argument("--bvecs", nargs=None, type=str,
                            dest='input_bvecs', default=None,
                            required=False,
-                           help="Gradient directions (b vectors) used  for diffusion MR signal generation."
+                           help="Path to file containing gradient directions (b vectors) used for diffusion MR signal generation."
                            )
     
     subparser.add_argument("--void_dist", nargs = None, type = float,
@@ -101,6 +102,13 @@ def add_subgparser_args(subparsers: argparse) -> argparse:
                            required = False,
                            help = "Size (in units of micrometers) of a region in middle of voxel, aka void, excluded from fiber placement. (optional except when fiber_configuration = ''Void'') "
                            )
+    
+    subparser.add_argument("--diff_scheme", nargs=None, type=str,
+                           dest='diff_scheme', default='DBSI_99',
+                           required=False,
+                           help="diffusion scheme."
+                          )
+
     subparser.add_argument("--verbose", nargs = None, type = str,
                         dest = 'verbose', default = 'yes',
                         required = False,
@@ -170,9 +178,16 @@ def typing_and_validation(args):
 
     assert args['verbose'] == 'yes' or args['verbose'] == 'no', "--verbose must be yes or no"
 
-
-    #assert numba.cuda.is_available(), "Trying to use Numba Cuda, " \
-    #                                  "but Numba Cuda is not available."
+    ## Check that GPU is available 
+    assert numba.cuda.is_available(), "Trying to use Cuda device, " \
+                                      "but Cuda device is not available."
+    
+    ## If using custom diffusion scheme... make sure that the bval and bvec paths exist
+    if all([args['input_bvals'], args['input_bvecs']]):
+        args['CUSTOM_DIFF_SCHEME_FLAG'] = True
+        assert all([os.path.exists(path) for path in [args['input_bvals'], args['input_bvecs']]])
+    else:
+        args['CUSTOM_DIFF_SCHEME_FLAG'] = False        
 
     return args
 

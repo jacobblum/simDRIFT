@@ -19,11 +19,6 @@ def _caclulate_volumes(spins):
     fiber_spins = np.array([-1 if spin._get_bundle_index() is None else spin._get_bundle_index() for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
 
-    for i in range(1, int(np.amax(fiber_spins))+1):
-        print(len(fiber_spins[np.where(fiber_spins == i)]) / len(fiber_spins))
-    
-    
-
     logging.info('------------------------------')  
     logging.info(' Empirical Volume Fractions')
     logging.info('------------------------------')   

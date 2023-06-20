@@ -123,7 +123,7 @@ def _signal(spins: list, bvals: np.ndarray, bvecs: np.ndarray, Delta: float, dt:
         return signal, trajectory_t1m, trajectory_t2p
 
 
-def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, diff_schemes: str, SNR = None):
+def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, diff_scheme: str, DIFF_SCHEME_FLAG: bool, SNR = None):
     r"""
     Helper function to organize and store compartment specific and combined trajectories and their incident signals
     """
@@ -131,8 +131,11 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     signals_dict = {}
     trajectories_dict = {}
 
-    bvals, bvecs = diffusion_schemes.get(diff_schemes)
-
+    if not DIFF_SCHEME_FLAG:
+        bvals, bvecs = diffusion_schemes.get_from_default(diff_scheme)
+    
+    #else:
+    #    bvals, bvals = diffusion_schemes.get_from_custom()
 
     fiber_spins = np.array([-1 if spin._get_bundle_index() is None else spin._get_bundle_index() for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
@@ -334,7 +337,7 @@ def _generate_signals_and_trajectories(spins: list, Delta: float, dt: float, dif
     #     signals_dict['water_cell_signal'] = water_cell_signal
     #     trajectories_dict['water_cell_trajectories'] = (water_cell_trajectory_t1m, water_cell_trajectory_t2p)
 
-def _save_data(self, spins: list, Delta: float, dt: float, diff_scheme: str):
+def _save_data(self, spins: list, Delta: float, dt: float, diff_scheme: str, CUSTOM_DIFF_SCHEME_FLAG: bool):
     r"""
     Helper function that saves signals and trajectories
     """
@@ -343,7 +346,8 @@ def _save_data(self, spins: list, Delta: float, dt: float, diff_scheme: str):
     signals_dict, trajectories_dict = _generate_signals_and_trajectories(self.spins,
                                                                          self.parameters['Delta'],
                                                                          self.parameters['dt'],
-                                                                         diff_scheme)
+                                                                         diff_scheme,
+                                                                         CUSTOM_DIFF_SCHEME_FLAG)
     logging.info('------------------------------')
     logging.info(' Saving outputs to {} ...'.format(os.getcwd()))
     if not os.path.exists(r'./signals'): os.mkdir(r'./signals')

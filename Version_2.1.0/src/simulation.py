@@ -30,6 +30,9 @@ class dmri_simulation:
 
     def set_parameters(self, args):
         self.parameters = args
+
+
+        print(self.parameters.keys())
         return
 
     def set_voxel(self):
@@ -69,6 +72,9 @@ class dmri_simulation:
     def run(self, args):
         verbose = {'yes': logging.INFO,'no': logging.WARNING}
         log_file = os.path.join(os.getcwd() + os.sep + 'log')
+        
+        logging.getLogger('numba').setLevel(logging.WARNING)
+        logging.getLogger('numpy').setLevel(logging.WARNING)
         logging.basicConfig(level = verbose[args['verbose']],
                             format = 'dMRI-SIM: %(message)s',
                             filename = log_file,
@@ -95,7 +101,8 @@ class dmri_simulation:
                             self.spins,
                             self.parameters['Delta'],
                             self.parameters['dt'],
-                            'DBSI_99')
+                            self.parameters['diff_scheme'],
+                            self.parameters['CUSTOM_DIFF_SCHEME_FLAG'])
         
         except KeyboardInterrupt:
             sys.stdout.write('\n')
