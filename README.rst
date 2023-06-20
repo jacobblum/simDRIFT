@@ -7,7 +7,7 @@ The current release contains the following modules:
 
 * ``simulate``
 
-  this module provides support for $n$ fiber bundles (with user-defined radii, intrinsic diffusivities, orientation angles, and densities) and   
+  this module supports $n$ fiber bundles (with user-defined radii, intrinsic diffusivities, orientation angles, and densities) and   
   $m$ cells (with user-defined radii and volume fractions). Given the coarse-graining of detailed microstructural features (fiber bending, 
   etc...) observed at experimentally realistic diffusion times and voxel sizes, `simDRIFT` represents fibers as narrow cylinders, 
   or "sticks", and cells as isotropic spheres, or "balls". The module executes the forward diffusion MRI simulation on voxel geometries described
@@ -17,7 +17,7 @@ The current release contains the following modules:
 
 * ``run_tests``
 
-  this module runs the test suit for ``simDRIFT``
+  this module runs the test suite for ``simDRIFT``
 
 Installation and Usage
 ----------------------
