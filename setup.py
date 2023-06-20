@@ -6,7 +6,7 @@ import setuptools
 
 
 
-install_requires  = ['numba', 'numpy', 'cupy', 'nibabel', ]
+install_requires  = ['numba', 'numpy', 'nibabel']
 setuptools.setup(
     name='simDRIFT',
     version='0.0.1',
