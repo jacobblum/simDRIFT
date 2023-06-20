@@ -1,7 +1,7 @@
 .. image:: https://github.com/jacobblum/dMRI-MCSIM/blob/main/joss/figs/logo.png
   :alt: simDRIFT logo
 
-This library, ``simDRIFT``, provides rapid and flexible Monte-Carlo simulations of diffusion-weighted magnetic resonance imaging (dMRI), which we expect to be useful for dMRI signal processing model development and validation purposes. The primary focus of this library is forward simulations of modular self-diffusion processes within an ensemble of nuclear magnetic resonance (NMR) active nuclei ("spins") residing in complex, biophysical tissue systems. ``simDrift`` is written in Python and supported by a Numba backend. Thus, ``simDRIFT`` benefits from Numba's CUDA API, allowing the simulation of individual spin trajectories to be performed in parallel on single Graphics Processing Unit (GPU) threads. The resulting performance gains support ``simDRIFT``'s aim to provide a customizable tool for the rapid prototyping of diffusion models, ground-truth model validation, and in silico phantom production.
+This library, ``simDRIFT``, provides rapid and flexible Monte-Carlo simulations of diffusion-weighted magnetic resonance imaging (dMRI), which we expect to be useful for dMRI signal processing model development and validation purposes. The primary focus of this library is forward simulations of modular self-diffusion processes within an ensemble of nuclear magnetic resonance (NMR) active nuclei ("spins") residing in complex, biophysical tissue systems. ``simDrift`` is written in Python and supported by a Numba backend. Thus, ``simDRIFT`` benefits from Numba's CUDA API, allowing individual spin trajectories to be simulated in parallel on single Graphics Processing Unit (GPU) threads. The resulting performance gains support ``simDRIFT``'s aim to provide a customizable tool for rapidly prototyping diffusion models, ground-truth model validation, and in silico phantom production.
 
 The current release contains the following modules:
 
@@ -32,7 +32,7 @@ The recommended installation is as follows. Create a conda environment and activ
    > conda create -n simDRIFT
    > conda activate simDRIFT
 
-Install the appropriate version of `pytorch <https://pytorch.org>`_ (shown below for our lab's GPU's; however, will vary based on your CUDA Toolkit version) :
+Install the appropriate version of `pytorch <https://pytorch.org>`_ (shown below using the syntax for our lab's GPUs; however, the specific syntax will vary based on your CUDA Toolkit version) :
 
 .. code-block:: bash
 
@@ -45,7 +45,7 @@ Clone this repository and install simDRIFT:
      (simDRIFT) >  git clone https://github.com/jacobblum/dMRI-MCSIM.git
      (simDRIFT) >  pip install -e simDRIFT
 
-To confirm that everything is working as expected, run the test suit:
+To confirm that everything is working as expected, run the test suite:
 
 .. code-block:: bash
 
@@ -55,4 +55,4 @@ To confirm that everything is working as expected, run the test suit:
 Citing simDRIFT
 -----------------
 
-If you use simDRIFT in your research, please cite our associated JOSS paper 
+If you use simDRIFT in your research, please cite our associated JOSS paper. 
