@@ -8,7 +8,7 @@ setuptools.setup(
     name='simDRIFT',
     description='A software package for forward simulating diffusion weighted MRI',
     url='https://github.com/jacobblum/simDRIFT',
-    author='Jacob Blum, Kainen Utt',
+    author='Jacob Blum, Kainen L. Utt',
     license='BSD (3-Clause)',
     packages=setuptools.find_packages(),
     install_requires=install_requires,
