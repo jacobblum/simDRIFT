@@ -15,6 +15,11 @@ from src.physics import walk_in_fiber, walk_in_cell, walk_in_water
 
 
 def _caclulate_volumes(spins):
+    """Calculates empirical volume fraction for each simulated compartment (i.e., fibers, cells, and water)
+
+    :param spins: A one-dimensional list (length = ``n_walkers``) containing each instance of ``objects.spin()``. Each entry corresponds to one spin from the spin ensemble. 
+    :type spins: list
+    """
     fiber_spins = np.array([-1 if spin._get_bundle_index() is None else spin._get_bundle_index() for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
 
@@ -29,41 +34,26 @@ def _caclulate_volumes(spins):
         len(cells[cells > -1]) / len(spins)))
         
 def _simulate_diffusion(self) -> None:
+    """Iterates over the range :math:`t \in [0, \Delta ]` with a step size of :math:`\dd{t}`.
 
-    """
-         Helper function to simulate the diffusion
+    :param self: the ``dmri_simulation`` object
+    :type self: class object
+    :param spins: A one-dimensional list (length = ``n_walkers``) containing each instance of ``objects.spin()``. Each entry corresponds to one spin from the spin ensemble. 
+    :type spins: list
+    :param cells: A one-dimensional list (length = ``n_cells``) containing each instance of ``objects.cell()``. Each entry corresponds to one cell within the simulated imaging voxel. 
+    :type cells: list
+    :param fibers: A list (size = ``n_fibers``\ :math:`\\times`\ ``n_fibers``) containing each instance of ``objects.fiber()``. Each entry corresponds to one fiber within the simulated imaging voxel. 
+    :type fibers: list
+    :param Delta: The diffusion time supplied by the user in units of milliseconds.
+    :type Delta: float
+    :param dt: The user-supplied duration for each time step in units of milliseconds. Assumed to be equal to :math:`\delta` under the narrow-pulse approximation.
+    :type dt: float
+    :param water_diffusivity: The user-supplied diffusivity for free water, in units of :math:`{\mathrm{μm}^2}\\, \mathrm{ms}^{-1}`.
+    :type water_diffusivity: float
+    :return: Updated spin trajectories within each instance of the spin object in the spin list
 
-        Parameters
-        ----------
-         - self  : the dmri_simulation object
-
-         - spins : list of spin objects
-
-         - cells : list of cell objects
-
-         - fibers : list of fiber objects
-
-         - Delta : The diffusion time
-
-         - dt: Time discretization parameter. Also, by the narrow pulse approximation dt is also equal to delta
-
-        Returns
-        -------
-         - Updated spin trajectories within each instance of the spin object in the spin list
-
-        Notes
-        -----
-         - Rejection Sampling
-
-        References
-        ----------
-         - Discussions with S.K. Song
-    """
-    
-    """ Declare Cuda Device Arrays
-
-    - Remark: At each iteration the updated spin position is written to spin_positions_cuda 
-      
+    .. note::
+        At each iteration, the updated spin position is written to ``spin_positions_cuda``
     """
 
     _caclulate_volumes(self.spins)
@@ -133,12 +123,21 @@ def _diffusion_context_manager(random_states,
                                cell_radii,
                                water_step,  
                                void):
-    """
-    Parameters:
+    """Helper function to segment each spin into the relevant ``physics`` module for its resident compartment
 
-    rng_states:
-    spinPositions: (N_spins, 3) numpy array
-    spin_in_fiber_key: (N_spins, ) numpy array, the spin_in_fiber[i] is the fiber index of the i-th spin. -1 if spin not in fiber.
+    :param random_states: Randomized states
+    :param spin_positions: Initial spin positions
+    :param spin_in_fiber_at_index: Spin indices for each fiber
+    :param fiber_centers: Geometric centers of each fiber
+    :param fiber_step: Length of diffusion step to take for each fiber type, in units of micrometers
+    :param fiber_radii: Radius of each fiber, in units of micrometers
+    :param fiber_directions: Relative fiber rotations
+    :param spin_in_cell_at_index: Spin indices for each cell
+    :param cell_centers: Geometric centers for each cell
+    :param cell_step: Length of diffusion step to take for each cell type, in units of micrometers
+    :param cell_radii: Radius of each cell, in units of micrometers
+    :param water_step: Length of diffusion step to take in free water, in units of micrometers
+    :param void: Boolean argument, True if fiber configuration is void, False otherwise
     """
     i = cuda.grid(1)
     if i > spin_positions.shape[0]:
