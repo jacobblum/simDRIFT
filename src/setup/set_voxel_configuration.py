@@ -7,15 +7,21 @@ import src.setup.objects as objects
 from src.jp import linalg
 
 def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fiber_configuration):
-    """Calculates the number of fibers that achieves the supplied fiber densities (fractions).
+    """Calculates the requisite number of fibers for the supplied fiber densities (volume fractions).
 
-    Args:
-    in_features (int): The size of each input sample.
-    out_features (int): The size of each output sample.
-    bias (bool, optional): If set to ``False``, the layer will not learn an
-        additive bias. Default: ``True``.
-
-    """
+    :param fiber_fractions: User-supplied fiber densities (volume fractions)
+    :type fiber_fractions: float, tuple
+    :param fiber_radii: User-supplied fiber radii, in units of :math:`{\mathrm{μm}}`.
+    :type fiber_radii: float, tuple
+    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`.
+    :type voxel_dimensions: float
+    :param buffer: User-supplied additional length to be added to the voxel size for placement routines, in units of :math:`{\mathrm{μm}}`.
+    :type buffer: float
+    :param fiber_configuration: Desired fiber geometry class name.
+    :type fiber_configuration: str
+    :return: List of grid sizes, float 
+    :rtype: int, tuple
+    """ 
 
     logging.info('------------------------------')
     logging.info(' Fiber Setup')
@@ -33,7 +39,18 @@ def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fibe
 
 
 def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
-    """ Calculates the number of cells required to acheive the supplied cell densities (fractions)
+    """Calculates the requisite number of cells for the supplied cell densities (volume fractions).
+
+    :param cell_fraction: User-supplied cell densities (volume fractions).
+    :type cell_fraction: float, tuple
+    :param cell_radii: User-supplied cell radii, in units of :math:`{\mathrm{μm}}`.
+    :type cell_radii: float, tuple
+    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`.
+    :type voxel_dimensions: float
+    :param buffer: User-supplied additional length to be added to the voxel size for placement routines.
+    :type buffer: float
+    :return: List containing the number of each cell type.
+    :rtype: float, tuple
     """
 
     logging.info('------------------------------')
@@ -50,6 +67,27 @@ def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
     return num_cells
 
 def _place_fiber_grid(self):
+    """Routine for populating fiber grid within the simulated imaging voxel
+    
+    :param fiber_fractions: User-supplied fiber densities (volume fractions)
+    :type fiber_fractions: float, tuple
+    :param fiber_radii: Radii of each fiber type
+    :type fiber_radii: float, tuple
+    :param fiber_diffusions: User-supplied diffusivities for each fiber type
+    :type fiber_diffusions: float, tuple
+    :param thetas: Desired alignment angle for each fiber type, relative to :math:`{\\vu{z}}`
+    :type thetas: float, tuple
+    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`
+    :type voxel_dimensions: float
+    :param buffer: User-supplied additional length to be added to the voxel size for placement routines, in units of :math:`{\mathrm{μm}}`
+    :type buffer: float
+    :param void_distance: Length of region for excluding fiber population, in units of :math:`{\mathrm{μm}}`
+    :type void_distance: float
+    :param fiber_configuration: Desired fiber geometry class. See `Class Objects`_ for further information.
+    :type fiber_configuration: str
+    :return: Class object containing fiber attributes. See `Class Objects`_ for further information.
+    :rtype: object
+    """
     num_fibers = _set_num_fibers(self.fiber_fractions, 
                                  self.fiber_radii, 
                                  self.voxel_dimensions, 
@@ -85,7 +123,26 @@ def _place_fiber_grid(self):
 
 
 def _place_cells(self):
-
+    """Routine for populating cells within the simulated imaging voxel
+    :param fibers: Class object containing fiber attributes. See `Class Objects`_ for further information.
+    :type fibers: object
+    :param cell_radii: Radii of each cell type, in units of :math:`{\mathrm{μm}}`
+    :type cell_radii: float, tuple
+    :param cell_fractions: User-supplied densities (volume fractions) for each cell type
+    :type cell_fractions: float, tuple
+    :param fiber_configuration: Desired fiber geometry class. See `Class Objects`_ for further information.
+    :type fiber_configuration: str
+    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`
+    :type voxel_dimensions: float
+    :param buffer: User-supplied additional length to be added to the voxel size for placement routines, in units of :math:`{\mathrm{μm}}`
+    :type buffer: float
+    :param void_distance: Length of region for excluding fiber population, in units of :math:`{\mathrm{μm}}`
+    :type void_distance: float
+    :param water_diffusivity: The user-supplied diffusivity for free water, in units of :math:`{\mathrm{μm}^2}\\, \mathrm{ms}^{-1}`.
+    :type water_diffusivity: float
+    :return: Class object containing cell attributes. See `Class Objects`_ for further information.
+    :rtype: object
+    """
     logging.info('------------------------------')
     logging.info(' Placing Cells...')
     logging.info('------------------------------')
@@ -181,7 +238,17 @@ def _place_cells(self):
     return cells
 
 def _place_spins(self):
-    
+    """Routine for randomly populating spins in the imaging voxel following a uniform probability distribution
+
+    :param n_walkers: User-specified number of spins to simulate
+    :type n_walkers: int
+    :param voxel_dims: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`
+    :type voxel_dims: float
+    :param fibers: Class object ``objects.fibers`` containing fiber attributes. See `Class Objects`_ for further information.
+    :type fibers: object
+    :return: Class object ``objects.spins`` containing spin attributes. See `Class Objects`_ for further information.
+    :rtype: object
+    """
     zmin = min([fiber.center[2] for fiber in self.fibers])
     zmax = zmin + self.voxel_dimensions
 
@@ -195,6 +262,8 @@ def _place_spins(self):
 
 
 def setup(self):
+    """Helper function to initiate relevant placement routines.
+    """
     self.fibers = _place_fiber_grid(self)
     self.cells = _place_cells(self)
     self.spins = _place_spins(self)
