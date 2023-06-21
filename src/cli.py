@@ -25,7 +25,7 @@ class CLI:
         # Fiber-Radii
         args['fiber_radii'] = [float(rad) for rad in str(args['fiber_radii']).split(',')]
         for radius in args['fiber_radii']:
-            assert radius >= 0, "--fiber_radii must be non-negative"
+            assert radius > 0, "--fiber_radii must be positive"
 
         # Thetas
         args['thetas'] = [float(theta) for theta in str(args['thetas']).split(',')]
@@ -48,7 +48,7 @@ class CLI:
         # Cell Radii 
         args['cell_radii'] = [float(rad) for rad in str(args['cell_radii']).split(',')]
         for cr in args['cell_radii']:
-            assert cr >= 0, "--cell_radii must be non-negative"
+            assert cr > 0, "--cell_radii must be positive"
 
         # Enforce self consistent 
         assert len(args['cell_fractions']) == len(args['cell_radii']), "cell parameters must be consistent with eachother (of equal lengths)"
@@ -206,14 +206,3 @@ class CLI:
 
         return self.subparsers
 
-#def _make_args_dict():
-#    parser = argparse.ArgumentParser(prog='cli',
-#                                    description='What the program does',
-#                                    epilog='Text at the bottom of help')
-#
-#    subparsers = parser.add_subparsers(help='sub-command help')
-#    subparsers = add_subgparser_args(subparsers)
-#    args = vars(parser.parse_args())
-#    args = typing_and_validation(args)
-#
-#    return args
