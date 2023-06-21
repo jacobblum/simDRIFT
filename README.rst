@@ -42,7 +42,7 @@ Clone this repository and install simDRIFT:
 
 .. code-block:: bash
      
-     (simDRIFT) >  git clone https://github.com/jacobblum/dMRI-MCSIM.git
+     (simDRIFT) >  git clone https://github.com/jacobblum/simDRIFT.git
      (simDRIFT) >  pip install -e simDRIFT
 
 To confirm that everything is working as expected, run the test suite:
