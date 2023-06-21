@@ -15,6 +15,7 @@ Contents
 ----------------------
 .. toctree::
    :maxdepth: 2
+   
    Installation-index
    Quickstart-index
    theory-index
