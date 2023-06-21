@@ -1,9 +1,5 @@
 import numpy as np
 import os
-import cupy as cp
-
-
-
 
 def get(*args):
 
