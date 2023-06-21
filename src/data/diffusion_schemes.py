@@ -1,45 +1,69 @@
 import numpy as np
 import os
-import logging
+import cupy as cp
 
-DATA_DIR = os.path.dirname(os.path.relpath(__file__)) 
 
-def normalize_bvecs(bvecs):
+
+
+def get(*args):
+
+    for arg in args:
+        if arg == 'DBSI_99':
+            return _DBSI_99() 
+        elif arg == 'ABCD_102':
+            return _ABCD_102()
+        elif arg == 'NODDI':
+            return _NODDI()
+
+
+def _DBSI_99():
+    path, _ = os.path.split(os.path.realpath(__file__)) 
+    
+    try:
+        bvals = np.loadtxt(path + os.sep + 'bval99')
+        bvecs = np.loadtxt(path + os.sep + 'bvec99').T
+
+    except:
+        bvals = np.loadtxt(path + os.sep + 'bval99', delimiter=',')
+        bvecs = np.loadtxt(path + os.sep + 'bvec99', delimiter=',').T
+
     div_safe = [not np.all(bvecs[i,:] == 0) for i in range(bvecs.shape[0])]
     bvecs[div_safe] = bvecs[div_safe] / np.linalg.norm(bvecs[div_safe], ord = 2, axis = 1)[:, None]
-    return bvecs
 
-def get_from_default(fname): 
-    return diff_scheme_opts[fname]()
-
-def get_from_custom(bvals_path, bvecs_path):
-    bvals = np.loadtxt(bvals_path)
-    bvecs = np.loadtxt(bvecs_path).T
-    return bvals, normalize_bvecs(bvecs)
-
-    
-def _DBSI_99():
-
-    bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval99'))
-    bvecs = np.loadtxt(os.path.join(DATA_DIR, 'bvec99')).T
-    return bvals, normalize_bvecs(bvecs)
+    return bvals, bvecs
 
 
 def _ABCD_102():
-   
-    bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval_ABCD'))
-    bvecs = np.loadtxt(os.path.join(DATA_DIR, 'bvec_ABCD')).T
-    return bvals, normalize_bvecs(bvecs)
+    path, _ = os.path.split(os.path.realpath(__file__)) 
+    
+    try:
+        bvals = np.loadtxt(path + os.sep + 'bval_ABCD')
+        bvecs = np.loadtxt(path + os.sep + 'bvec_ABCD').T
+
+    except:
+        bvals = np.loadtxt(path + os.sep + 'bval_ABCD', delimiter=',')
+        bvecs = np.loadtxt(path + os.sep + 'bvec_ABCD', delimiter=',').T
+
+    div_safe = [not np.all(bvecs[i,:] == 0) for i in range(bvecs.shape[0])]
+    bvecs[div_safe] = bvecs[div_safe] / np.linalg.norm(bvecs[div_safe], ord = 2, axis = 1)[:, None]
+
+    return bvals, bvecs
 
 def _NODDI():
+    path, _ = os.path.split(os.path.realpath(__file__)) 
+    
+    try:
+        bvals = np.loadtxt(path + os.sep + 'bval_NODDI')
+        bvecs = np.loadtxt(path + os.sep + 'bvec_NODDI').T
 
-    bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval_NODDI'))
-    bvecs = np.loadtxt(os.path.join(DATA_DIR, 'bvec_NODDI')).T
-    return bvals, normalize_bvecs(bvecs)
+    except:
+        bvals = np.loadtxt(path + os.sep + 'bval_NODDI', delimiter=',')
+        bvecs = np.loadtxt(path + os.sep + 'bvec_NODDI', delimiter=',').T
 
-diff_scheme_opts = {'DBSI_99': _DBSI_99,
-                    'ABCD_102': _ABCD_102,
-                    'NODDI_145': _NODDI}
+    div_safe = [not np.all(bvecs[i,:] == 0) for i in range(bvecs.shape[0])]
+    bvecs[div_safe] = bvecs[div_safe] / np.linalg.norm(bvecs[div_safe], ord = 2, axis = 1)[:, None]
+
+    return bvals, bvecs
 
 
 
