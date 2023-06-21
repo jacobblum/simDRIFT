@@ -11,25 +11,21 @@ import logging
 
 
 def Ry(thetas):
-    np.set_printoptions(precision=4, suppress=True, linewidth=120)
+
+    logging.info('------------------------------')
+    logging.info(' Rotation Matrices ')
+    logging.info('------------------------------')
    
     rotation_matricies = np.zeros((len(thetas),3,3))
     for i, theta in enumerate(thetas):
-
         theta = np.radians(float(theta))
         s, c = np.sin(theta), np.cos(theta)
         Ry = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
         rotation_matricies[i,:,:] = Ry
-    logging.info('------------------------------')
-    logging.info(' Rotation Matrices ')
-    logging.info('------------------------------')
-    logging.info(' [[{: .2f}, {: .2f}, {: .2f}],'.format(rotation_matricies[0,0,0],rotation_matricies[0,0,1],rotation_matricies[0,0,2]))
-    logging.info('  [{: .2f}, {: .2f}, {: .2f}],'.format(rotation_matricies[0,1,0],rotation_matricies[0,1,1],rotation_matricies[0,1,2]))
-    logging.info('  [{: .2f}, {: .2f}, {: .2f}]]\n'.format(rotation_matricies[0,2,0],rotation_matricies[0,2,1],rotation_matricies[0,2,2]))
-    logging.info(' [[{: .2f}, {: .2f}, {: .2f}],'.format(rotation_matricies[1,0,0],rotation_matricies[1,0,1],rotation_matricies[1,0,2]))
-    logging.info('  [{: .2f}, {: .2f}, {: .2f}],'.format(rotation_matricies[1,1,0],rotation_matricies[1,1,1],rotation_matricies[1,1,2]))
-    logging.info('  [{: .2f}, {: .2f}, {: .2f}]]'.format(rotation_matricies[1,2,0],rotation_matricies[1,2,1],rotation_matricies[1,2,2]))
-    
+        logging.info(' [[{: .2f}, {: .2f}, {: .2f}],'.format(Ry[0,0],Ry[0,1],Ry[0,2]))
+        logging.info('  [{: .2f}, {: .2f}, {: .2f}],'.format(Ry[1,0],Ry[1,1],Ry[1,2]))
+        logging.info('  [{: .2f}, {: .2f}, {: .2f}]]\n'.format(Ry[2,0],Ry[2,1],Ry[2,2]))
+
     return rotation_matricies
 
 def affine_transformation(xv: np.ndarray, x: float, y: float, thetas, i):

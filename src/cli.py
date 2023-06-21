@@ -10,7 +10,7 @@ class CLI:
         self.subparsers = subparsers        
         pass
 
-    def validate_args(self, args):     
+    def validate_args(self, args):   
         # N_walkers
         args['n_walkers'] = int(args['n_walkers'])
         #assert args['n_walkers']/(args['voxel_dims']**3) > 1.0," --Simulation requires spin densities > 1.0 per cubic micron"
@@ -26,7 +26,7 @@ class CLI:
         args['fiber_radii'] = [float(rad) for rad in str(args['fiber_radii']).split(',')]
         for radius in args['fiber_radii']:
             assert radius >= 0, "--fiber_radii must be non-negative"
-        
+
         # Thetas
         args['thetas'] = [float(theta) for theta in str(args['thetas']).split(',')]
         
@@ -34,6 +34,9 @@ class CLI:
         args['fiber_diffusions'] = [float(D0) for D0 in str(args['fiber_diffusions']).split(',')]
         for D0 in args['fiber_diffusions']:
             assert D0 >= 0, "--fiber_diffusions must be non-negative"
+
+        # Enforce self Consistent Fiber Parameters 
+        assert all([len(args['fiber_fractions']) == len(param) for param in [args['thetas'], args['fiber_radii'], args['fiber_diffusions']]]), "fiber parameters must be consistent with eachother (of equal lengths)"
         
         # Cell Fractions
         args['cell_fractions'] = [float(fraction) for fraction in str(args['cell_fractions']).split(',')]
@@ -46,6 +49,10 @@ class CLI:
         args['cell_radii'] = [float(rad) for rad in str(args['cell_radii']).split(',')]
         for cr in args['cell_radii']:
             assert cr >= 0, "--cell_radii must be non-negative"
+
+        # Enforce self consistent 
+        assert len(args['cell_fractions']) == len(args['cell_radii']), "cell parameters must be consistent with eachother (of equal lengths)"
+
         
         # Water Diffusivity
         args['water_diffusivity'] = float(args['water_diffusivity'])
@@ -100,27 +107,27 @@ class CLI:
                             required=False,
                             help="The number of spins to populate within the voxel, entered as an integer value. To obtain reliable results, use enough spins to acheive a minimal spin volume density of 1 per cubic micron.")
         subparser.add_argument("--fiber_fractions", nargs=None, type=str,
-                    dest='fiber_fractions', default='0.5, 0.3, 0.19',
+                    dest='fiber_fractions', default='0.3,0.3',
                     required=False,
                     help="The desired volume fraction of each fiber type within its region of the voxel, entered as a comma-separated string of values between 0 and 1 (e.g., ''0.5, 0.7'')")
 
         subparser.add_argument("--fiber_radii", nargs=None, type=str,
-                    dest='fiber_radii', default='1.0, 1.0, 1.0',
+                    dest='fiber_radii', default='1.0,1.0',
                     required=False,
                     help="The radii (in units of micrometers) of each fiber type, entered as a comma-separated string (e.g., ''1.5, 2.0'')")
 
         subparser.add_argument("--thetas", nargs=None, type=str,
-                    dest='thetas', default='0, 0,0',
+                    dest='thetas', default='0,0',
                     required=False,
                     help="Rotation angle (with respect to the Y axis, in degrees) for each fiber type, entered as a comma-separated string (e.g., ''0, 30'')")
 
         subparser.add_argument("--fiber_diffusions", nargs=None, type=str,
-                    dest='fiber_diffusions', default='1.0,2.0,1.5',
+                    dest='fiber_diffusions', default='1.0,2.0',
                     required=False,
                     help="Diffusivity within each fiber type (in units of micrometers^2 per ms), entered as a comma-separated string (e.g., ''1.0, 2.5'')")
 
         subparser.add_argument("--cell_fractions", nargs=None, type=str,
-                    dest='cell_fractions', default='0.0, 0.0',
+                    dest='cell_fractions', default='0.0,0.0',
                     required=False,
                     help="The desired volume fraction of each cell type, entered as a comma-separated string of values between 0 and 1 (e.g., ''0.05, 0.20'')")
 
@@ -144,7 +151,7 @@ class CLI:
         """  Scanning Parameters """
 
         subparser.add_argument("--Delta", nargs=None, type=float,
-                            dest='Delta', default=0.001,
+                            dest='Delta', default=10.0,
                             required=False,
                             help="Diffusion time, in units of milliseconds"
                             )

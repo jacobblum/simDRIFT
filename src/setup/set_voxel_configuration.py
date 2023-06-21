@@ -25,9 +25,6 @@ def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fibe
     for i in range(len(fiber_fractions)):
         num_fiber = int(np.sqrt(
             (fiber_fractions[i] * (voxel_dimensions**2))/(np.pi*fiber_radii[i]**2)))
-        
-        
-        
         num_fibers.append(num_fiber)
         logging.info(' {} fibers of type {} (R{} = {})'.format(int(num_fibers[i]**2),int(i),int(i),fiber_radii[i]))
     logging.info(' Fiber geometry: {}'.format(fiber_configuration))
@@ -43,7 +40,7 @@ def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
     logging.info(' Cells Setup')
     logging.info('------------------------------')    
     num_cells = []
-    for i in range(len(cell_radii)):
+    for i in range(len(cell_fraction)):
         if cell_fraction[i] > 0:
             num_cells.append(int(
                 (0.5*cell_fraction[i]*(voxel_dimensions**3)/((4.0/3.0)*np.pi*cell_radii[i]**3))))
@@ -171,7 +168,7 @@ def _place_cells(self):
                         cellCenters[j, :] = proposedCell
                         invalid = False
         cell_centers_total.append(cellCenters)
-    output_arg = np.vstack([cell_centers_total[0], cell_centers_total[1]])
+    output_arg = np.vstack([cell_centers_total[i] for i in range(len(cell_centers_total))])
 
     cells = []
     

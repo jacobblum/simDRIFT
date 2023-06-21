@@ -98,8 +98,8 @@ def test_water_physics(input, expected):
     assert np.isclose(1e3 * tenfit.ad, expected, atol = .1) 
     assert np.isclose(1e3 * tenfit.ad, 1e3 * tenfit.rd, atol=.1)
 
-@pytest.mark.parametrize("input, expected", [((1.0,2.0,3.0), (1.0,2.0,3.0)), ((1.0,1.5,2.0), (1.0,1.5,2.0)), ((1.0,1.0,1.5), (1.0,1.0,1.5))])
-def test_fiber_physics(input, expected):
+@pytest.mark.parametrize("input, expected", [((1.0,2.0,2.5), (1.0,2.0,2.5)), ((1.0,1.5,2.0), (1.0,1.5,2.0)), ((1.0,1.0,1.5), (1.0,1.0,1.5))])
+def test_fiber_physics_multi(input, expected):
     """
     1. Check that the forward simulated fiber-only signal corresponds to a diffusion tensor matching the input fiber diffusivities
     2. Check that the forward simulated fiber-only signal corresponds to an anisotropic diffusion tensor 
@@ -121,8 +121,20 @@ def test_fiber_physics(input, expected):
     assert (np.isclose(1e3 * np.array([tenfit_1.ad, tenfit_2.ad, tenfit_3.ad]), np.array(expected), atol = 0.1).all())
     assert (np.array([tenfit_1.fa, tenfit_2.fa, tenfit_3.fa]) > .20).all()
 
+@pytest.mark.parametrize("input, expected", [(1.0, 1.0)])
+def test_fiber_physics_single(input, expected):
+    gtab = gradient_table(bvals, bvecs)
+    tenmodel = dti.TensorModel(gtab)
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    cmd = r"simDRIFT"
+    cmd += f" simulate --n_walkers 256000 --fiber_fractions .30 --fiber_diffusions {input} --cell_fractions 0,0 --Delta 1 --voxel_dims 10 --buffer 0 --verbose no" 
+    os.system(cmd)
+    fiber_1_signal = nb.load(os.getcwd() + os.sep + 'signals' + os.sep + 'fiber_1_signal.nii').get_fdata()
+    tenfit_1 = tenmodel.fit(fiber_1_signal)
+    assert np.isclose(1e3 * tenfit_1.ad, np.array(expected), atol = 0.1)
+
 @pytest.mark.parametrize("input", [(1.0,1.0), (1.5,1.5), (2.0,2.0)])
-def test_cell_physics(input):
+def test_cell_physics_multi(input):
     """
     1. Check that the forward simulated cell-only signal corresponds to an isotropic diffusion tensor
        RMK: the inverse problem measured diffusivity here will strongly depend on the diffusion time, thus, this test only requires that 
@@ -137,6 +149,24 @@ def test_cell_physics(input):
     signal = signal = nb.load(os.getcwd() + os.sep + 'signals' + os.sep + 'cell_signal.nii').get_fdata()  
     tenfit = tenmodel.fit(signal)
     assert np.isclose(1e3 * tenfit.ad, 1e3 * tenfit.rd, atol = 0.1) 
+
+@pytest.mark.parametrize("input", [(1.0)])
+def test_cell_physics_single(input):
+    """
+    1. Check that the forward simulated cell-only signal corresponds to an isotropic diffusion tensor
+       RMK: the inverse problem measured diffusivity here will strongly depend on the diffusion time, thus, this test only requires that 
+           the cell diffusion be isotropic  
+    """
+    gtab = gradient_table(bvals, bvecs)
+    tenmodel = dti.TensorModel(gtab)
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    cmd = r"simDRIFT"
+    cmd += f" simulate --n_walkers 256000 --fiber_fractions 0,0 --cell_fractions .1 --cell_radii {input} --Delta 1 --voxel_dims 20 --buffer 0 --verbose no" 
+    os.system(cmd)
+    signal = signal = nb.load(os.getcwd() + os.sep + 'signals' + os.sep + 'cell_signal.nii').get_fdata()  
+    tenfit = tenmodel.fit(signal)
+    assert np.isclose(1e3 * tenfit.ad, 1e3 * tenfit.rd, atol = 0.1) 
+    
 
 def run_tests():
     cmd = f"pytest {os.path.abspath(__file__)}"
