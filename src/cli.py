@@ -7,10 +7,22 @@ import os
 
 class CLI:
     def __init__(self, subparsers) -> None:
+        """Initializes subparsers for input parameters
+
+        :param subparsers: Parsers for each relevant module
+        :type subparsers: str
+        """   
         self.subparsers = subparsers        
         pass
 
     def validate_args(self, args):   
+        """Validation step for parsed user input arguments
+
+        :param args: Parsed user inputs
+        :type args: dictionary
+        :return: Parsed and validated arguments
+        :rtype: dictionary
+        """         
         # N_walkers
         args['n_walkers'] = int(args['n_walkers'])
         #assert args['n_walkers']/(args['voxel_dims']**3) > 1.0," --Simulation requires spin densities > 1.0 per cubic micron"
@@ -90,10 +102,20 @@ class CLI:
         return args
     
     def run(self, args):
+        """Run simulation using parsed user inputs
+
+        :param args: User inputs for relevant parameters
+        :type args: dictionary
+        """
         simulation.run(args)
 
 
     def add_subparser_args(self) -> argparse:
+        """Defines subparsers for each simulation parameter.
+
+        :return: argparse object containing subparsers for each simulation parameter
+        :rtype: argparse
+        """  
         
         subparser = self.subparsers.add_parser("simulate",
                                         description="Simulate PGSE experiment"
