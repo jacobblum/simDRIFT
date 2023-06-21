@@ -14,7 +14,7 @@ authors:
   - name: Kainen L. Utt
     orcid: 0000-0002-8555-9000
     affiliation: 1
-	corresponding: true
+    corresponding: true
 affiliations:
  - name: Washington University in St. Louis, USA
    index: 1
