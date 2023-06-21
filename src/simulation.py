@@ -117,14 +117,14 @@ class dmri_simulation(Parameters):
         logging.getLogger('numba').setLevel(logging.WARNING)
         logging.getLogger('numpy').setLevel(logging.WARNING)
         logging.basicConfig(level = verbose[self.verbose],
-                            format = 'dMRI-SIM: %(message)s',
+                            format = 'simDRIFT: %(message)s',
                             filename = log_file,
                             filemode = 'w')
         console = logging.StreamHandler()
-        formatter = logging.Formatter("dMRI-SIM: %(message)s")
+        formatter = logging.Formatter("simDRIFT: %(message)s")
         console.setFormatter(formatter)
         logging.getLogger('').addHandler(console)
-        logging.info('Running dMRI-SIM')
+        logging.info('Running simDRIFT')
 
         try:
             set_voxel_configuration.setup(self)
