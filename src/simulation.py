@@ -225,7 +225,7 @@ class dmri_simulation(Parameters):
         
         except KeyboardInterrupt:
             sys.stdout.write('\n')
-            logging.info('Keyboard interupt. Terminated without saving.')
+            logging.info('Keyboard interrupt. Terminated without saving.')
             exit()
  
 def dmri_sim_wrapper(arg):
