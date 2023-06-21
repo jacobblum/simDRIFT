@@ -89,7 +89,7 @@ def _simulate_diffusion(self) -> None:
     logging.info(' Beginning Simulation...')
     logging.info('------------------------------')    
     for i in range(int(self.Delta/self.dt)):
-        sys.stdout.write('\r' + 'dMRI-SIM:  Step ' +  str(i+1) + '/' + str(int(self.Delta/self.dt)))
+        sys.stdout.write('\r' + 'simDRIFT:  Step ' +  str(i+1) + '/' + str(int(self.Delta/self.dt)))
         sys.stdout.flush()
         
         _diffusion_context_manager[blocks_per_grid,threads_per_block](random_states_cuda, 
