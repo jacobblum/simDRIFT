@@ -40,6 +40,6 @@ For each time step $\mathrm{d}t$ in the simulation, each tissue compartment’s 
 
 
 # Acknowledgments
-The authors would like to acknowledge the early contributions of Chunyu Song and Anthony Wu. We are also immensly grateful for the supportive and clarifying discussions with Professor Sheng-Kwei Song, whose insight helped to clarify the trajectory of this project.
+This work was funded in part via support from NIH NINDS R01 NS11691 and R01 NS047592. The authors would like to acknowledge the early contributions of Chunyu Song and Anthony Wu. We are also immensly grateful for the supportive and clarifying discussions with Professor Sheng-Kwei Song, whose insight helped to clarify the trajectory of this project.
 
 # References---
