@@ -7,104 +7,42 @@ import time
 import logging
 import torch 
 
-""""
-def spins_in_voxel(trajectoryT1m, trajectoryT2p):
-   
-        Helper function to ensure that the spins at time T2p are wtihin the self.voxelDims x self.voxelDims x inf imaging voxel
-
-    Parameters
-    ----------
-    trajectoryT1m: N_{spins} x 3 ndarray
-        The initial spin position at time t1m
-
-    trajectoryT2p: N_{spins} x 3 ndarray
-        The spin position at time t2p
-
-    Returns
-    -------
-    traj1_vox: (N, 3) ndarray
-        Position at T1m of the spins which stay within the voxel
-    traj2_vox: (N, 3) ndarray
-        Position at T2p of the spins which stay within the voxel
-
-    Notes
-    -----
-    None
-
-    References
-    ----------
-    None
-
-    
-    traj1_vox = []
-    traj2_vox = []
-
-    for i in range(trajectoryT1m.shape[0]):
-        if np.amin(trajectoryT2p[i, 0:2]) >= 0 + 0.5*self.buffer and np.amax(trajectoryT2p[i, 0:2]) <= self.voxelDims + 0.5*self.buffer:
-            traj1_vox.append(trajectoryT1m[i, :])
-            traj2_vox.append(trajectoryT2p[i, :])
-    return np.array(traj1_vox), np.array(traj2_vox)
-"""
-
-
 def _add_noise(signal, snr):
-    r"""
-    Add Gaussian Noise to the forward simulated signal
+    """Add Gaussian noise to the forward simulated signal [2]_
 
-    Args:
-        signal (np.ndarray): The forward simulated signal
-        snr (float): The signal to noise ratio of the b0 image
-
-    Shapes:
-        signal: (n_bvals,) where n_bvals is the number of b-values in the supplied bval file
-
-    Returns:
-        noised_signal (np.ndarray): The noised signal
-    
-    References:
-        [1] Garyfallidis E, Brett M, Amirbekian B, Rokem A, van der Walt S, Descoteaux M, Nimmo-Smith I and Dipy Contributors (2014). DIPY, a library for the analysis of diffusion MRI data. Frontiers in Neuroinformatics, vol.8, no.8.
-    
-    
-    """
+    :param signal: The forward simulated signal
+    :type signal: np.ndarray
+    :param snr: The desired signal to noise ratio of the b0 image
+    :type snr: float
+    :return: The noise-added signal
+    :rtype: np.ndarray
+    """ 
     sigma = 1.0/snr 
     real_channel_noise = np.random.normal(0, sigma, signal.shape[0])
     return signal + real_channel_noise
 
    
 def _signal(spins: list, bvals: np.ndarray, bvecs: np.ndarray, Delta: float, dt: float, SNR = None) -> np.ndarray:
-    r"""
-    Calculates the PGSE signal from the forward simulated spin trajectories. Note that this computation is executed on the GPU using CuPy.
-    
-    Args:
-        spins (list): A list of each objects.spin instance corresponding to a spin in the ensemble of random walkers
-        bvals (np.ndarray): The supplied b-values (diffusion weighting factors)
-        bvecs (np.ndarray): The supplied diffusion gradients 
-        Delta (float): The diffusion time (ms)
-        dt (float): The time step parameter, also equal to delta because of the narrow pulse approximation
-        SNR (float, optional): The snr of the b0 image. If a value is not entered, the snr of the signal is infinite. 
+    """Calculates the PGSE signal from the forward simulated spin trajectories [3]_. Note that this computation is executed on the GPU using PyTorch.
 
-    Shapes:
-        spins: (n_walkers,) where n_walkers is an input parameter denoting the n umber of spins in the ensemble
-        bvals: (n_bvals,) where n_bvals is the number of b-values in the supplied bval file
-        bvecs: (n_bvals, 3) where n_bvals is the number of b-values in the supplied bval file)I
-
-    Returns:
-        signal (np.ndarray): the forward simulated PGSE signal
-        trajectory_t1m (np.ndarray): the initial spin positions 
-        trajectory_t2p (np.ndarray): the final spin positions
-
-    References:
-        [1] Hall, M. G., and Alexander, D. C. (2009). Convergence and parameter choice for monte-carlo simulations of diffusion MRI. IEEE Trans. Med. Imaging 28, 1354–1364. doi: 10.1109/TMI.2009.2015756
-    """    
-
-
-
-    """ Use CuPy to execute the einstein summations on the GPU """
+    :param spins: A list of each objects.spin instance corresponding to a spin in the ensemble of random walkers
+    :type spins: list
+    :param bvals: The supplied b-values (diffusion weighting factors)
+    :type bvals: np.ndarray
+    :param bvecs: The supplied diffusion gradients 
+    :type bvecs: np.ndarray
+    :param Delta: The diffusion time, in milliseconds
+    :type Delta: float
+    :param dt: The time step parameter, also equal to delta because of the narrow pulse approximation
+    :type dt: float
+    :param SNR: The snr of the b0 image. If a value is not entered, the SNR of the signal is infinite. (Defaults to ``None``)
+    :type SNR: float, optional
+    :return: the forward simulated PGSE signal (``signal``), the initial spin positions (``trajectory_t1m``), and the final spin positions ``trajectory_t2p``
+    :rtype: np.ndarray
+    """
     
     gamma = 42.58 # MHz/T - The proton gyromagnetic ratio
-    delta = dt    # ms - From the narrow pulse approximation. More convient for GPU memory managment 
-
-    #Possibly call finite voxel helper
+    delta = dt    # ms - From the narrow pulse approximation. More convenient for GPU memory management 
 
     trajectory_t1m = torch.from_numpy(np.array([spin._get_position_t1m() for spin in spins])).float().to('cuda')
     trajectory_t2p = torch.from_numpy(np.array([spin._get_position_t2p() for spin in spins])).float().to('cuda')
@@ -125,8 +63,10 @@ def _signal(spins: list, bvals: np.ndarray, bvecs: np.ndarray, Delta: float, dt:
 
 
 def _generate_signals_and_trajectories(self):
-    r"""
-    Helper function to organize and store compartment specific and combined trajectories and their incident signals
+    """Helper function to organize and store compartment specific and combined trajectories and their incident signals
+
+    :return: signals with associated labels (``signals_dict``), trajectories with associated labels (``trajectories_dict``)
+    :rtype: dictionaries
     """
     
     signals_dict = {}
@@ -236,110 +176,8 @@ def _generate_signals_and_trajectories(self):
     trajectories_dict['total_trajectories'] = (total_trajectory_t1m, total_trajectory_t2p)
     return signals_dict, trajectories_dict
 
-    # """ Fiber 1 Plus Water Signal"""
-    # f1_water_spins = np.hstack([fiber_1_spins, water_spins])
-    # if any(f1_water_spins) & any(fiber_1_spins) & any(water_spins):
-    #     logging.info(' Computing fiber 1 + water signal...')
-    #     Start = time.time()
-    #     f1_water_signal, f1_water_trajectory_t1m, f1_water_trajectory_t2p = _signal(f1_water_spins, bvals, bvecs, Delta, dt)
-    #     End = time.time()
-    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-    #     signals_dict['f1_water_signal'] = f1_water_signal
-    #     trajectories_dict['f1_water_trajectories'] = (f1_water_trajectory_t1m, f1_water_trajectory_t2p)
-
-    # """ Fiber 1 Plus Cell Signal"""
-    # f1_cell_spins = np.hstack([fiber_1_spins, cell_spins])
-    # if any(f1_cell_spins) & any(fiber_1_spins) & any(cell_spins):
-    #     logging.info(' Computing fiber 1 + cell signal...')
-    #     Start = time.time()
-    #     f1_cell_spins = np.hstack([fiber_1_spins, cell_spins])
-    #     f1_cell_signal, f1_cell_trajectory_t1m, f1_cell_trajectory_t2p = _signal(f1_cell_spins, bvals, bvecs, Delta, dt)
-    #     End = time.time()
-    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-    #     signals_dict['f1_cell_signal'] = f1_cell_signal
-    #     trajectories_dict['f1_cell_trajectories'] = (f1_cell_trajectory_t1m, f1_cell_trajectory_t2p)
-
-    # """ Fiber 1 Plus Cell Plus Water Signal"""
-    # f1_cell_water_spins = np.hstack([fiber_1_spins, cell_spins, water_spins])
-    # if any(f1_cell_water_spins) & any(fiber_1_spins) & any(cell_spins):
-    #     logging.info(' Computing fiber 1 + cell + water signal...')
-    #     Start = time.time()
-    #     f1_cell_water_signal, f1_cell_water_trajectory_t1m, f1_cell_water_trajectory_t2p = _signal(f1_cell_water_spins, bvals, bvecs, Delta, dt)
-    #     End = time.time()
-    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-    #     signals_dict['f1_cell_water_signal'] = f1_cell_water_signal
-    #     trajectories_dict['f1_cell_water_trajectories'] = (f1_cell_water_trajectory_t1m, f1_cell_water_trajectory_t2p)
-
-    # """ Fiber 2 Plus Water Signal"""
-    # f2_water_spins = np.hstack([fiber_2_spins, water_spins])
-    # if any(f2_water_spins) & any(fiber_2_spins):
-    #     logging.info(' Computing fiber 2 + water signal...')
-    #     Start = time.time()
-    #     f2_water_signal, f2_water_trajectory_t1m, f2_water_trajectory_t2p = _signal(f2_water_spins, bvals, bvecs, Delta, dt)
-    #     End = time.time()
-    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-    #     signals_dict['f2_water_signal'] = f2_water_signal
-    #     trajectories_dict['f2_water_trajectories'] = (f2_water_trajectory_t1m, f2_water_trajectory_t2p)
-
-
-    # """ Fiber 2 Plus Cell Signal"""
-    # f2_cell_spins = np.hstack([fiber_2_spins, cell_spins])
-    # if any(f2_cell_spins) & any(fiber_2_spins) & any(cell_spins):
-    #     logging.info(' Computing fiber 2 + cell signal...')
-    #     Start = time.time()
-    #     f2_cell_signal, f2_cell_trajectory_t1m, f2_cell_trajectory_t2p = _signal(f2_cell_spins, bvals, bvecs, Delta, dt)
-    #     End = time.time()
-    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-    #     signals_dict['f2_cell_signal'] = f2_cell_signal
-    #     trajectories_dict['f2_cell_trajectories'] = (f2_cell_trajectory_t1m, f2_cell_trajectory_t2p)
-
-    # """ Fiber 2 Plus Cell Plus Water Signal"""
-    # f2_cell_water_spins = np.hstack([fiber_2_spins, cell_spins, water_spins])
-    # if any(f2_cell_water_spins) & any(fiber_2_spins) & any(cell_spins):
-    #     logging.info(' Computing fiber 2 + cell + water signal...')
-    #     Start = time.time()
-    #     f2_cell_water_signal, f2_cell_water_trajectory_t1m, f2_cell_water_trajectory_t2p = _signal(f2_cell_water_spins, bvals, bvecs, Delta, dt)
-    #     End = time.time()
-    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-    #     signals_dict['f2_cell_water_signal'] = f2_cell_water_signal
-    #     trajectories_dict['f2_cell_water_trajectories'] = (f2_cell_water_trajectory_t1m, f2_cell_water_trajectory_t2p)
-
-    # """ Both Fibers + Water Signal""" 
-    # total_fiber_water_spins = np.hstack([total_fiber_spins, water_spins])
-    # if any(total_fiber_water_spins) & any(fiber_1_spins) & any(fiber_2_spins):
-    #     logging.info(' Computing total fiber + water signal...')
-    #     Start = time.time()
-    #     total_fiber_water_signal, total_fiber_water_trajectory_t1m, total_fiber_water_trajectory_t2p = _signal(total_fiber_water_spins, bvals, bvecs, Delta, dt) 
-    #     End = time.time()
-    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-    #     signals_dict['total_fiber_water_signal'] = total_fiber_water_signal
-    #     trajectories_dict['total_fiber_water_trajectories'] = (total_fiber_water_trajectory_t1m, total_fiber_water_trajectory_t2p)
-
-    # """ Both Fibers + Cell Signal""" 
-    # total_fiber_cell_spins = np.hstack([total_fiber_spins, cell_spins])
-    # if any(total_fiber_cell_spins) & any(fiber_1_spins) & any(fiber_2_spins) & any(cell_spins):
-    #     logging.info(' Computing total fiber + cell signal...')
-    #     Start = time.time()
-    #     total_fiber_cell_signal, total_fiber_cell_trajectory_t1m, total_fiber_cell_trajectory_t2p = _signal(total_fiber_cell_spins, bvals, bvecs, Delta, dt)
-    #     End = time.time()
-    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-    #     signals_dict['total_fiber_cell_signal'] = total_fiber_cell_signal
-    #     trajectories_dict['total_fiber_cell_trajectories'] = (total_fiber_cell_trajectory_t1m, total_fiber_cell_trajectory_t2p)
-
-    # """ Cell + Water Signal""" 
-    # water_cell_spins = np.hstack([total_fiber_spins, cell_spins])
-    # if any(water_cell_spins) & any(cell_spins):
-    #     logging.info(' Computing water + cell signal...')
-    #     Start = time.time()
-    #     water_cell_signal, water_cell_trajectory_t1m, water_cell_trajectory_t2p = _signal(water_cell_spins, bvals, bvecs, Delta, dt)
-    #     End = time.time()
-    #     logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
-    #     signals_dict['water_cell_signal'] = water_cell_signal
-    #     trajectories_dict['water_cell_trajectories'] = (water_cell_trajectory_t1m, water_cell_trajectory_t2p)
-
 def _save_data(self):
-    r"""
-    Helper function that saves signals and trajectories
+    """Helper function that saves signals and trajectories to the current directory.
     """
 
 
