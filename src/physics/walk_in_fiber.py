@@ -5,30 +5,36 @@ from src.jp import random, linalg
 
 @numba.cuda.jit(nopython=True,parallel=True)
 def _diffusion_in_fiber(i, random_states, fiber_center, fiber_radius, fiber_direction, fiber_step, spin_positions):
-    r"""
-    
-    Rejection-sample random steps of a spin residing within a fiber in the imaging voxel. Note that the rejection criteria is if the spin steps outside of the fiber. Thus, the 
-    spin is confined to the fiber. This is reasonable so long as the diffusion times simulated does not exceed the intra-cellular pre-exchangle lifetime of the fiber. 
-    
-    Args:
-        i (int): The absolute position of the current thread in the entire grid of blocks
-        random_states (numba.cuda.cudadrv.devicearray.DeviceNDArray): xoroshiro128p random states
-        fiber_center (numba.cuda.cudadrv.devicearray.DeviceNDArray): cordinates of the fiber centers
-        fiber_radius (float): radii of the fibers
-        fiber_direction (numba.cuda.cudadrv.devicearray.DeviceNDArray): directions of the fiber centers
-        fiber_step (float): step size
-        spin_positions (numba.cuda.cudadrv.devicearray.DeviceNDArray): array to write updated spin positions to   
-        void (bool): void configuration 
-    
-    Shapes:
-        random_states: (n_walkers,) where n_walkers is an input parameter denoting the number of spins in the ensemble
-        fiber_center: (3,)
-        fiber_direction: (3,)
-        spin_positions: (n_walkers, 3) where n_walkers is an input parameter denoting the number of spins in the ensemble  
+    """Simulated Brownian motion of a spin confined to within in a fiber, implemented via random walk with rejection sampling for proposed steps beyond the fiber membrane. Note that this implementation assumes zero exchange between compartments and is therefore only physically-accurate for :math:`\Delta < {\\tau_{i}}` [1]_. 
 
-    References:
-    [1] Yang DM, Huettner JE, Bretthorst GL, Neil JJ, Garbow JR, Ackerman JJH. Intracellular water preexchange lifetime in neurons and astrocytes. Magn Reson Med. 2018 Mar;79(3):1616-1627. doi: 10.1002/mrm.26781. Epub 2017 Jul 4. PMID: 28675497; PMCID: PMC5754269.
-    
+    :param i: Absolute index of the current thread within the block grid
+    :type i: int
+    :param random_states: ``xoroshiro128p`` random states
+    :type random_states: numba.cuda.cudadrv.devicearray.DeviceNDArray
+    :param fiber_center: Coordinates of the center of specified fiber
+    :type fiber_center: numba.cuda.cudadrv.devicearray.DeviceNDArray
+    :param fiber_radius: Radius of the specified fiber type
+    :type fiber_radius: numba.cuda.cudadrv.devicearray.DeviceNDArray
+    :param fiber_direction: Orientation of the specified fiber type
+    :type fiber_direction: numba.cuda.cudadrv.devicearray.DeviceNDArray
+    :param fiber_step: Distance travelled by resident spins for each time step :math:`\dd{t}`
+    :type fiber_step: float
+    :param spin_positions: Array containing the updated spin positions
+    :type spin_positions: numba.cuda.cudadrv.devicearray.DeviceNDArray
+
+    **Shapes**
+        :random_states: 
+            (n_walkers,) where n_walkers is an input parameter denoting the number of spins in the ensemble
+        :cell_center: 
+            (3,)
+        :fiber_centers: 
+            (n_fibers x n_fibers, 3) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel
+        :fiber_radii: 
+            (n_fibers x n_fibers, ) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel
+        :fiber_directions: 
+            (n_fibers x n_fibers, 3) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel
+        :spin_positions: 
+            (n_walkers, 3) where n_walkers is an input parameter denoting the number of spins in the ensemble  
     """
 
     eps = numba.float32(1e-3)
