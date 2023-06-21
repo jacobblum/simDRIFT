@@ -1,7 +1,7 @@
 .. image:: https://github.com/jacobblum/dMRI-MCSIM/blob/main/joss/figs/logo.png
   :alt: simDRIFT logo
 
-This library, ``simDRIFT``, provides rapid and flexible Monte-Carlo simulations of diffusion-weighted magnetic resonance imaging (dMRI), which we expect to be useful for dMRI signal processing model development and validation purposes. The primary focus of this library is forward simulations of modular self-diffusion processes within an ensemble of nuclear magnetic resonance (NMR) active nuclei ("spins") residing in complex, biophysical tissue systems. ``simDRIFT`` is written in Python and supported by a Numba backend. Thus, ``simDRIFT`` benefits from Numba's CUDA API, allowing individual spin trajectories to be simulated in parallel on single Graphics Processing Unit (GPU) threads. The resulting performance gains support ``simDRIFT``'s aim to provide a customizable tool for rapidly prototyping diffusion models, ground-truth model validation, and in silico phantom production.
+This library, ``simDRIFT``, provides rapid and flexible Monte Carlo simulations of diffusion-weighted magnetic resonance imaging (dMRI), which we expect to be useful for dMRI signal processing model development and validation purposes. The primary focus of this library is forward simulations of modular self-diffusion processes within an ensemble of nuclear magnetic resonance (NMR) active nuclei ("spins") residing in complex, biophysical tissue systems. ``simDRIFT`` is written in Python and supported by a Numba backend. Thus, ``simDRIFT`` benefits from Numba's CUDA API, allowing individual spin trajectories to be simulated in parallel on single Graphics Processing Unit (GPU) threads. The resulting performance gains support ``simDRIFT``'s aim to provide a customizable tool for rapidly prototyping diffusion models, ground-truth model validation, and in silico phantom production.
 
 The current release contains the following modules:
 
@@ -13,7 +13,7 @@ The current release contains the following modules:
   or "sticks", and cells as isotropic spheres, or "balls". The module executes the forward diffusion MRI simulation on voxel geometries described
   by user-defined microstructural and scanning parameters. 
   A quick start tutorial can be found
-  `here <https://en.wikipedia.org/wiki/Bloch_equations>`_.
+  `here <https://simdrift.readthedocs.io/en/latest/quickstart-index.html>`_.
 
 * ``run_tests``
 
