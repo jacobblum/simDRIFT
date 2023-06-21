@@ -1,11 +1,13 @@
 import os
 import sys
-sys.path.insert(0, os.path.abspath("../../src/"))
-sys.path.insert(0, os.path.abspath("../../src/setup/"))
-sys.path.insert(0, os.path.abspath("../../src/physics/"))
-sys.path.insert(0, os.path.abspath("../../src/data"))
-sys.path.insert(0, os.path.abspath("../../src/gui"))
-sys.path.insert(0, os.path.abspath("../../src/jp"))
+sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../../src'))
+sys.path.insert(0, os.path.abspath('../../src/setup'))
+sys.path.insert(0, os.path.abspath('../../src/physics'))
+sys.path.insert(0, os.path.abspath('../../src/configs'))
+sys.path.insert(0, os.path.abspath('../../src/data'))
+sys.path.insert(0, os.path.abspath('../../src/gui'))
+sys.path.insert(0, os.path.abspath('../../src/jp'))
 
 # Configuration file for the Sphinx documentation builder.
 #
