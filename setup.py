@@ -3,7 +3,7 @@
 import os
 import setuptools
 
-install_requires  = ['numba', 'numpy', 'nibabel', 'dipy', 'pytest']
+install_requires  = ['numba', 'numpy', 'scipy', 'nibabel', 'dipy', 'pytest']
 setuptools.setup(
     name='simDRIFT',
     description='A software package for forward simulating diffusion weighted MRI',
