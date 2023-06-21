@@ -1,6 +1,6 @@
 import numba 
 from numba import jit, cuda
-from jp import random, linalg
+from src.jp import random, linalg
 
 
 @numba.cuda.jit(nopython=True,parallel=True)

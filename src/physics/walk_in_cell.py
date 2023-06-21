@@ -1,7 +1,7 @@
 import numba 
 from numba import jit, cuda
 import math
-from jp import random, linalg
+from src.jp import random, linalg
 import operator
 
 

@@ -1,11 +1,11 @@
 import numpy as np  
 import os  
 import sys
-from data import diffusion_schemes
-import cupy as cp
+from src.data import diffusion_schemes
 import nibabel as nb
 import time
 import logging
+import torch 
 
 """"
 def spins_in_voxel(trajectoryT1m, trajectoryT2p):
@@ -106,14 +106,15 @@ def _signal(spins: list, bvals: np.ndarray, bvecs: np.ndarray, Delta: float, dt:
 
     #Possibly call finite voxel helper
 
-    trajectory_t1m = cp.array([spin._get_position_t1m() for spin in spins])
-    trajectory_t2p = cp.array([spin._get_position_t2p() for spin in spins])
-    bvals_cp       = cp.array(bvals)
-    bvecs_cp       = cp.array(bvecs)
+    trajectory_t1m = torch.from_numpy(np.array([spin._get_position_t1m() for spin in spins])).float().to('cuda')
+    trajectory_t2p = torch.from_numpy(np.array([spin._get_position_t2p() for spin in spins])).float().to('cuda')
+    bvals_cp       = torch.from_numpy(np.array(bvals)).float().to('cuda')
+    bvecs_cp       = torch.from_numpy(np.array(bvecs)).float().to('cuda')
 
-    scaled_gradients = np.einsum('i, ij -> ij', (np.sqrt( (bvals_cp * 1e-3)/ (gamma**2*delta**2*(Delta - delta/3)))), bvecs_cp)
-    phase_shifts = gamma * np.einsum('ij, kj -> ik', scaled_gradients, (trajectory_t1m - trajectory_t2p))*dt
-    signal = 1/trajectory_t1m.shape[0] * np.abs(np.sum(np.exp(-(0+1j)*phase_shifts), axis = 1))
+    scaled_gradients = torch.einsum('i, ij -> ij', (torch.sqrt( (bvals_cp * 1e-3)/ (gamma**2*delta**2*(Delta - delta/3)))), bvecs_cp)
+    phase_shifts = gamma * torch.einsum('ij, kj -> ik', scaled_gradients, (trajectory_t1m - trajectory_t2p))*dt
+    signal =  torch.abs(torch.sum(torch.exp(-(0+1j)*phase_shifts), axis = 1)).cpu().numpy()
+    signal /= trajectory_t1m.shape[0]
 
 
     if SNR != None:
@@ -347,13 +348,13 @@ def _save_data(self):
     logging.info(' Saving outputs to {} ...'.format(os.getcwd()))
     if not os.path.exists(r'./signals'): os.mkdir(r'./signals')
     for key in signals_dict.keys():        
-        Nifti = nb.Nifti1Image(signals_dict[key].get(), affine = np.eye(4))
+        Nifti = nb.Nifti1Image(signals_dict[key], affine = np.eye(4))
         nb.save(Nifti, r'./signals/{}.nii'.format(key))
 
     if not os.path.exists(r'./trajectories'): os.mkdir(r'./trajectories')
     for key in trajectories_dict.keys():        
-        np.save(r'./trajectories/{}_t1m.npy'.format(key), trajectories_dict[key][0].get())
-        np.save(r'./trajectories/{}_t2p.npy'.format(key), trajectories_dict[key][1].get())
+        np.save(r'./trajectories/{}_t1m.npy'.format(key), trajectories_dict[key][0].cpu().numpy())
+        np.save(r'./trajectories/{}_t2p.npy'.format(key), trajectories_dict[key][1].cpu().numpy())
     logging.info(' Program complete!')
     logging.info('------------------------------')
     return

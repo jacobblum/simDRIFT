@@ -1,11 +1,10 @@
 import numpy as np
-import jp as jp
 import sys
-from jp import linalg
-import objects
 import random
 import logging
-import setup.spin_init_positions as spin_init_positions
+import src.setup.spin_init_positions as spin_init_positions
+import src.setup.objects as objects
+from src.jp import linalg
 
 def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fiber_configuration):
     """Calculates the number of fibers that achieves the supplied fiber densities (fractions).
