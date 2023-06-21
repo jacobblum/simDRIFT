@@ -11,7 +11,13 @@ import logging
 
 
 def Ry(thetas):
+    """Calculates rotation matrices for the desired fiber orientations
 
+    :param thetas: List of angles (with respect to the `y`-axis) for each fiber bundle
+    :type thetas: int, tuple
+    :return: Rotation matrices for each fiber bundle.
+    :rtype: np.ndarray
+    """ 
     logging.info('------------------------------')
     logging.info(' Rotation Matrices ')
     logging.info('------------------------------')
@@ -29,6 +35,21 @@ def Ry(thetas):
     return rotation_matricies
 
 def affine_transformation(xv: np.ndarray, x: float, y: float, thetas, i):
+    """Calculates and applies affine transformation to fiber grid.
+
+    :param xv: Fiber grid
+    :type xv: np.ndarray
+    :param x: `x` coordinates
+    :type x: float
+    :param y: `y` coordinates
+    :type y: float
+    :param thetas: _description_
+    :type thetas: int, tuple
+    :param i: bundle index
+    :type i: int
+    :return: Transformed coordinates
+    :rtype: np.ndarray
+    """
     
     if xv.shape[0] % 2 == 1:
         middle_fiber_index = (xv.shape[0]-1) //2 
@@ -49,6 +70,19 @@ def affine_transformation(xv: np.ndarray, x: float, y: float, thetas, i):
 
 @cuda.jit(device = True)
 def dL2(x,y,v, project_along):
+    """Internal linear algebra function for projecting along transformed vectors.
+
+    :param x: `x` coordinate
+    :type x: float
+    :param y: `x` coordinate
+    :type y: float
+    :param v: Vector to project along
+    :type v: list
+    
+    :return: Distance
+    :rtype: float
+    """
+    
     dist = 0
     proj = 0
 
