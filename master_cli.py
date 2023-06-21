@@ -6,7 +6,7 @@ from tests.cli import CLI as testsCLI
 
 
 def main():
-    """Parses module selection (simulate or run_tests) and invokes the relevant functions
+    """Parses module selection (``simulate`` or ``run_tests``) and invokes the relevant functions
     """    
     TOOL_DICT = {'simulate': simCLI,
                  'run_tests': testsCLI}
