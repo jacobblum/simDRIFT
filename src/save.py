@@ -108,10 +108,10 @@ def _signal(spins: list, bvals: np.ndarray, bvecs: np.ndarray, Delta: float, dt:
 
     trajectory_t1m = torch.from_numpy(np.array([spin._get_position_t1m() for spin in spins])).float().to('cuda')
     trajectory_t2p = torch.from_numpy(np.array([spin._get_position_t2p() for spin in spins])).float().to('cuda')
-    bvals_cp       = torch.from_numpy(np.array(bvals)).float().to('cuda')
-    bvecs_cp       = torch.from_numpy(np.array(bvecs)).float().to('cuda')
+    bvals_cu       = torch.from_numpy(np.array(bvals)).float().to('cuda')
+    bvecs_cu       = torch.from_numpy(np.array(bvecs)).float().to('cuda')
 
-    scaled_gradients = torch.einsum('i, ij -> ij', (torch.sqrt( (bvals_cp * 1e-3)/ (gamma**2*delta**2*(Delta - delta/3)))), bvecs_cp)
+    scaled_gradients = torch.einsum('i, ij -> ij', (torch.sqrt( (bvals_cu * 1e-3)/ (gamma**2*delta**2*(Delta - delta/3)))), bvecs_cu)
     phase_shifts = gamma * torch.einsum('ij, kj -> ik', scaled_gradients, (trajectory_t1m - trajectory_t2p))*dt
     signal =  torch.abs(torch.sum(torch.exp(-(0+1j)*phase_shifts), axis = 1)).cpu().numpy()
     signal /= trajectory_t1m.shape[0]
