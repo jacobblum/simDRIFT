@@ -6,12 +6,14 @@ from tests.cli import CLI as testsCLI
 
 
 def main():
+    """Parses module selection (simulate or run_tests) and invokes the relevant functions
+    """    
     TOOL_DICT = {'simulate': simCLI,
                  'run_tests': testsCLI}
     
     parser = argparse.ArgumentParser(prog='cli',
-                                    description='What the program does',
-                                    epilog='Text at the bottom of help')
+                                    description='Parses module selection (simulate or run_tests) and invokes the relevant functions',
+                                    epilog='See online documentation for more information about each function.')
     subparsers = parser.add_subparsers(help='sub-command help')
     
     if len(sys.argv) > 1:
