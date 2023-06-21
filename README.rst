@@ -29,7 +29,7 @@ The recommended installation is as follows. Create a conda environment and activ
 
 .. code-block:: bash
 
-   > conda create -n simDRIFT
+   > conda create -n simDRIFT 
    > conda activate simDRIFT
 
 Install the appropriate version of `pytorch <https://pytorch.org>`_ (shown below using the syntax for our lab's GPUs; however, the specific syntax will vary based on your CUDA Toolkit version) :
