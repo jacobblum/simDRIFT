@@ -20,18 +20,24 @@ def _find_spin_locations_kernel(resident_fiber_indxs_cuda: numba.cuda.cudadrv.de
                                 cell_radii_cuda:           numba.cuda.cudadrv.devicearray.DeviceNDArray,
                                 spin_positions_cuda:       numba.cuda.cudadrv.devicearray.DeviceNDArray
                                 ) -> None:
-    r"""
-    Locate spins within resident microstructural elements
-    
-    Args:
-        resident_fiber_indxs_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): Array to write resident fiber indices to
-        resident_cell_indxs_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): Array to write resident cell indicies to
-        fiber_centers_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): coordinates of the fiber centers
-        fiber_directions_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): directions of the fibers
-        fiber_radii_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): fiber radii
-        cell_centers_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): coordinates of the cell centers
-        cell_radii_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): cell radii
-        spin_positions_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): initial spin positions
+    """Locate spins within resident microstructural elements
+
+    :param resident_fiber_indxs_cuda: Array to write resident fiber indices to
+    :type resident_fiber_indxs_cuda: CUDA Device Array
+    :param resident_cell_indxs_cuda: Array to write resident cell indices to
+    :type resident_cell_indxs_cuda: CUDA Device Array
+    :param fiber_centers_cuda:  Coordinates for the centers of each fiber
+    :type fiber_centers_cuda: CUDA Device Array
+    :param fiber_directions_cuda: Direction of each fiber
+    :type fiber_directions_cuda: CUDA Device Array
+    :param fiber_radii_cuda: Radii of each fiber
+    :type fiber_radii_cuda: CUDA Device Array
+    :param cell_centers_cuda: Coordinates for the centers of each cell
+    :type cell_centers_cuda: CUDA Device Array
+    :param cell_radii_cuda: Radii of each cell
+    :type cell_radii_cuda: CUDA Device Array
+    :param spin_positions_cuda: Initial spin positions
+    :type spin_positions_cuda: CUDA Device Array
     """
     i = cuda.grid(1)
   
@@ -57,8 +63,7 @@ def _find_spin_locations_kernel(resident_fiber_indxs_cuda: numba.cuda.cudadrv.de
     return
 
 def _find_spin_locations(self):
-    r"""
-    helper function to find initial spin locations
+    """Helper function to find initial spin locations
     """
     resident_fiber_indxs_cuda = cuda.to_device( -1 * np.ones(shape = (len(self.spins),), dtype= np.int32))
     resident_cell_indxs_cuda  = cuda.to_device( -1 * np.ones(shape = (len(self.spins),), dtype= np.int32))
