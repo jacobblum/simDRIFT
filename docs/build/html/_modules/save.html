@@ -40,6 +40,8 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
+<li class="toctree-l1"><a class="reference internal" href="../install-index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart-index.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../theory-index.html">Theory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../simulation-index.html">Simulation Module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../cli-index.html">Command Line Interface</a></li>
@@ -70,14 +72,14 @@
            <div itemprop="articleBody">
              
   <h1>Source code for save</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>  
-<span class="kn">import</span> <span class="nn">os</span>  
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">from</span> <span class="nn">data</span> <span class="kn">import</span> <span class="n">diffusion_schemes</span>
-<span class="kn">import</span> <span class="nn">cupy</span> <span class="k">as</span> <span class="nn">cp</span>
+<span class="kn">from</span> <span class="nn">src.data</span> <span class="kn">import</span> <span class="n">diffusion_schemes</span>
 <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nb</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">torch</span> 
 
 <span class="sd">&quot;&quot;&quot;&quot;</span>
 <span class="sd">def spins_in_voxel(trajectoryT1m, trajectoryT2p):</span>
@@ -120,42 +122,54 @@
 
 
 <div class="viewcode-block" id="_add_noise"><a class="viewcode-back" href="../simulation-index.html#save._add_noise">[docs]</a><span class="k">def</span> <span class="nf">_add_noise</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">snr</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add Gaussian noise to the forward simulated signal. [2]_</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add Gaussian Noise to the forward simulated signal</span>
 
-<span class="sd">    :param signal: The forward-simulated signal</span>
-<span class="sd">    :type signal: numpy.ndarray</span>
-<span class="sd">    :param snr: The signal to noise ratio of the :math:`b_{0}` image</span>
-<span class="sd">    :type snr: float</span>
-<span class="sd">    :return: The noise-added signal</span>
-<span class="sd">    :rtype: np.ndarray</span>
-<span class="sd">    &quot;&quot;&quot;</span>    
-    
+<span class="sd">    Args:</span>
+<span class="sd">        signal (np.ndarray): The forward simulated signal</span>
+<span class="sd">        snr (float): The signal to noise ratio of the b0 image</span>
+
+<span class="sd">    Shapes:</span>
+<span class="sd">        signal: (n_bvals,) where n_bvals is the number of b-values in the supplied bval file</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        noised_signal (np.ndarray): The noised signal</span>
+<span class="sd">    </span>
+<span class="sd">    References:</span>
+<span class="sd">        [1] Garyfallidis E, Brett M, Amirbekian B, Rokem A, van der Walt S, Descoteaux M, Nimmo-Smith I and Dipy Contributors (2014). DIPY, a library for the analysis of diffusion MRI data. Frontiers in Neuroinformatics, vol.8, no.8.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sigma</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">snr</span> 
     <span class="n">real_channel_noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">signal</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">signal</span> <span class="o">+</span> <span class="n">real_channel_noise</span></div>
 
    
 <div class="viewcode-block" id="_signal"><a class="viewcode-back" href="../simulation-index.html#save._signal">[docs]</a><span class="k">def</span> <span class="nf">_signal</span><span class="p">(</span><span class="n">spins</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">bvals</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">bvecs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">SNR</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculates the PGSE signal from the forward simulated spin trajectories.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the PGSE signal from the forward simulated spin trajectories. Note that this computation is executed on the GPU using CuPy.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        spins (list): A list of each objects.spin instance corresponding to a spin in the ensemble of random walkers</span>
+<span class="sd">        bvals (np.ndarray): The supplied b-values (diffusion weighting factors)</span>
+<span class="sd">        bvecs (np.ndarray): The supplied diffusion gradients </span>
+<span class="sd">        Delta (float): The diffusion time (ms)</span>
+<span class="sd">        dt (float): The time step parameter, also equal to delta because of the narrow pulse approximation</span>
+<span class="sd">        SNR (float, optional): The snr of the b0 image. If a value is not entered, the snr of the signal is infinite. </span>
 
-<span class="sd">    :param spins: A list of each :py:class:`objects.spin` instance corresponding to a spin in the ensemble of random walkers</span>
-<span class="sd">    :type spins: list</span>
-<span class="sd">    :param bvals: The supplied b-values (diffusion weighting factors)</span>
-<span class="sd">    :type bvals: np.ndarray</span>
-<span class="sd">    :param bvecs: The supplied diffusion gradients </span>
-<span class="sd">    :type bvecs: np.ndarray</span>
-<span class="sd">    :param Delta: The diffusion time (ms)</span>
-<span class="sd">    :type Delta: float</span>
-<span class="sd">    :param dt: The time step parameter, equivalent to 𝛿 under the narrow pulse approximation [3]_</span>
-<span class="sd">    :type dt: float</span>
-<span class="sd">    :param SNR: The snr of the :math:`b_{0}` image , defaults to ``None`` (i.e., :math:`SNR \\rightarrow \\infty`)</span>
-<span class="sd">    :type SNR: float, optional</span>
-<span class="sd">    :return: Output signals, output :math:`T_{1\mathrm{m}}` trajectories, output :math:`T_{2ρ}` trajectories</span>
-<span class="sd">    :rtype: np.ndarray</span>
+<span class="sd">    Shapes:</span>
+<span class="sd">        spins: (n_walkers,) where n_walkers is an input parameter denoting the n umber of spins in the ensemble</span>
+<span class="sd">        bvals: (n_bvals,) where n_bvals is the number of b-values in the supplied bval file</span>
+<span class="sd">        bvecs: (n_bvals, 3) where n_bvals is the number of b-values in the supplied bval file)I</span>
 
-<span class="sd">    .. note::</span>
-<span class="sd">        This computation is executed on the GPU using CuPy.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        signal (np.ndarray): the forward simulated PGSE signal</span>
+<span class="sd">        trajectory_t1m (np.ndarray): the initial spin positions </span>
+<span class="sd">        trajectory_t2p (np.ndarray): the final spin positions</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        [1] Hall, M. G., and Alexander, D. C. (2009). Convergence and parameter choice for monte-carlo simulations of diffusion MRI. IEEE Trans. Med. Imaging 28, 1354–1364. doi: 10.1109/TMI.2009.2015756</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
 
 
 
@@ -164,14 +178,17 @@
     <span class="n">gamma</span> <span class="o">=</span> <span class="mf">42.58</span> <span class="c1"># MHz/T - The proton gyromagnetic ratio</span>
     <span class="n">delta</span> <span class="o">=</span> <span class="n">dt</span>    <span class="c1"># ms - From the narrow pulse approximation. More convient for GPU memory managment </span>
 
-    <span class="n">trajectory_t1m</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_position_t1m</span><span class="p">()</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">])</span>
-    <span class="n">trajectory_t2p</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_position_t2p</span><span class="p">()</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">])</span>
-    <span class="n">bvals_cp</span>       <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bvals</span><span class="p">)</span>
-    <span class="n">bvecs_cp</span>       <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bvecs</span><span class="p">)</span>
+    <span class="c1">#Possibly call finite voxel helper</span>
 
-    <span class="n">scaled_gradients</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;i, ij -&gt; ij&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="p">(</span><span class="n">bvals_cp</span> <span class="o">*</span> <span class="mf">1e-3</span><span class="p">)</span><span class="o">/</span> <span class="p">(</span><span class="n">gamma</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">delta</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">Delta</span> <span class="o">-</span> <span class="n">delta</span><span class="o">/</span><span class="mi">3</span><span class="p">)))),</span> <span class="n">bvecs_cp</span><span class="p">)</span>
-    <span class="n">phase_shifts</span> <span class="o">=</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij, kj -&gt; ik&#39;</span><span class="p">,</span> <span class="n">scaled_gradients</span><span class="p">,</span> <span class="p">(</span><span class="n">trajectory_t1m</span> <span class="o">-</span> <span class="n">trajectory_t2p</span><span class="p">))</span><span class="o">*</span><span class="n">dt</span>
-    <span class="n">signal</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">trajectory_t1m</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="mi">0</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="p">)</span><span class="o">*</span><span class="n">phase_shifts</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">trajectory_t1m</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_position_t1m</span><span class="p">()</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">]))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span><span class="p">)</span>
+    <span class="n">trajectory_t2p</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_position_t2p</span><span class="p">()</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">]))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span><span class="p">)</span>
+    <span class="n">bvals_cp</span>       <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bvals</span><span class="p">))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span><span class="p">)</span>
+    <span class="n">bvecs_cp</span>       <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bvecs</span><span class="p">))</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span><span class="p">)</span>
+
+    <span class="n">scaled_gradients</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;i, ij -&gt; ij&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="p">(</span><span class="n">bvals_cp</span> <span class="o">*</span> <span class="mf">1e-3</span><span class="p">)</span><span class="o">/</span> <span class="p">(</span><span class="n">gamma</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">delta</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">Delta</span> <span class="o">-</span> <span class="n">delta</span><span class="o">/</span><span class="mi">3</span><span class="p">)))),</span> <span class="n">bvecs_cp</span><span class="p">)</span>
+    <span class="n">phase_shifts</span> <span class="o">=</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij, kj -&gt; ik&#39;</span><span class="p">,</span> <span class="n">scaled_gradients</span><span class="p">,</span> <span class="p">(</span><span class="n">trajectory_t1m</span> <span class="o">-</span> <span class="n">trajectory_t2p</span><span class="p">))</span><span class="o">*</span><span class="n">dt</span>
+    <span class="n">signal</span> <span class="o">=</span>  <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="mi">0</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span><span class="p">)</span><span class="o">*</span><span class="n">phase_shifts</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+    <span class="n">signal</span> <span class="o">/=</span> <span class="n">trajectory_t1m</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
 
     <span class="k">if</span> <span class="n">SNR</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
@@ -181,120 +198,60 @@
         <span class="k">return</span> <span class="n">signal</span><span class="p">,</span> <span class="n">trajectory_t1m</span><span class="p">,</span> <span class="n">trajectory_t2p</span></div>
 
 
-<div class="viewcode-block" id="_generate_signals_and_trajectories"><a class="viewcode-back" href="../simulation-index.html#save._generate_signals_and_trajectories">[docs]</a><span class="k">def</span> <span class="nf">_generate_signals_and_trajectories</span><span class="p">(</span><span class="n">spins</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">Delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">diff_schemes</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">SNR</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function to organize and store compartment-specific and combined trajectories, as well as their corresponding dMRI signals</span>
-
-<span class="sd">    :param spins: A list of each :py:class:`objects.spin` instance corresponding to a spin in the ensemble of random walkers</span>
-<span class="sd">    :type spins: list</span>
-<span class="sd">    :param Delta: The diffusion time (ms)</span>
-<span class="sd">    :type Delta: float</span>
-<span class="sd">    :param dt: The time step parameter, equivalent to 𝛿 under the narrow pulse approximation [3]_</span>
-<span class="sd">    :type dt: float</span>
-<span class="sd">    :param diff_schemes: User-specified diffusion encoding scheme. See :doc:`cli-index` for mor information</span>
-<span class="sd">    :type diff_schemes: str</span>
-<span class="sd">    :param SNR: The snr of the b\ :sub:`0` image , defaults to ``None`` (i.e., :math:`SNR \\rightarrow \\infty`)</span>
-<span class="sd">    :type SNR: float, optional</span>
-<span class="sd">    :return: Dictionary arrays containing output signals and trajectories</span>
-<span class="sd">    :rtype: list</span>
-<span class="sd">    &quot;&quot;&quot;</span> 
+<div class="viewcode-block" id="_generate_signals_and_trajectories"><a class="viewcode-back" href="../simulation-index.html#save._generate_signals_and_trajectories">[docs]</a><span class="k">def</span> <span class="nf">_generate_signals_and_trajectories</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Helper function to organize and store compartment specific and combined trajectories and their incident signals</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     
     <span class="n">signals_dict</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">trajectories_dict</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="n">bvals</span><span class="p">,</span> <span class="n">bvecs</span> <span class="o">=</span> <span class="n">diffusion_schemes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">diff_schemes</span><span class="p">)</span>
-
-    <span class="n">fiber1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_fiber_index</span><span class="p">()</span> <span class="k">if</span> <span class="n">spin</span><span class="o">.</span><span class="n">_get_bundle_index</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">])</span>
-    <span class="n">fiber2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_fiber_index</span><span class="p">()</span> <span class="k">if</span> <span class="n">spin</span><span class="o">.</span><span class="n">_get_bundle_index</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">])</span>
-    <span class="n">fiber3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_fiber_index</span><span class="p">()</span> <span class="k">if</span> <span class="n">spin</span><span class="o">.</span><span class="n">_get_bundle_index</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">])</span>
-    <span class="n">fiber4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_fiber_index</span><span class="p">()</span> <span class="k">if</span> <span class="n">spin</span><span class="o">.</span><span class="n">_get_bundle_index</span><span class="p">()</span> <span class="o">==</span> <span class="mi">4</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">])</span>
-    <span class="n">cells</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_cell_index</span><span class="p">()</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">])</span>
-    <span class="n">water</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_water_index</span><span class="p">()</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_diff_scheme_flag</span><span class="p">:</span>
+        <span class="n">bvals</span><span class="p">,</span> <span class="n">bvecs</span> <span class="o">=</span> <span class="n">diffusion_schemes</span><span class="o">.</span><span class="n">get_from_default</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diff_scheme</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bvals</span><span class="p">,</span> <span class="n">bvecs</span> <span class="o">=</span> <span class="n">diffusion_schemes</span><span class="o">.</span><span class="n">get_from_custom</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bvals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bvecs</span><span class="p">)</span>
+  
+    <span class="n">fiber_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">spin</span><span class="o">.</span><span class="n">_get_bundle_index</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">spin</span><span class="o">.</span><span class="n">_get_bundle_index</span><span class="p">()</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">])</span>
+    <span class="n">cells</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_cell_index</span><span class="p">()</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">])</span>
+    <span class="n">water</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_water_index</span><span class="p">()</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">])</span>
 
 
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;------------------------------&#39;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Signal Generation&#39;</span><span class="p">)</span> 
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;------------------------------&#39;</span><span class="p">)</span>
-<span class="w">    </span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Fiber 1 Signal &quot;&quot;&quot;</span>
-  
-    <span class="n">fiber_1_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spins</span><span class="p">)[</span><span class="n">fiber1</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">fiber_1_spins</span><span class="p">):</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Computing fiber 1 signal...&#39;</span><span class="p">)</span> 
-        <span class="n">Start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">fiber_1_signal</span><span class="p">,</span> <span class="n">fiber_1_trajectory_t1m</span><span class="p">,</span> <span class="n">fiber_1_trajectory_t2p</span> <span class="o">=</span> <span class="n">_signal</span><span class="p">(</span><span class="n">fiber_1_spins</span><span class="p">,</span>
-                                                                                <span class="n">bvals</span><span class="p">,</span>
-                                                                                <span class="n">bvecs</span><span class="p">,</span>
-                                                                                <span class="n">Delta</span><span class="p">,</span> 
-                                                                                <span class="n">dt</span><span class="p">)</span>
-        <span class="n">End</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;     Done! Signal computed in </span><span class="si">{}</span><span class="s1"> sec&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">End</span><span class="o">-</span><span class="n">Start</span><span class="p">),</span><span class="mi">4</span><span class="p">))</span>
-        <span class="n">signals_dict</span><span class="p">[</span><span class="s1">&#39;fiber_1_signal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fiber_1_signal</span>
-        <span class="n">trajectories_dict</span><span class="p">[</span><span class="s1">&#39;fiber_1_trajectories&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fiber_1_trajectory_t1m</span><span class="p">,</span> <span class="n">fiber_1_trajectory_t2p</span><span class="p">)</span>
-
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Fiber 2 Signal &quot;&quot;&quot;</span>
-
-    <span class="n">fiber_2_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spins</span><span class="p">)[</span><span class="n">fiber2</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">fiber_2_spins</span><span class="p">):</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Computing fiber 2 signal...&#39;</span><span class="p">)</span>
-        <span class="n">Start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">fiber_2_signal</span><span class="p">,</span> <span class="n">fiber_2_trajectory_t1m</span><span class="p">,</span> <span class="n">fiber_2_trajectory_t2p</span> <span class="o">=</span> <span class="n">_signal</span><span class="p">(</span><span class="n">fiber_2_spins</span><span class="p">,</span>
-                                                                                <span class="n">bvals</span><span class="p">,</span>
-                                                                                <span class="n">bvecs</span><span class="p">,</span>
-                                                                                <span class="n">Delta</span><span class="p">,</span> 
-                                                                                <span class="n">dt</span><span class="p">)</span>
-        <span class="n">End</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;     Done! Signal computed in </span><span class="si">{}</span><span class="s1"> sec&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">End</span><span class="o">-</span><span class="n">Start</span><span class="p">),</span><span class="mi">4</span><span class="p">))</span>
-        <span class="n">signals_dict</span><span class="p">[</span><span class="s1">&#39;fiber_2_signal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fiber_2_signal</span>
-        <span class="n">trajectories_dict</span><span class="p">[</span><span class="s1">&#39;fiber_2_trajectories&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fiber_2_trajectory_t1m</span><span class="p">,</span> <span class="n">fiber_2_trajectory_t2p</span><span class="p">)</span>
 
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Fiber 3 Signal &quot;&quot;&quot;</span>
-  
-    <span class="n">fiber_3_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spins</span><span class="p">)[</span><span class="n">fiber3</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">amax</span><span class="p">(</span><span class="n">fiber_spins</span><span class="p">))</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Fiber i Signal &quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">fiber_3_spins</span><span class="p">):</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Computing fiber 3 signal...&#39;</span><span class="p">)</span> 
-        <span class="n">Start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">fiber_3_signal</span><span class="p">,</span> <span class="n">fiber_3_trajectory_t1m</span><span class="p">,</span> <span class="n">fiber_3_trajectory_t2p</span> <span class="o">=</span> <span class="n">_signal</span><span class="p">(</span><span class="n">fiber_3_spins</span><span class="p">,</span>
-                                                                                <span class="n">bvals</span><span class="p">,</span>
-                                                                                <span class="n">bvecs</span><span class="p">,</span>
-                                                                                <span class="n">Delta</span><span class="p">,</span> 
-                                                                                <span class="n">dt</span><span class="p">)</span>
-        <span class="n">End</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;     Done! Signal computed in </span><span class="si">{}</span><span class="s1"> sec&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">End</span><span class="o">-</span><span class="n">Start</span><span class="p">),</span><span class="mi">4</span><span class="p">))</span>
-        <span class="n">signals_dict</span><span class="p">[</span><span class="s1">&#39;fiber_3_signal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fiber_3_signal</span>
-        <span class="n">trajectories_dict</span><span class="p">[</span><span class="s1">&#39;fiber_3_trajectories&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fiber_3_trajectory_t1m</span><span class="p">,</span> <span class="n">fiber_3_trajectory_t2p</span><span class="p">)</span>
+        <span class="n">fiber_i_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">)[</span><span class="n">fiber_spins</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span>
 
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Fiber 4 Signal &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">fiber_i_spins</span><span class="p">):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Computing fiber </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> signal...&quot;</span><span class="p">)</span> 
+            <span class="n">Start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">fiber_i_signal</span><span class="p">,</span> <span class="n">fiber_i_trajectory_t1m</span><span class="p">,</span> <span class="n">fiber_i_trajectory_t2p</span> <span class="o">=</span> <span class="n">_signal</span><span class="p">(</span><span class="n">fiber_i_spins</span><span class="p">,</span>
+                                                                                    <span class="n">bvals</span><span class="p">,</span>
+                                                                                    <span class="n">bvecs</span><span class="p">,</span>
+                                                                                    <span class="bp">self</span><span class="o">.</span><span class="n">Delta</span><span class="p">,</span> 
+                                                                                    <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+            <span class="n">End</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;     Done! Signal computed in </span><span class="si">{}</span><span class="s1"> sec&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">End</span><span class="o">-</span><span class="n">Start</span><span class="p">),</span><span class="mi">4</span><span class="p">))</span>
+            <span class="n">signals_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;fiber_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_signal&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fiber_i_signal</span>
+            <span class="n">trajectories_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;fiber_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_trajectories&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fiber_i_trajectory_t1m</span><span class="p">,</span> <span class="n">fiber_i_trajectory_t2p</span><span class="p">)</span>
 
-    <span class="n">fiber_4_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spins</span><span class="p">)[</span><span class="n">fiber4</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">fiber_4_spins</span><span class="p">):</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Computing fiber 4 signal...&#39;</span><span class="p">)</span>
-        <span class="n">Start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">fiber_4_signal</span><span class="p">,</span> <span class="n">fiber_4_trajectory_t1m</span><span class="p">,</span> <span class="n">fiber_4_trajectory_t2p</span> <span class="o">=</span> <span class="n">_signal</span><span class="p">(</span><span class="n">fiber_4_spins</span><span class="p">,</span>
-                                                                                <span class="n">bvals</span><span class="p">,</span>
-                                                                                <span class="n">bvecs</span><span class="p">,</span>
-                                                                                <span class="n">Delta</span><span class="p">,</span> 
-                                                                                <span class="n">dt</span><span class="p">)</span>
-        <span class="n">End</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;     Done! Signal computed in </span><span class="si">{}</span><span class="s1"> sec&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">End</span><span class="o">-</span><span class="n">Start</span><span class="p">),</span><span class="mi">4</span><span class="p">))</span>
-        <span class="n">signals_dict</span><span class="p">[</span><span class="s1">&#39;fiber_4_signal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fiber_4_signal</span>
-        <span class="n">trajectories_dict</span><span class="p">[</span><span class="s1">&#39;fiber_4_trajectories&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">fiber_4_trajectory_t1m</span><span class="p">,</span> <span class="n">fiber_4_trajectory_t2p</span><span class="p">)</span>
-
+<span class="w">  </span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Total Fiber Signal &quot;&quot;&quot;</span> 
-  
-    <span class="n">total_fiber_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">fiber_1_spins</span><span class="p">,</span> <span class="n">fiber_2_spins</span><span class="p">,</span><span class="n">fiber_3_spins</span><span class="p">,</span> <span class="n">fiber_4_spins</span><span class="p">])</span>
- 
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">total_fiber_spins</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">any</span><span class="p">(</span><span class="n">fiber_1_spins</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">any</span><span class="p">(</span><span class="n">fiber_2_spins</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">any</span><span class="p">(</span><span class="n">fiber_3_spins</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">any</span><span class="p">(</span><span class="n">fiber_4_spins</span><span class="p">):</span>
+
+    <span class="n">total_fiber_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">)[</span><span class="n">fiber_spins</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">total_fiber_spins</span><span class="p">):</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Computing total fiber signal...&#39;</span><span class="p">)</span>
         <span class="n">Start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">total_fiber_signal</span><span class="p">,</span> <span class="n">total_fiber_trajectory_t1m</span><span class="p">,</span> <span class="n">total_fiber_trajectory_t2p</span> <span class="o">=</span> <span class="n">_signal</span><span class="p">(</span><span class="n">total_fiber_spins</span><span class="p">,</span>
                                                                                             <span class="n">bvals</span><span class="p">,</span>
                                                                                             <span class="n">bvecs</span><span class="p">,</span>
-                                                                                            <span class="n">Delta</span><span class="p">,</span> 
-                                                                                            <span class="n">dt</span><span class="p">)</span> 
+                                                                                            <span class="bp">self</span><span class="o">.</span><span class="n">Delta</span><span class="p">,</span> 
+                                                                                            <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span> 
         <span class="n">End</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;     Done! Signal computed in </span><span class="si">{}</span><span class="s1"> sec&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">End</span><span class="o">-</span><span class="n">Start</span><span class="p">),</span><span class="mi">4</span><span class="p">))</span>
         <span class="n">signals_dict</span><span class="p">[</span><span class="s1">&#39;total_fiber_signal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_fiber_signal</span>
@@ -303,7 +260,7 @@
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Cell Signal &quot;&quot;&quot;</span>
  
-    <span class="n">cell_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spins</span><span class="p">)[</span><span class="n">cells</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">cell_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">)[</span><span class="n">cells</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">cell_spins</span><span class="p">):</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Computing cell signal...&#39;</span><span class="p">)</span>
@@ -311,8 +268,8 @@
         <span class="n">cell_signal</span><span class="p">,</span> <span class="n">cell_trajectory_t1m</span><span class="p">,</span> <span class="n">cell_trajectory_t2p</span> <span class="o">=</span> <span class="n">_signal</span><span class="p">(</span><span class="n">cell_spins</span><span class="p">,</span>
                                                                             <span class="n">bvals</span><span class="p">,</span>
                                                                             <span class="n">bvecs</span><span class="p">,</span>
-                                                                            <span class="n">Delta</span><span class="p">,</span> 
-                                                                            <span class="n">dt</span><span class="p">)</span>
+                                                                            <span class="bp">self</span><span class="o">.</span><span class="n">Delta</span><span class="p">,</span> 
+                                                                            <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
         
         <span class="n">End</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;     Done! Signal computed in </span><span class="si">{}</span><span class="s1"> sec&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">End</span><span class="o">-</span><span class="n">Start</span><span class="p">),</span><span class="mi">4</span><span class="p">))</span>
@@ -322,7 +279,7 @@
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Water Signal &quot;&quot;&quot;</span>
 
-    <span class="n">water_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spins</span><span class="p">)[</span><span class="n">water</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">water_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">)[</span><span class="n">water</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">water_spins</span><span class="p">):</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Computing water signal...&#39;</span><span class="p">)</span>
@@ -330,8 +287,8 @@
         <span class="n">water_signal</span><span class="p">,</span> <span class="n">water_trajectory_t1m</span><span class="p">,</span> <span class="n">water_trajectory_t2p</span> <span class="o">=</span> <span class="n">_signal</span><span class="p">(</span><span class="n">water_spins</span><span class="p">,</span>
                                                                             <span class="n">bvals</span><span class="p">,</span>
                                                                             <span class="n">bvecs</span><span class="p">,</span>
-                                                                            <span class="n">Delta</span><span class="p">,</span> 
-                                                                            <span class="n">dt</span><span class="p">)</span>
+                                                                            <span class="bp">self</span><span class="o">.</span><span class="n">Delta</span><span class="p">,</span> 
+                                                                            <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
         
         <span class="n">End</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;     Done! Signal computed in </span><span class="si">{}</span><span class="s1"> sec&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">End</span><span class="o">-</span><span class="n">Start</span><span class="p">),</span><span class="mi">4</span><span class="p">))</span>
@@ -341,11 +298,11 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Total Signal &quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Computing total signal...&#39;</span><span class="p">)</span>
     <span class="n">Start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-    <span class="n">total_signal</span><span class="p">,</span> <span class="n">total_trajectory_t1m</span><span class="p">,</span> <span class="n">total_trajectory_t2p</span> <span class="o">=</span> <span class="n">_signal</span><span class="p">(</span><span class="n">spins</span><span class="p">,</span>
+    <span class="n">total_signal</span><span class="p">,</span> <span class="n">total_trajectory_t1m</span><span class="p">,</span> <span class="n">total_trajectory_t2p</span> <span class="o">=</span> <span class="n">_signal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">,</span>
                                                                        <span class="n">bvals</span><span class="p">,</span>
                                                                        <span class="n">bvecs</span><span class="p">,</span>
-                                                                       <span class="n">Delta</span><span class="p">,</span>
-                                                                       <span class="n">dt</span><span class="p">)</span>
+                                                                       <span class="bp">self</span><span class="o">.</span><span class="n">Delta</span><span class="p">,</span>
+                                                                       <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
     
     <span class="n">End</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;     Done! Signal computed in </span><span class="si">{}</span><span class="s1"> sec&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">End</span><span class="o">-</span><span class="n">Start</span><span class="p">),</span><span class="mi">4</span><span class="p">))</span>
@@ -353,136 +310,24 @@
     <span class="n">trajectories_dict</span><span class="p">[</span><span class="s1">&#39;total_trajectories&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">total_trajectory_t1m</span><span class="p">,</span> <span class="n">total_trajectory_t2p</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">signals_dict</span><span class="p">,</span> <span class="n">trajectories_dict</span></div>
 
-    <span class="c1"># &quot;&quot;&quot; Fiber 1 Plus Water Signal&quot;&quot;&quot;</span>
-    <span class="c1"># f1_water_spins = np.hstack([fiber_1_spins, water_spins])</span>
-    <span class="c1"># if any(f1_water_spins) &amp; any(fiber_1_spins) &amp; any(water_spins):</span>
-    <span class="c1">#     logging.info(&#39; Computing fiber 1 + water signal...&#39;)</span>
-    <span class="c1">#     Start = time.time()</span>
-    <span class="c1">#     f1_water_signal, f1_water_trajectory_t1m, f1_water_trajectory_t2p = _signal(f1_water_spins, bvals, bvecs, Delta, dt)</span>
-    <span class="c1">#     End = time.time()</span>
-    <span class="c1">#     logging.info(&#39;     Done! Signal computed in {} sec&#39;.format(round(End-Start),4))</span>
-    <span class="c1">#     signals_dict[&#39;f1_water_signal&#39;] = f1_water_signal</span>
-    <span class="c1">#     trajectories_dict[&#39;f1_water_trajectories&#39;] = (f1_water_trajectory_t1m, f1_water_trajectory_t2p)</span>
-
-    <span class="c1"># &quot;&quot;&quot; Fiber 1 Plus Cell Signal&quot;&quot;&quot;</span>
-    <span class="c1"># f1_cell_spins = np.hstack([fiber_1_spins, cell_spins])</span>
-    <span class="c1"># if any(f1_cell_spins) &amp; any(fiber_1_spins) &amp; any(cell_spins):</span>
-    <span class="c1">#     logging.info(&#39; Computing fiber 1 + cell signal...&#39;)</span>
-    <span class="c1">#     Start = time.time()</span>
-    <span class="c1">#     f1_cell_spins = np.hstack([fiber_1_spins, cell_spins])</span>
-    <span class="c1">#     f1_cell_signal, f1_cell_trajectory_t1m, f1_cell_trajectory_t2p = _signal(f1_cell_spins, bvals, bvecs, Delta, dt)</span>
-    <span class="c1">#     End = time.time()</span>
-    <span class="c1">#     logging.info(&#39;     Done! Signal computed in {} sec&#39;.format(round(End-Start),4))</span>
-    <span class="c1">#     signals_dict[&#39;f1_cell_signal&#39;] = f1_cell_signal</span>
-    <span class="c1">#     trajectories_dict[&#39;f1_cell_trajectories&#39;] = (f1_cell_trajectory_t1m, f1_cell_trajectory_t2p)</span>
-
-    <span class="c1"># &quot;&quot;&quot; Fiber 1 Plus Cell Plus Water Signal&quot;&quot;&quot;</span>
-    <span class="c1"># f1_cell_water_spins = np.hstack([fiber_1_spins, cell_spins, water_spins])</span>
-    <span class="c1"># if any(f1_cell_water_spins) &amp; any(fiber_1_spins) &amp; any(cell_spins):</span>
-    <span class="c1">#     logging.info(&#39; Computing fiber 1 + cell + water signal...&#39;)</span>
-    <span class="c1">#     Start = time.time()</span>
-    <span class="c1">#     f1_cell_water_signal, f1_cell_water_trajectory_t1m, f1_cell_water_trajectory_t2p = _signal(f1_cell_water_spins, bvals, bvecs, Delta, dt)</span>
-    <span class="c1">#     End = time.time()</span>
-    <span class="c1">#     logging.info(&#39;     Done! Signal computed in {} sec&#39;.format(round(End-Start),4))</span>
-    <span class="c1">#     signals_dict[&#39;f1_cell_water_signal&#39;] = f1_cell_water_signal</span>
-    <span class="c1">#     trajectories_dict[&#39;f1_cell_water_trajectories&#39;] = (f1_cell_water_trajectory_t1m, f1_cell_water_trajectory_t2p)</span>
-
-    <span class="c1"># &quot;&quot;&quot; Fiber 2 Plus Water Signal&quot;&quot;&quot;</span>
-    <span class="c1"># f2_water_spins = np.hstack([fiber_2_spins, water_spins])</span>
-    <span class="c1"># if any(f2_water_spins) &amp; any(fiber_2_spins):</span>
-    <span class="c1">#     logging.info(&#39; Computing fiber 2 + water signal...&#39;)</span>
-    <span class="c1">#     Start = time.time()</span>
-    <span class="c1">#     f2_water_signal, f2_water_trajectory_t1m, f2_water_trajectory_t2p = _signal(f2_water_spins, bvals, bvecs, Delta, dt)</span>
-    <span class="c1">#     End = time.time()</span>
-    <span class="c1">#     logging.info(&#39;     Done! Signal computed in {} sec&#39;.format(round(End-Start),4))</span>
-    <span class="c1">#     signals_dict[&#39;f2_water_signal&#39;] = f2_water_signal</span>
-    <span class="c1">#     trajectories_dict[&#39;f2_water_trajectories&#39;] = (f2_water_trajectory_t1m, f2_water_trajectory_t2p)</span>
-
-
-    <span class="c1"># &quot;&quot;&quot; Fiber 2 Plus Cell Signal&quot;&quot;&quot;</span>
-    <span class="c1"># f2_cell_spins = np.hstack([fiber_2_spins, cell_spins])</span>
-    <span class="c1"># if any(f2_cell_spins) &amp; any(fiber_2_spins) &amp; any(cell_spins):</span>
-    <span class="c1">#     logging.info(&#39; Computing fiber 2 + cell signal...&#39;)</span>
-    <span class="c1">#     Start = time.time()</span>
-    <span class="c1">#     f2_cell_signal, f2_cell_trajectory_t1m, f2_cell_trajectory_t2p = _signal(f2_cell_spins, bvals, bvecs, Delta, dt)</span>
-    <span class="c1">#     End = time.time()</span>
-    <span class="c1">#     logging.info(&#39;     Done! Signal computed in {} sec&#39;.format(round(End-Start),4))</span>
-    <span class="c1">#     signals_dict[&#39;f2_cell_signal&#39;] = f2_cell_signal</span>
-    <span class="c1">#     trajectories_dict[&#39;f2_cell_trajectories&#39;] = (f2_cell_trajectory_t1m, f2_cell_trajectory_t2p)</span>
-
-    <span class="c1"># &quot;&quot;&quot; Fiber 2 Plus Cell Plus Water Signal&quot;&quot;&quot;</span>
-    <span class="c1"># f2_cell_water_spins = np.hstack([fiber_2_spins, cell_spins, water_spins])</span>
-    <span class="c1"># if any(f2_cell_water_spins) &amp; any(fiber_2_spins) &amp; any(cell_spins):</span>
-    <span class="c1">#     logging.info(&#39; Computing fiber 2 + cell + water signal...&#39;)</span>
-    <span class="c1">#     Start = time.time()</span>
-    <span class="c1">#     f2_cell_water_signal, f2_cell_water_trajectory_t1m, f2_cell_water_trajectory_t2p = _signal(f2_cell_water_spins, bvals, bvecs, Delta, dt)</span>
-    <span class="c1">#     End = time.time()</span>
-    <span class="c1">#     logging.info(&#39;     Done! Signal computed in {} sec&#39;.format(round(End-Start),4))</span>
-    <span class="c1">#     signals_dict[&#39;f2_cell_water_signal&#39;] = f2_cell_water_signal</span>
-    <span class="c1">#     trajectories_dict[&#39;f2_cell_water_trajectories&#39;] = (f2_cell_water_trajectory_t1m, f2_cell_water_trajectory_t2p)</span>
-
-    <span class="c1"># &quot;&quot;&quot; Both Fibers + Water Signal&quot;&quot;&quot; </span>
-    <span class="c1"># total_fiber_water_spins = np.hstack([total_fiber_spins, water_spins])</span>
-    <span class="c1"># if any(total_fiber_water_spins) &amp; any(fiber_1_spins) &amp; any(fiber_2_spins):</span>
-    <span class="c1">#     logging.info(&#39; Computing total fiber + water signal...&#39;)</span>
-    <span class="c1">#     Start = time.time()</span>
-    <span class="c1">#     total_fiber_water_signal, total_fiber_water_trajectory_t1m, total_fiber_water_trajectory_t2p = _signal(total_fiber_water_spins, bvals, bvecs, Delta, dt) </span>
-    <span class="c1">#     End = time.time()</span>
-    <span class="c1">#     logging.info(&#39;     Done! Signal computed in {} sec&#39;.format(round(End-Start),4))</span>
-    <span class="c1">#     signals_dict[&#39;total_fiber_water_signal&#39;] = total_fiber_water_signal</span>
-    <span class="c1">#     trajectories_dict[&#39;total_fiber_water_trajectories&#39;] = (total_fiber_water_trajectory_t1m, total_fiber_water_trajectory_t2p)</span>
-
-    <span class="c1"># &quot;&quot;&quot; Both Fibers + Cell Signal&quot;&quot;&quot; </span>
-    <span class="c1"># total_fiber_cell_spins = np.hstack([total_fiber_spins, cell_spins])</span>
-    <span class="c1"># if any(total_fiber_cell_spins) &amp; any(fiber_1_spins) &amp; any(fiber_2_spins) &amp; any(cell_spins):</span>
-    <span class="c1">#     logging.info(&#39; Computing total fiber + cell signal...&#39;)</span>
-    <span class="c1">#     Start = time.time()</span>
-    <span class="c1">#     total_fiber_cell_signal, total_fiber_cell_trajectory_t1m, total_fiber_cell_trajectory_t2p = _signal(total_fiber_cell_spins, bvals, bvecs, Delta, dt)</span>
-    <span class="c1">#     End = time.time()</span>
-    <span class="c1">#     logging.info(&#39;     Done! Signal computed in {} sec&#39;.format(round(End-Start),4))</span>
-    <span class="c1">#     signals_dict[&#39;total_fiber_cell_signal&#39;] = total_fiber_cell_signal</span>
-    <span class="c1">#     trajectories_dict[&#39;total_fiber_cell_trajectories&#39;] = (total_fiber_cell_trajectory_t1m, total_fiber_cell_trajectory_t2p)</span>
-
-    <span class="c1"># &quot;&quot;&quot; Cell + Water Signal&quot;&quot;&quot; </span>
-    <span class="c1"># water_cell_spins = np.hstack([total_fiber_spins, cell_spins])</span>
-    <span class="c1"># if any(water_cell_spins) &amp; any(cell_spins):</span>
-    <span class="c1">#     logging.info(&#39; Computing water + cell signal...&#39;)</span>
-    <span class="c1">#     Start = time.time()</span>
-    <span class="c1">#     water_cell_signal, water_cell_trajectory_t1m, water_cell_trajectory_t2p = _signal(water_cell_spins, bvals, bvecs, Delta, dt)</span>
-    <span class="c1">#     End = time.time()</span>
-    <span class="c1">#     logging.info(&#39;     Done! Signal computed in {} sec&#39;.format(round(End-Start),4))</span>
-    <span class="c1">#     signals_dict[&#39;water_cell_signal&#39;] = water_cell_signal</span>
-    <span class="c1">#     trajectories_dict[&#39;water_cell_trajectories&#39;] = (water_cell_trajectory_t1m, water_cell_trajectory_t2p)</span>
-
-<div class="viewcode-block" id="_save_data"><a class="viewcode-back" href="../simulation-index.html#save._save_data">[docs]</a><span class="k">def</span> <span class="nf">_save_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spins</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">Delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">diff_scheme</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function that saves signals and trajectories to the current directory.</span>
-
-<span class="sd">    :param spins: _description_</span>
-<span class="sd">    :type spins: list</span>
-<span class="sd">    :param Delta: _description_</span>
-<span class="sd">    :type Delta: float</span>
-<span class="sd">    :param dt: _description_</span>
-<span class="sd">    :type dt: float</span>
-<span class="sd">    :param diff_scheme: _description_</span>
-<span class="sd">    :type diff_scheme: str</span>
+<div class="viewcode-block" id="_save_data"><a class="viewcode-back" href="../simulation-index.html#save._save_data">[docs]</a><span class="k">def</span> <span class="nf">_save_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Helper function that saves signals and trajectories</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 
-    <span class="n">signals_dict</span><span class="p">,</span> <span class="n">trajectories_dict</span> <span class="o">=</span> <span class="n">_generate_signals_and_trajectories</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">,</span>
-                                                                         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;Delta&#39;</span><span class="p">],</span>
-                                                                         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;dt&#39;</span><span class="p">],</span>
-                                                                         <span class="n">diff_scheme</span><span class="p">)</span>
+    <span class="n">signals_dict</span><span class="p">,</span> <span class="n">trajectories_dict</span> <span class="o">=</span> <span class="n">_generate_signals_and_trajectories</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;------------------------------&#39;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Saving outputs to </span><span class="si">{}</span><span class="s1"> ...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()))</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;./signals&#39;</span><span class="p">):</span> <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;./signals&#39;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">signals_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>        
-        <span class="n">Nifti</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span><span class="n">signals_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span> <span class="n">affine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+        <span class="n">Nifti</span> <span class="o">=</span> <span class="n">nb</span><span class="o">.</span><span class="n">Nifti1Image</span><span class="p">(</span><span class="n">signals_dict</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">affine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
         <span class="n">nb</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">Nifti</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;./signals/</span><span class="si">{}</span><span class="s1">.nii&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;./trajectories&#39;</span><span class="p">):</span> <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;./trajectories&#39;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">trajectories_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>        
-        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;./trajectories/</span><span class="si">{}</span><span class="s1">_t1m.npy&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">trajectories_dict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;./trajectories/</span><span class="si">{}</span><span class="s1">_t2p.npy&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">trajectories_dict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;./trajectories/</span><span class="si">{}</span><span class="s1">_t1m.npy&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">trajectories_dict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;./trajectories/</span><span class="si">{}</span><span class="s1">_t2p.npy&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">trajectories_dict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Program complete!&#39;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;------------------------------&#39;</span><span class="p">)</span>
     <span class="k">return</span></div>

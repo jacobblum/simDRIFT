@@ -16,6 +16,8 @@ Contents
 .. toctree::
    :maxdepth: 2
    
+   install-index
+   quickstart-index
    theory-index
    simulation-index
    cli-index

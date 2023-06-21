@@ -16,8 +16,6 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
-        <script>window.MathJax = {"loader": {"load": ["[tex]/physics", "[tex]/upgreek"]}, "tex": {"packages": {"[+]": ["physics", "upgreek"]}}}</script>
-        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -45,23 +43,17 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install-index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart-index.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="theory-index.html">Theory</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Simulation Module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#main-script">Main Script</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#simulation.dmri_simulation"><code class="docutils literal notranslate"><span class="pre">dmri_simulation</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#simulation.dmri_simulation.run"><code class="docutils literal notranslate"><span class="pre">dmri_simulation.run()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#simulation.dmri_simulation.set_parameters"><code class="docutils literal notranslate"><span class="pre">dmri_simulation.set_parameters()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#simulation.dmri_simulation.set_voxel"><code class="docutils literal notranslate"><span class="pre">dmri_simulation.set_voxel()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="#simulation.dmri_simulation"><code class="docutils literal notranslate"><span class="pre">dmri_simulation</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#simulation.dmri_sim_wrapper"><code class="docutils literal notranslate"><span class="pre">dmri_sim_wrapper()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#simulation.run"><code class="docutils literal notranslate"><span class="pre">run()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-set_voxel_configuration">Setup Functions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#set_voxel_configuration._place_cells"><code class="docutils literal notranslate"><span class="pre">_place_cells()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#set_voxel_configuration._place_fiber_grid"><code class="docutils literal notranslate"><span class="pre">_place_fiber_grid()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#set_voxel_configuration._place_spins"><code class="docutils literal notranslate"><span class="pre">_place_spins()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#set_voxel_configuration._set_num_cells"><code class="docutils literal notranslate"><span class="pre">_set_num_cells()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#set_voxel_configuration._set_num_fibers"><code class="docutils literal notranslate"><span class="pre">_set_num_fibers()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#spin_init_positions._find_spin_locations_kernel"><code class="docutils literal notranslate"><span class="pre">_find_spin_locations_kernel()</span></code></a></li>
@@ -111,12 +103,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#save._signal"><code class="docutils literal notranslate"><span class="pre">_signal()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-linalg">Miscellaneous Functions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#linalg.Ry"><code class="docutils literal notranslate"><span class="pre">Ry()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#linalg.affine_transformation"><code class="docutils literal notranslate"><span class="pre">affine_transformation()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-linalg">Miscellaneous Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">References</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cli-index.html">Command Line Interface</a></li>
@@ -152,62 +140,21 @@
 <span id="mainex"></span><h2>Main Script<a class="headerlink" href="#main-script" title="Permalink to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="simulation.dmri_simulation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simulation.</span></span><span class="sig-name descname"><span class="pre">dmri_simulation</span></span><a class="reference internal" href="_modules/simulation.html#dmri_simulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulation.dmri_simulation" title="Permalink to this definition"></a></dt>
-<dd><p>Class instance of the simulated pulsed gradient spin echo (PGSE) simulation</p>
-<section id="attributes">
-<h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this heading"></a></h3>
-<blockquote>
-<div><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A dictionary of the user-specified simulation parameters as entered via GUI or CLI.</p>
-</dd>
-<dt class="field-even">Fibers<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of <a class="reference internal" href="#objects.fiber" title="objects.fiber"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.fiber</span></code></a> instances</p>
-</dd>
-<dt class="field-odd">Spins<span class="colon">:</span></dt>
-<dd class="field-odd"><p>List of <a class="reference internal" href="#objects.spin" title="objects.spin"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.spin</span></code></a> instances</p>
-</dd>
-<dt class="field-even">Cells<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of <a class="reference internal" href="#objects.cell" title="objects.cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.cell</span></code></a> instances</p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simulation.</span></span><span class="sig-name descname"><span class="pre">dmri_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulation.html#dmri_simulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulation.dmri_simulation" title="Permalink to this definition"></a></dt>
+<dd><p>Class instance of the forward simulation model of the Pulsed Gradient Spin Echo (PGSE) Experiment.</p>
+<dl class="simple">
+<dt>Attributes:</dt><dd><p>parameters: A dictionary of simulation parameters entered in cli.py.
+fibers: A list of objects.fiber instances
+spins: A list of objects.spin instances
+cells: A list of objects.cell instances</p>
 </dd>
 </dl>
-</div></blockquote>
-<dl class="py method">
-<dt class="sig sig-object py" id="simulation.dmri_simulation.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulation.html#dmri_simulation.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulation.dmri_simulation.run" title="Permalink to this definition"></a></dt>
-<dd><p>Starts the simulation programs and passes user inputs to relevant function executions.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>args</strong> – See <a class="reference internal" href="cli-index.html"><span class="doc">Command Line Interface</span></a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="simulation.dmri_simulation.set_parameters">
-<span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulation.html#dmri_simulation.set_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulation.dmri_simulation.set_parameters" title="Permalink to this definition"></a></dt>
-<dd><p>Applies user-specified simulation parameters</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="simulation.dmri_simulation.set_voxel">
-<span class="sig-name descname"><span class="pre">set_voxel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulation.html#dmri_simulation.set_voxel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulation.dmri_simulation.set_voxel" title="Permalink to this definition"></a></dt>
-<dd><p>Configures the simulated voxel according to user-specified parameters</p>
-</dd></dl>
-
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simulation.dmri_sim_wrapper">
 <span class="sig-prename descclassname"><span class="pre">simulation.</span></span><span class="sig-name descname"><span class="pre">dmri_sim_wrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simulation.html#dmri_sim_wrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simulation.dmri_sim_wrapper" title="Permalink to this definition"></a></dt>
-<dd><p>Wrapper for initiating the simulation</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>args</strong> – See <a class="reference internal" href="cli-index.html"><span class="doc">Command Line Interface</span></a></p>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simulation.run">
@@ -218,121 +165,19 @@
 <section id="module-set_voxel_configuration">
 <span id="setup-functions"></span><span id="setupfuncs"></span><h2>Setup Functions<a class="headerlink" href="#module-set_voxel_configuration" title="Permalink to this heading"></a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="set_voxel_configuration._place_cells">
-<span class="sig-prename descclassname"><span class="pre">set_voxel_configuration.</span></span><span class="sig-name descname"><span class="pre">_place_cells</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fibers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_fractions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_configuration</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_dimensions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">void_dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_diffusivity</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/set_voxel_configuration.html#_place_cells"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#set_voxel_configuration._place_cells" title="Permalink to this definition"></a></dt>
-<dd><p>Routine for populating cells within the simulated imaging voxel</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>fibers</strong> (<em>object</em>) – Class object containing fiber attributes. See <a class="reference internal" href="#objects.fiber" title="objects.fiber"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.fiber</span></code></a> for further information.</p></li>
-<li><p><strong>cell_radii</strong> (<em>float</em><em>, </em><em>tuple</em>) – Radii of each cell type, in units of µm</p></li>
-<li><p><strong>cell_fractions</strong> (<em>float</em><em>, </em><em>tuple</em>) – User-supplied densities (volume fractions) for each cell type</p></li>
-<li><p><strong>fiber_configuration</strong> (<em>str</em>) – Desired fiber geometry class. See <a class="reference internal" href="#objects.cell" title="objects.cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.cell</span></code></a> for further information.</p></li>
-<li><p><strong>voxel_dimensions</strong> (<em>float</em>) – User-supplied voxel side length, in units of µm</p></li>
-<li><p><strong>buffer</strong> (<em>float</em>) – User-supplied additional length to be added to the voxel size for placement routines, in units of µm</p></li>
-<li><p><strong>void_distance</strong> (<em>float</em>) – Length of region for excluding fiber population, in units of µm</p></li>
-<li><p><strong>water_diffusivity</strong> (<em>float</em>) – The user-supplied diffusivity for free water, in units of µm<sup>2</sup> ms<sup>-1</sup> .</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Class object containing cell attributes. See <a class="reference internal" href="#objects.cell" title="objects.cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.cell</span></code></a> for further information.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>object</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="set_voxel_configuration._place_fiber_grid">
-<span class="sig-prename descclassname"><span class="pre">set_voxel_configuration.</span></span><span class="sig-name descname"><span class="pre">_place_fiber_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fiber_fractions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_diffusions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_dimensions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">void_distance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_configuration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/set_voxel_configuration.html#_place_fiber_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#set_voxel_configuration._place_fiber_grid" title="Permalink to this definition"></a></dt>
-<dd><p>Routine for populating fiber grid within the simulated imaging voxel</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>fiber_fractions</strong> (<em>float</em><em>, </em><em>tuple</em>) – User-supplied fiber densities (volume fractions)</p></li>
-<li><p><strong>fiber_radii</strong> (<em>float</em><em>, </em><em>tuple</em>) – Radii of each fiber type</p></li>
-<li><p><strong>fiber_diffusions</strong> (<em>float</em><em>, </em><em>tuple</em>) – User-supplied diffusivities for each fiber type</p></li>
-<li><p><strong>thetas</strong> (<em>float</em><em>, </em><em>tuple</em>) – Desired alignment angle for each fiber type, relative to <span class="math notranslate nohighlight">\({\vu{z}}\)</span></p></li>
-<li><p><strong>voxel_dimensions</strong> (<em>float</em>) – User-supplied voxel side length, in units of µm</p></li>
-<li><p><strong>buffer</strong> (<em>float</em>) – User-supplied additional length to be added to the voxel size for placement routines, in units of µm</p></li>
-<li><p><strong>void_distance</strong> (<em>float</em>) – Length of region for excluding fiber population, in units of µm</p></li>
-<li><p><strong>fiber_configuration</strong> (<em>str</em>) – Desired fiber geometry class. See <a class="reference internal" href="#objects.fiber" title="objects.fiber"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.fiber</span></code></a> for further information.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Class object containing fiber attributes. See <a class="reference internal" href="#objects.fiber" title="objects.fiber"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.fiber</span></code></a> for further information.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>object</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="set_voxel_configuration._place_spins">
-<span class="sig-prename descclassname"><span class="pre">set_voxel_configuration.</span></span><span class="sig-name descname"><span class="pre">_place_spins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_walkers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fibers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/set_voxel_configuration.html#_place_spins"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#set_voxel_configuration._place_spins" title="Permalink to this definition"></a></dt>
-<dd><p>Routine for randomly populating spins in the imaging voxel following a uniform probability distribution</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>n_walkers</strong> (<em>int</em>) – User-specified number of spins to simulate</p></li>
-<li><p><strong>voxel_dims</strong> (<em>float</em>) – User-supplied voxel side length, in units of µm</p></li>
-<li><p><strong>fibers</strong> (<em>object</em>) – Class object <a class="reference internal" href="#objects.fiber" title="objects.fiber"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.fiber</span></code></a> containing fiber attributes.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Class object <a class="reference internal" href="#objects.spin" title="objects.spin"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.spin</span></code></a> containing spin attributes.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>object</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="set_voxel_configuration._set_num_cells">
 <span class="sig-prename descclassname"><span class="pre">set_voxel_configuration.</span></span><span class="sig-name descname"><span class="pre">_set_num_cells</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_fraction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_dimensions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/set_voxel_configuration.html#_set_num_cells"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#set_voxel_configuration._set_num_cells" title="Permalink to this definition"></a></dt>
-<dd><p>Calculates the requisite number of cells for the supplied cell densities (volume fractions).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>cell_fraction</strong> (<em>float</em><em>, </em><em>tuple</em>) – User-supplied cell densities (volume fractions).</p></li>
-<li><p><strong>cell_radii</strong> (<em>float</em><em>, </em><em>tuple</em>) – User-supplied cell radii, in units of µm.</p></li>
-<li><p><strong>voxel_dimensions</strong> (<em>float</em>) – User-supplied voxel side length, in units of µm.</p></li>
-<li><p><strong>buffer</strong> (<em>float</em>) – User-supplied additional length to be added to the voxel size for placement routines.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List containing the number of each cell type.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>float, tuple</p>
-</dd>
-</dl>
+<dd><p>Calculates the number of cells required to acheive the supplied cell densities (fractions)</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="set_voxel_configuration._set_num_fibers">
 <span class="sig-prename descclassname"><span class="pre">set_voxel_configuration.</span></span><span class="sig-name descname"><span class="pre">_set_num_fibers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fiber_fractions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voxel_dimensions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_configuration</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/set_voxel_configuration.html#_set_num_fibers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#set_voxel_configuration._set_num_fibers" title="Permalink to this definition"></a></dt>
-<dd><p>Calculates the requisite number of fibers for the supplied fiber densities (volume fractions).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>fiber_fractions</strong> (<em>float</em><em>, </em><em>tuple</em>) – User-supplied fiber densities (volume fractions)</p></li>
-<li><p><strong>fiber_radii</strong> (<em>float</em><em>, </em><em>tuple</em>) – User-supplied fiber radii, in units of µm.</p></li>
-<li><p><strong>voxel_dimensions</strong> (<em>float</em>) – User-supplied voxel side length, in units of µm.</p></li>
-<li><p><strong>buffer</strong> (<em>float</em>) – User-supplied additional length to be added to the voxel size for placement routines, in units of µm.</p></li>
-<li><p><strong>fiber_configuration</strong> (<em>str</em>) – Desired fiber geometry class name.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>List of grid sizes, float</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>int, tuple</p>
-</dd>
-</dl>
+<dd><p>Calculates the number of fibers that achieves the supplied fiber densities (fractions).
+Args:
+in_features (int): The size of each input sample.
+out_features (int): The size of each output sample.
+bias (bool, optional): If set to <code class="docutils literal notranslate"><span class="pre">False</span></code>, the layer will not learn an additive bias. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd></dl>
 
 <span class="target" id="module-spin_init_positions"></span><dl class="py function">
@@ -357,17 +202,8 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="spin_init_positions._find_spin_locations">
-<span class="sig-prename descclassname"><span class="pre">spin_init_positions.</span></span><span class="sig-name descname"><span class="pre">_find_spin_locations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cells</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fibers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/spin_init_positions.html#_find_spin_locations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spin_init_positions._find_spin_locations" title="Permalink to this definition"></a></dt>
-<dd><p>Helper function to find initial spin locations</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>spins</strong> (<em>object</em>) – List of <a class="reference internal" href="#objects.spin" title="objects.spin"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.spin</span></code></a> instances</p></li>
-<li><p><strong>cells</strong> (<em>object</em>) – List of <a class="reference internal" href="#objects.cell" title="objects.cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.cell</span></code></a> instances</p></li>
-<li><p><strong>fibers</strong> (<em>object</em>) – List of <a class="reference internal" href="#objects.fiber" title="objects.fiber"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.fiber</span></code></a> instances</p></li>
-</ul>
-</dd>
-</dl>
+<span class="sig-prename descclassname"><span class="pre">spin_init_positions.</span></span><span class="sig-name descname"><span class="pre">_find_spin_locations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/spin_init_positions.html#_find_spin_locations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#spin_init_positions._find_spin_locations" title="Permalink to this definition"></a></dt>
+<dd><p>helper function to find initial spin locations</p>
 </dd></dl>
 
 </section>
@@ -378,83 +214,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="objects.cell">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">objects.</span></span><span class="sig-name descname"><span class="pre">cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_diffusivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#cell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.cell" title="Permalink to this definition"></a></dt>
-<dd><p>Class object for cell attributes</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="objects.cell._get_center">
-<span class="sig-name descname"><span class="pre">_get_center</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#cell._get_center"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.cell._get_center" title="Permalink to this definition"></a></dt>
-<dd><p>Returns an array containing coordinates for the center of the specified cell</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>An array containing the cell center coordinates</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="objects.cell._get_diffusivity">
-<span class="sig-name descname"><span class="pre">_get_diffusivity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#cell._get_diffusivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.cell._get_diffusivity" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the diffusivity within the specified cell in units of µm<sup>2</sup> ms<sup>-1</sup></p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The diffusivity within the cell</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="objects.cell._get_radius">
-<span class="sig-name descname"><span class="pre">_get_radius</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#cell._get_radius"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.cell._get_radius" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the radius of the specified cell, in units of µm</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The cell radius</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="objects.cell._set_center">
-<span class="sig-name descname"><span class="pre">_set_center</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell_center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#cell._set_center"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.cell._set_center" title="Permalink to this definition"></a></dt>
-<dd><p>Records the center coordinates for the specified cell</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cell_center</strong> (<em>np.ndarray</em>) – An array containing the cell center coordinates</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="objects.cell._set_diffusivity">
-<span class="sig-name descname"><span class="pre">_set_diffusivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#cell._set_diffusivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.cell._set_diffusivity" title="Permalink to this definition"></a></dt>
-<dd><p>Records the diffusivity within the specified cell in units of µm<sup>2</sup> ms<sup>-1</sup></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>D0</strong> (<em>float</em>) – The diffusivity within the cell, assumed to be equal to the user-specified free water diffusivity</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="objects.cell._set_radius">
-<span class="sig-name descname"><span class="pre">_set_radius</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#cell._set_radius"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.cell._set_radius" title="Permalink to this definition"></a></dt>
-<dd><p>Records the radius of the specified cell, in units of µm</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>radius</strong> (<em>float</em>) – The cell radius</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
+<dd></dd></dl>
 
 </section>
 <section id="fibers">
@@ -462,78 +222,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="objects.fiber">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">objects.</span></span><span class="sig-name descname"><span class="pre">fiber</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bundle</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diffusivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#fiber"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.fiber" title="Permalink to this definition"></a></dt>
-<dd><p>Class object for fiber attributes</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="objects.fiber._get_bundle">
-<span class="sig-name descname"><span class="pre">_get_bundle</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#fiber._get_bundle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.fiber._get_bundle" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the fiber bundle index for the specified fiber</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The bundle/type index for the specified fiber</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="objects.fiber._get_center">
-<span class="sig-name descname"><span class="pre">_get_center</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#fiber._get_center"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.fiber._get_center" title="Permalink to this definition"></a></dt>
-<dd><p>Returns an array containing coordinates for the center of the specified fiber</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>An array of fiber center coordinates</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="objects.fiber._get_diffusivity">
-<span class="sig-name descname"><span class="pre">_get_diffusivity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#fiber._get_diffusivity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.fiber._get_diffusivity" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the intra-axonal diffusivity for the specified fiber, in units of µm<sup>2</sup> ms<sup>-1</sup></p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The user-specified diffusivity within the specified fiber</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="objects.fiber._get_direction">
-<span class="sig-name descname"><span class="pre">_get_direction</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#fiber._get_direction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.fiber._get_direction" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the orientation vector for the specified fiber</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The orientation vector/rotation matrix for the specified fiber</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>numpy.ndarray</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="objects.fiber._get_radius">
-<span class="sig-name descname"><span class="pre">_get_radius</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#fiber._get_radius"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.fiber._get_radius" title="Permalink to this definition"></a></dt>
-<dd><p>Returns the radius of the specified fiber, in units of µm</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The user-specified radius of the specified fiber</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>float</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
+<dd></dd></dl>
 
 </section>
 <section id="spins">
@@ -541,8 +230,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="objects.spin">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">objects.</span></span><span class="sig-name descname"><span class="pre">spin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spin_position_t1m</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/objects.html#spin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#objects.spin" title="Permalink to this definition"></a></dt>
-<dd><p>Class object for spin attributes</p>
-</dd></dl>
+<dd></dd></dl>
 
 </section>
 </section>
@@ -553,56 +241,60 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="diffusion._caclulate_volumes">
 <span class="sig-prename descclassname"><span class="pre">diffusion.</span></span><span class="sig-name descname"><span class="pre">_caclulate_volumes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spins</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/diffusion.html#_caclulate_volumes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#diffusion._caclulate_volumes" title="Permalink to this definition"></a></dt>
-<dd><p>Calculates emprical volume fraction for each simulated compartment (i.e., fibers, cells, and water)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>spins</strong> (<em>list</em>) – A one-dimensional list (length = N<sub>spins</sub>) containing each instance of <a class="reference internal" href="#objects.spin" title="objects.spin"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.spin</span></code></a>. Each entry corresponds to one spin from the spin ensemble.</p>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="diffusion._diffusion_context_manager">
-<span class="sig-prename descclassname"><span class="pre">diffusion.</span></span><span class="sig-name descname"><span class="pre">_diffusion_context_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">random_states</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spin_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spin_in_fiber_1_at_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spin_in_fiber_2_at_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_centers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_directions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spin_in_cell_at_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_centers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">void</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/diffusion.html#_diffusion_context_manager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#diffusion._diffusion_context_manager" title="Permalink to this definition"></a></dt>
-<dd><p>Helper function to segment each spin into the relevant <a class="reference internal" href="#diffusion-physics">Diffusion Physics</a> module for its resident compartment</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>random_states</strong> (<em>ndarray</em>) – <code class="docutils literal notranslate"><span class="pre">xoroshiro128p</span></code> random states</p></li>
-<li><p><strong>spin_positions</strong> (<em>ndarray</em>) – Array containing the updated spin positions</p></li>
-<li><p><strong>spin_in_fiber_1_at_index</strong> (<em>ndarray</em>) – _description_</p></li>
-<li><p><strong>spin_in_fiber_2_at_index</strong> (<em>ndarray</em>) – _description_</p></li>
-<li><p><strong>fiber_centers</strong> (<em>ndarray</em>) – Coordinates of the fiber centers</p></li>
-<li><p><strong>fiber_step</strong> (<em>float</em>) – Distance travelled by spins in fibers for each time step <span class="math notranslate nohighlight">\(\dd{t}\)</span></p></li>
-<li><p><strong>fiber_radii</strong> (<em>ndarray</em>) – Radii of each fiber type (µm)</p></li>
-<li><p><strong>fiber_directions</strong> (<em>ndarray</em>) – Orientation of each fiber type</p></li>
-<li><p><strong>spin_in_cell_at_index</strong> (<em>ndarray</em>) – Indices of spins in cells</p></li>
-<li><p><strong>cell_center</strong> (<em>ndarray</em>) – Coordinates of the cell centers</p></li>
-<li><p><strong>cell_step</strong> (<em>float</em>) – Distance travelled by spins in cells for each time step <span class="math notranslate nohighlight">\(\dd{t}\)</span></p></li>
-<li><p><strong>cell_radii</strong> (<em>float</em>) – Cell radius (µm)</p></li>
-<li><p><strong>water_step</strong> (<em>ndarray</em>) – Distance travelled by spins in water for each time step <span class="math notranslate nohighlight">\(\dd{t}\)</span></p></li>
-<li><p><strong>void</strong> (<em>bool</em>) – Logical condition that is <code class="docutils literal notranslate"><span class="pre">True</span></code> if <code class="docutils literal notranslate"><span class="pre">fiber_configuration</span> <span class="pre">=</span> <span class="pre">Void</span></code> and <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise</p></li>
-</ul>
-</dd>
-</dl>
+<span class="sig-prename descclassname"><span class="pre">diffusion.</span></span><span class="sig-name descname"><span class="pre">_diffusion_context_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">random_states</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spin_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spin_in_fiber_at_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_centers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_directions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spin_in_cell_at_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_centers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">void</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/diffusion.html#_diffusion_context_manager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#diffusion._diffusion_context_manager" title="Permalink to this definition"></a></dt>
+<dd><p>Parameters:</p>
+<p>rng_states:
+spinPositions: (N_spins, 3) numpy array
+spin_in_fiber_key: (N_spins, ) numpy array, the spin_in_fiber[i] is the fiber index of the i-th spin. -1 if spin not in fiber.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="diffusion._simulate_diffusion">
-<span class="sig-prename descclassname"><span class="pre">diffusion.</span></span><span class="sig-name descname"><span class="pre">_simulate_diffusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cells</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fibers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water_diffusivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/diffusion.html#_simulate_diffusion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#diffusion._simulate_diffusion" title="Permalink to this definition"></a></dt>
-<dd><p>Iterates over the range <span class="math notranslate nohighlight">\(t \in [0, \Delta ]\)</span> with a step size of <span class="math notranslate nohighlight">\(\dd{t}\)</span>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>spins</strong> (<em>list</em>) – A one-dimensional list (length = N<sub>spins</sub>) containing each instance of <a class="reference internal" href="#objects.spin" title="objects.spin"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.spin</span></code></a>. Each entry corresponds to one spin from the spin ensemble.</p></li>
-<li><p><strong>cells</strong> (<em>list</em>) – A one-dimensional list (length = N<sub>cells</sub>) containing each instance of <a class="reference internal" href="#objects.cell" title="objects.cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.cell</span></code></a>. Each entry corresponds to one cell within the simulated imaging voxel.</p></li>
-<li><p><strong>fibers</strong> (<em>list</em>) – A list (size = N<sub>fibers</sub><span class="math notranslate nohighlight">\(\times\)</span>N<sub>fibers</sub>) containing each instance of <code class="docutils literal notranslate"><span class="pre">objects.fiber()</span></code>. Each entry corresponds to one fiber within the simulated imaging voxel.</p></li>
-<li><p><strong>Delta</strong> (<em>float</em>) – The diffusion time supplied by the user, in units of milliseconds.</p></li>
-<li><p><strong>dt</strong> (<em>float</em>) – The user-supplied duration for each time step, in units of milliseconds. Assumed to be equal to <span class="math notranslate nohighlight">\(\delta\)</span> under the narrow-pulse approximation.</p></li>
-<li><p><strong>water_diffusivity</strong> (<em>float</em>) – The user-supplied diffusivity for free water, in units of µm<sup>2</sup> ms<sup>-1</sup> .</p></li>
+<span class="sig-prename descclassname"><span class="pre">diffusion.</span></span><span class="sig-name descname"><span class="pre">_simulate_diffusion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/diffusion.html#_simulate_diffusion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#diffusion._simulate_diffusion" title="Permalink to this definition"></a></dt>
+<dd><blockquote>
+<div><p>Helper function to simulate the diffusion</p>
+</div></blockquote>
+<section id="parameters">
+<h4>Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><ul class="simple">
+<li><p>self  : the dmri_simulation object</p></li>
+<li><p>spins : list of spin objects</p></li>
+<li><p>cells : list of cell objects</p></li>
+<li><p>fibers : list of fiber objects</p></li>
+<li><p>Delta : The diffusion time</p></li>
+<li><p>dt: Time discretization parameter. Also, by the narrow pulse approximation dt is also equal to delta</p></li>
 </ul>
-</dd>
-</dl>
+</div></blockquote>
+</section>
+<section id="returns">
+<h4>Returns<a class="headerlink" href="#returns" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><ul class="simple">
+<li><p>Updated spin trajectories within each instance of the spin object in the spin list</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="notes">
+<h4>Notes<a class="headerlink" href="#notes" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><ul class="simple">
+<li><p>Rejection Sampling</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="references">
+<h4>References<a class="headerlink" href="#references" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><ul class="simple">
+<li><p>Discussions with S.K. Song</p></li>
+</ul>
+</div></blockquote>
+</section>
 </dd></dl>
 
 </section>
@@ -611,46 +303,30 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="walk_in_cell._diffusion_in_cell">
 <span class="sig-prename descclassname"><span class="pre">walk_in_cell.</span></span><span class="sig-name descname"><span class="pre">_diffusion_in_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_states</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_centers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_directions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spin_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">void</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/walk_in_cell.html#_diffusion_in_cell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#walk_in_cell._diffusion_in_cell" title="Permalink to this definition"></a></dt>
-<dd><p>Simulated Brownian motion of a spin confined to within in a cell, implemented via random walk with rejection sampling for proposed steps beyond the cell membrane. Note that this implementation assumes zero exchange between compartments and is therefore only pysically-accurate for <span class="math notranslate nohighlight">\(\Delta &lt; {\tau_{i}}\)</span>. <a class="footnote-reference brackets" href="#id7" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>i</strong> (<em>int</em>) – Absolute index of the current thread within the block grid</p></li>
-<li><p><strong>random_states</strong> (<em>ndarray</em>) – <code class="docutils literal notranslate"><span class="pre">xoroshiro128p</span></code> random states</p></li>
-<li><p><strong>cell_center</strong> (<em>ndarray</em>) – Coordinates of the cell centers</p></li>
-<li><p><strong>cell_radii</strong> (<em>float</em>) – Cell radius, in units of µm</p></li>
-<li><p><strong>cell_step</strong> (<em>float</em>) – Distance travelled by resident spins for each time step <span class="math notranslate nohighlight">\(\dd{t}\)</span></p></li>
-<li><p><strong>fiber_centers</strong> (<em>ndarray</em>) – Coordinates of the fiber centers</p></li>
-<li><p><strong>fiber_radii</strong> (<em>ndarray</em>) – Radii of each fiber type</p></li>
-<li><p><strong>fiber_directions</strong> (<em>ndarray</em>) – Orientation of each fiber type</p></li>
-<li><p><strong>spin_positions</strong> (<em>ndarray</em>) – Array containing the updated spin positions</p></li>
-<li><p><strong>void</strong> (<em>bool</em>) – Logical condition that is <code class="docutils literal notranslate"><span class="pre">True</span></code> if <code class="docutils literal notranslate"><span class="pre">fiber_configuration</span> <span class="pre">=</span> <span class="pre">Void</span></code> and <code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise</p></li>
-</ul>
-</dd>
-</dl>
+<dd><p>Rejection-sample random steps of a spin residing within a cell in the imaging voxel. Note that the rejection criteria is if the spin steps outside of the cell. Thus, the 
+spin is confined to the cell. This is reasonable so long as the diffusion times simulated does not exceed the intra-cellular pre-exchangle lifetime.</p>
 <dl class="simple">
-<dt><strong>Shapes</strong></dt><dd><dl class="field-list simple">
-<dt class="field-odd">random_states<span class="colon">:</span></dt>
-<dd class="field-odd"><p>(N<sub>spins</sub>, ), where N<sub>spins</sub> is an input parameter denoting the number of spins in the ensemble</p>
+<dt>Args:</dt><dd><p>i (int): The absolute position of the current thread in the entire grid of blocks
+random_states (numba.cuda.cudadrv.devicearray.DeviceNDArray): xoroshiro128p random states
+cell_center (numba.cuda.cudadrv.devicearray.DeviceNDArray): cordinates of the cell center
+cell_radii (float): the radius of the cell (um)
+cell_step (float): step size
+fiber_centers (numba.cuda.cudadrv.devicearray.DeviceNDArray): cordinates of the fiber centers
+fiber_radii (numba.cuda.cudadrv.devicearray.DeviceNDArray): radii of the fibers
+fiber_directions (numba.cuda.cudadrv.devicearray.DeviceNDArray): directions of the fiber centers
+spin_positions (numba.cuda.cudadrv.devicearray.DeviceNDArray: array to write updated spin positions to
+void (bool): void configuration</p>
 </dd>
-<dt class="field-even">cell_center<span class="colon">:</span></dt>
-<dd class="field-even"><p>(3, )</p>
-</dd>
-<dt class="field-odd">fiber_centers<span class="colon">:</span></dt>
-<dd class="field-odd"><p>N<sub>fibers</sub> <span class="math notranslate nohighlight">\({\times}\)</span> N<sub>fibers</sub> <span class="math notranslate nohighlight">\({\times}\)</span> 3, where N<sub>fibers</sub> is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel</p>
-</dd>
-<dt class="field-even">fiber_radii<span class="colon">:</span></dt>
-<dd class="field-even"><p>N<sub>fibers</sub> <span class="math notranslate nohighlight">\({\times}\)</span> N<sub>fibers</sub></p>
-</dd>
-<dt class="field-odd">fiber_directions<span class="colon">:</span></dt>
-<dd class="field-odd"><p>N<sub>fibers</sub> <span class="math notranslate nohighlight">\({\times}\)</span> N<sub>fibers</sub> <span class="math notranslate nohighlight">\({\times}\)</span> 3</p>
-</dd>
-<dt class="field-even">spin_positions<span class="colon">:</span></dt>
-<dd class="field-even"><p>N<sub>spins</sub> <span class="math notranslate nohighlight">\({\times}\)</span> 3</p>
-</dd>
-</dl>
+<dt>Shapes:</dt><dd><p>random_states: (n_walkers,) where n_walkers is an input parameter denoting the number of spins in the ensemble
+cell_center: (3,)
+fiber_centers: (n_fibers x n_fibers, 3) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel
+fiber_radii (n_fibers x n_fibers, ) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel
+fiber_directions: (n_fibers x n_fibers, 3) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel
+spin_positions: (n_walkers, 3) where n_walkers is an input parameter denoting the number of spins in the ensemble</p>
 </dd>
 </dl>
+<p>References:
+[1] Yang DM, Huettner JE, Bretthorst GL, Neil JJ, Garbow JR, Ackerman JJH. Intracellular water preexchange lifetime in neurons and astrocytes. Magn Reson Med. 2018 Mar;79(3):1616-1627. doi: 10.1002/mrm.26781. Epub 2017 Jul 4. PMID: 28675497; PMCID: PMC5754269.</p>
 </dd></dl>
 
 </section>
@@ -659,40 +335,26 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="walk_in_fiber._diffusion_in_fiber">
 <span class="sig-prename descclassname"><span class="pre">walk_in_fiber.</span></span><span class="sig-name descname"><span class="pre">_diffusion_in_fiber</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_states</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_radius</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_direction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spin_positions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/walk_in_fiber.html#_diffusion_in_fiber"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#walk_in_fiber._diffusion_in_fiber" title="Permalink to this definition"></a></dt>
-<dd><p>Simulated Brownian motion of a spin confined to within in a fiber, implemented via random walk with rejection sampling for proposed steps beyond the fiber membrane. Note that this implementation assumes zero exchange between compartments and is therefore only pysically-accurate for <span class="math notranslate nohighlight">\(\Delta &lt; {\tau_{i}}\)</span>. <a class="footnote-reference brackets" href="#id7" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>i</strong> (<em>int</em>) – Absolute index of the current thread within the block grid</p></li>
-<li><p><strong>random_states</strong> (<em>ndarray</em>) – <code class="docutils literal notranslate"><span class="pre">xoroshiro128p</span></code> random states</p></li>
-<li><p><strong>fiber_center</strong> (<em>ndarray</em>) – Coordinates of the center of specified fiber</p></li>
-<li><p><strong>fiber_radius</strong> (<em>ndarray</em>) – Radius of the specified fiber type</p></li>
-<li><p><strong>fiber_direction</strong> (<em>ndarray</em>) – Orientation of the specified fiber type</p></li>
-<li><p><strong>fiber_step</strong> (<em>float</em>) – Distance travelled by resident spins for each time step <span class="math notranslate nohighlight">\(\dd{t}\)</span></p></li>
-<li><p><strong>spin_positions</strong> (<em>ndarray</em>) – Array containing the updated spin positions</p></li>
-</ul>
-</dd>
-</dl>
+<dd><p>Rejection-sample random steps of a spin residing within a fiber in the imaging voxel. Note that the rejection criteria is if the spin steps outside of the fiber. Thus, the 
+spin is confined to the fiber. This is reasonable so long as the diffusion times simulated does not exceed the intra-cellular pre-exchangle lifetime of the fiber.</p>
 <dl class="simple">
-<dt><strong>Shapes</strong></dt><dd><dl class="field-list simple">
-<dt class="field-odd">random_states<span class="colon">:</span></dt>
-<dd class="field-odd"><p>(N<sub>spins</sub>, ), where N<sub>spins</sub> is an input parameter denoting the number of spins in the ensemble</p>
+<dt>Args:</dt><dd><p>i (int): The absolute position of the current thread in the entire grid of blocks
+random_states (numba.cuda.cudadrv.devicearray.DeviceNDArray): xoroshiro128p random states
+fiber_center (numba.cuda.cudadrv.devicearray.DeviceNDArray): cordinates of the fiber centers
+fiber_radius (float): radii of the fibers
+fiber_direction (numba.cuda.cudadrv.devicearray.DeviceNDArray): directions of the fiber centers
+fiber_step (float): step size
+spin_positions (numba.cuda.cudadrv.devicearray.DeviceNDArray): array to write updated spin positions to   
+void (bool): void configuration</p>
 </dd>
-<dt class="field-even">fiber_center<span class="colon">:</span></dt>
-<dd class="field-even"><p>3</p>
-</dd>
-<dt class="field-odd">fiber_radius<span class="colon">:</span></dt>
-<dd class="field-odd"><p>(N<sub>fibers</sub>, ), where N<sub>fibers</sub> is computed in a manner such that the fibers occupy the supplied fiber volume fraction of the imaging voxel</p>
-</dd>
-<dt class="field-even">fiber_direction<span class="colon">:</span></dt>
-<dd class="field-even"><p>(3, )</p>
-</dd>
-<dt class="field-odd">spin_positions<span class="colon">:</span></dt>
-<dd class="field-odd"><p>N<sub>spins</sub> <span class="math notranslate nohighlight">\({\times}\)</span> 3</p>
+<dt>Shapes:</dt><dd><p>random_states: (n_walkers,) where n_walkers is an input parameter denoting the number of spins in the ensemble
+fiber_center: (3,)
+fiber_direction: (3,)
+spin_positions: (n_walkers, 3) where n_walkers is an input parameter denoting the number of spins in the ensemble</p>
 </dd>
 </dl>
-</dd>
-</dl>
+<p>References:
+[1] Yang DM, Huettner JE, Bretthorst GL, Neil JJ, Garbow JR, Ackerman JJH. Intracellular water preexchange lifetime in neurons and astrocytes. Magn Reson Med. 2018 Mar;79(3):1616-1627. doi: 10.1002/mrm.26781. Epub 2017 Jul 4. PMID: 28675497; PMCID: PMC5754269.</p>
 </dd></dl>
 
 </section>
@@ -701,45 +363,30 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="walk_in_water._diffusion_in_water">
 <span class="sig-prename descclassname"><span class="pre">walk_in_water.</span></span><span class="sig-name descname"><span class="pre">_diffusion_in_water</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_states</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_centers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_directions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fiber_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_centers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_radii</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spin_positions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/walk_in_water.html#_diffusion_in_water"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#walk_in_water._diffusion_in_water" title="Permalink to this definition"></a></dt>
-<dd><p>Simulated Brownian motion of a spin confined to the extra-cellular/axonal water, implemented via random walk with rejection sampling for proposed steps into cells or fibers. Note that this implementation assumes zero exchange between compartments and is therefore only pysically-accurate for <span class="math notranslate nohighlight">\(\Delta &lt; {\tau_{i}(\mathrm{cells})}\)</span> and <span class="math notranslate nohighlight">\(\Delta &lt; {\tau_{i}(\mathrm{fibers})}\)</span>. <a class="footnote-reference brackets" href="#id7" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>i</strong> (<em>int</em>) – Absolute index of the current thread within the block grid</p></li>
-<li><p><strong>random_states</strong> (<em>ndarray</em>) – <code class="docutils literal notranslate"><span class="pre">xoroshiro128p</span></code> random states</p></li>
-<li><p><strong>fiber_centers</strong> (<em>ndarray</em>) – Coordinates of the fiber centers</p></li>
-<li><p><strong>fiber_directions</strong> (<em>ndarray</em>) – Orientation of each fiber type</p></li>
-<li><p><strong>fiber_radii</strong> (<em>ndarray</em>) – Radii of each fiber type</p></li>
-<li><p><strong>cell_centers</strong> (<em>ndarray</em>) – Coordinates of the cell centers</p></li>
-<li><p><strong>cell_radii</strong> (<em>float</em>) – Cell radius, in units of µm</p></li>
-<li><p><strong>spin_positions</strong> (<em>ndarray</em>) – Array containing the updated spin positions</p></li>
-<li><p><strong>step</strong> (<em>float</em>) – Distance travelled by resident spins for each time step <span class="math notranslate nohighlight">\(\dd{t}\)</span></p></li>
-</ul>
-</dd>
-</dl>
+<dd><p>Rejection-sample random steps of a spin residing within the extra cellular and extra fiber compartment (water). Note that the rejection criteria is if the spin steps into any of the voxels constituent microstructure.
+Thus, the spin is confined to the water. This is reasonable so long as the diffusion times simulated does not exceed the intra-cellular pre-exchangle lifetime of the fibers and cells.</p>
 <dl class="simple">
-<dt><strong>Shapes</strong></dt><dd><dl class="field-list simple">
-<dt class="field-odd">random_states<span class="colon">:</span></dt>
-<dd class="field-odd"><p>(N<sub>spins</sub>,) where N<sub>spins</sub> is an input parameter denoting the number of spins in the ensemble</p>
+<dt>Args:</dt><dd><p>i (int): The absolute position of the current thread in the entire grid of blocks
+random_states (numba.cuda.cudadrv.devicearray.DeviceNDArray): xoroshiro128p random states
+fiber_centers (numba.cuda.cudadrv.devicearray.DeviceNDArray): coordinates of the fiber centers
+fiber_radii (numba.cuda.cudadrv.devicearray.DeviceNDArray): radii of the fibers
+fiber_directions (numba.cuda.cudadrv.devicearray.DeviceNDArray): directions of the fibers
+cell_centers (numba.cuda.cudadrv.devicearray.DeviceNDArray): coordinates of the cell centers
+cell_radii (numba.cuda.cudadrv.devicearray.DeviceNDArray): radii of the cells
+spin_positions (numba.cuda.cudadrv.devicearray.DeviceNDArray): array to write updated positions to   
+step (float): step size in the water</p>
 </dd>
-<dt class="field-even">cell_center<span class="colon">:</span></dt>
-<dd class="field-even"><p>(N<sub>cells</sub> <span class="math notranslate nohighlight">\({\times}\)</span> 3, where N<sub>cells</sub> is computed in a manner such that the cells occupy the supplied cell volume fraction in the imaging voxel</p>
-</dd>
-<dt class="field-odd">fiber_centers<span class="colon">:</span></dt>
-<dd class="field-odd"><p>N<sub>fibers</sub> <span class="math notranslate nohighlight">\({\times}\)</span> N<sub>fibers</sub> <span class="math notranslate nohighlight">\({\times}\)</span> 3, where N<sub>fibers</sub> is computed in a manner such that the fibers occupy the supplied fiber volume fraction of the imaging voxel</p>
-</dd>
-<dt class="field-even">fiber_radii<span class="colon">:</span></dt>
-<dd class="field-even"><p>N<sub>fibers</sub> <span class="math notranslate nohighlight">\({\times}\)</span> N<sub>fibers</sub>, )</p>
-</dd>
-<dt class="field-odd">fiber_directions<span class="colon">:</span></dt>
-<dd class="field-odd"><p>N<sub>fibers</sub> <span class="math notranslate nohighlight">\({\times}\)</span> N<sub>fibers</sub> <span class="math notranslate nohighlight">\({\times}\)</span> 3</p>
-</dd>
-<dt class="field-even">spin_positions<span class="colon">:</span></dt>
-<dd class="field-even"><p>N<sub>spins</sub> <span class="math notranslate nohighlight">\({\times}\)</span> 3</p>
-</dd>
-</dl>
+<dt>Shapes:</dt><dd><p>random_states: (n_walkers,) where n_walkers is an input parameter denoting the number of spins in the ensemble
+fiber_centers: (n_fibers x n_fibers, 3) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel
+fiber_radii: (n_fibers x n_fibers, ) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel
+fiber_directions: (n_fibers x n_fibers, 3) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel
+cell_centers: (n_cells, 3) where n_cells is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel
+cell_radii: (n_cells, ) where n_cells is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel
+spin_positions: (n_walkers, 3) where n_walkers is an input parameter denoting the number of spins in the ensemble</p>
 </dd>
 </dl>
+<p>References:
+[1] Yang DM, Huettner JE, Bretthorst GL, Neil JJ, Garbow JR, Ackerman JJH. Intracellular water preexchange lifetime in neurons and astrocytes. Magn Reson Med. 2018 Mar;79(3):1616-1627. doi: 10.1002/mrm.26781. Epub 2017 Jul 4. PMID: 28675497; PMCID: PMC5754269.</p>
 </dd></dl>
 
 </section>
@@ -749,143 +396,74 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="save._add_noise">
 <span class="sig-prename descclassname"><span class="pre">save.</span></span><span class="sig-name descname"><span class="pre">_add_noise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/save.html#_add_noise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#save._add_noise" title="Permalink to this definition"></a></dt>
-<dd><p>Add Gaussian noise to the forward simulated signal. <a class="footnote-reference brackets" href="#id8" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>signal</strong> (<em>numpy.ndarray</em>) – The forward-simulated signal</p></li>
-<li><p><strong>snr</strong> (<em>float</em>) – The signal to noise ratio of the <span class="math notranslate nohighlight">\(b_{0}\)</span> image</p></li>
-</ul>
+<dd><p>Add Gaussian Noise to the forward simulated signal</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>signal (np.ndarray): The forward simulated signal
+snr (float): The signal to noise ratio of the b0 image</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The noise-added signal</p>
+<dt>Shapes:</dt><dd><p>signal: (n_bvals,) where n_bvals is the number of b-values in the supplied bval file</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
+<dt>Returns:</dt><dd><p>noised_signal (np.ndarray): The noised signal</p>
+</dd>
+<dt>References:</dt><dd><p>[1] Garyfallidis E, Brett M, Amirbekian B, Rokem A, van der Walt S, Descoteaux M, Nimmo-Smith I and Dipy Contributors (2014). DIPY, a library for the analysis of diffusion MRI data. Frontiers in Neuroinformatics, vol.8, no.8.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="save._generate_signals_and_trajectories">
-<span class="sig-prename descclassname"><span class="pre">save.</span></span><span class="sig-name descname"><span class="pre">_generate_signals_and_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diff_schemes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SNR</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/save.html#_generate_signals_and_trajectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#save._generate_signals_and_trajectories" title="Permalink to this definition"></a></dt>
-<dd><p>Helper function to organize and store compartment-specific and combined trajectories, as well as their corresponding dMRI signals</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>spins</strong> (<em>list</em>) – A list of each <a class="reference internal" href="#objects.spin" title="objects.spin"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.spin</span></code></a> instance corresponding to a spin in the ensemble of random walkers</p></li>
-<li><p><strong>Delta</strong> (<em>float</em>) – The diffusion time (ms)</p></li>
-<li><p><strong>dt</strong> (<em>float</em>) – The time step parameter, equivalent to 𝛿 under the narrow pulse approximation <a class="footnote-reference brackets" href="#id9" id="id5" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a></p></li>
-<li><p><strong>diff_schemes</strong> (<em>str</em>) – User-specified diffusion encoding scheme. See <a class="reference internal" href="cli-index.html"><span class="doc">Command Line Interface</span></a> for mor information</p></li>
-<li><p><strong>SNR</strong> (<em>float</em><em>, </em><em>optional</em>) – The snr of the b<sub>0</sub> image , defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> (i.e., <span class="math notranslate nohighlight">\(SNR \rightarrow \infty\)</span>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Dictionary arrays containing output signals and trajectories</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list</p>
-</dd>
-</dl>
+<span class="sig-prename descclassname"><span class="pre">save.</span></span><span class="sig-name descname"><span class="pre">_generate_signals_and_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/save.html#_generate_signals_and_trajectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#save._generate_signals_and_trajectories" title="Permalink to this definition"></a></dt>
+<dd><p>Helper function to organize and store compartment specific and combined trajectories and their incident signals</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="save._save_data">
-<span class="sig-prename descclassname"><span class="pre">save.</span></span><span class="sig-name descname"><span class="pre">_save_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diff_scheme</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/save.html#_save_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#save._save_data" title="Permalink to this definition"></a></dt>
-<dd><p>Helper function that saves signals and trajectories to the current directory.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>spins</strong> (<em>list</em>) – _description_</p></li>
-<li><p><strong>Delta</strong> (<em>float</em>) – _description_</p></li>
-<li><p><strong>dt</strong> (<em>float</em>) – _description_</p></li>
-<li><p><strong>diff_scheme</strong> (<em>str</em>) – _description_</p></li>
-</ul>
-</dd>
-</dl>
+<span class="sig-prename descclassname"><span class="pre">save.</span></span><span class="sig-name descname"><span class="pre">_save_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/save.html#_save_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#save._save_data" title="Permalink to this definition"></a></dt>
+<dd><p>Helper function that saves signals and trajectories</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="save._signal">
 <span class="sig-prename descclassname"><span class="pre">save.</span></span><span class="sig-name descname"><span class="pre">_signal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bvals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bvecs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Delta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SNR</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/save.html#_signal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#save._signal" title="Permalink to this definition"></a></dt>
-<dd><p>Calculates the PGSE signal from the forward simulated spin trajectories.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>spins</strong> (<em>list</em>) – A list of each <a class="reference internal" href="#objects.spin" title="objects.spin"><code class="xref py py-class docutils literal notranslate"><span class="pre">objects.spin</span></code></a> instance corresponding to a spin in the ensemble of random walkers</p></li>
-<li><p><strong>bvals</strong> (<em>np.ndarray</em>) – The supplied b-values (diffusion weighting factors)</p></li>
-<li><p><strong>bvecs</strong> (<em>np.ndarray</em>) – The supplied diffusion gradients</p></li>
-<li><p><strong>Delta</strong> (<em>float</em>) – The diffusion time (ms)</p></li>
-<li><p><strong>dt</strong> (<em>float</em>) – The time step parameter, equivalent to 𝛿 under the narrow pulse approximation <a class="footnote-reference brackets" href="#id9" id="id6" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a></p></li>
-<li><p><strong>SNR</strong> (<em>float</em><em>, </em><em>optional</em>) – The snr of the <span class="math notranslate nohighlight">\(b_{0}\)</span> image , defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> (i.e., <span class="math notranslate nohighlight">\(SNR \rightarrow \infty\)</span>)</p></li>
-</ul>
+<dd><p>Calculates the PGSE signal from the forward simulated spin trajectories. Note that this computation is executed on the GPU using CuPy.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>spins (list): A list of each objects.spin instance corresponding to a spin in the ensemble of random walkers
+bvals (np.ndarray): The supplied b-values (diffusion weighting factors)
+bvecs (np.ndarray): The supplied diffusion gradients 
+Delta (float): The diffusion time (ms)
+dt (float): The time step parameter, also equal to delta because of the narrow pulse approximation
+SNR (float, optional): The snr of the b0 image. If a value is not entered, the snr of the signal is infinite.</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Output signals, output <span class="math notranslate nohighlight">\(T_{1\mathrm{m}}\)</span> trajectories, output <span class="math notranslate nohighlight">\(T_{2ρ}\)</span> trajectories</p>
+<dt>Shapes:</dt><dd><p>spins: (n_walkers,) where n_walkers is an input parameter denoting the n umber of spins in the ensemble
+bvals: (n_bvals,) where n_bvals is the number of b-values in the supplied bval file
+bvecs: (n_bvals, 3) where n_bvals is the number of b-values in the supplied bval file)I</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>np.ndarray</p>
+<dt>Returns:</dt><dd><p>signal (np.ndarray): the forward simulated PGSE signal
+trajectory_t1m (np.ndarray): the initial spin positions 
+trajectory_t2p (np.ndarray): the final spin positions</p>
+</dd>
+<dt>References:</dt><dd><p>[1] Hall, M. G., and Alexander, D. C. (2009). Convergence and parameter choice for monte-carlo simulations of diffusion MRI. IEEE Trans. Med. Imaging 28, 1354–1364. doi: 10.1109/TMI.2009.2015756</p>
 </dd>
 </dl>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This computation is executed on the GPU using CuPy.</p>
-</div>
 </dd></dl>
 
 </section>
 <section id="module-linalg">
 <span id="miscellaneous-functions"></span><h2>Miscellaneous Functions<a class="headerlink" href="#module-linalg" title="Permalink to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="linalg.Ry">
-<span class="sig-prename descclassname"><span class="pre">linalg.</span></span><span class="sig-name descname"><span class="pre">Ry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">thetas</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/linalg.html#Ry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#linalg.Ry" title="Permalink to this definition"></a></dt>
-<dd><p>Generates rotation matrices for the user-specified angles (with respect to <span class="math notranslate nohighlight">\(\vu{y}\)</span>) for each fiber type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>thetas</strong> (<em>float</em><em>, </em><em>tuple</em>) – List of user-specified angles (relative to the <span class="math notranslate nohighlight">\(y\)</span>-axis) for each fiber type</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Array of rotation matrices for each fiber type.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>numpy.array</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="linalg.affine_transformation">
-<span class="sig-prename descclassname"><span class="pre">linalg.</span></span><span class="sig-name descname"><span class="pre">affine_transformation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thetas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/linalg.html#affine_transformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#linalg.affine_transformation" title="Permalink to this definition"></a></dt>
-<dd><p>Generates affine transforms for fiber grids</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>xv</strong> (<em>np.ndarray</em>) – fiber grid coordinates</p></li>
-<li><p><strong>x</strong> (<em>float</em>) – x coordinate</p></li>
-<li><p><strong>y</strong> (<em>float</em>) – y coordinate</p></li>
-<li><p><strong>thetas</strong> (<em>float</em><em>, </em><em>tuple</em>) – List of user-specified angles (relative to the <span class="math notranslate nohighlight">\(y\)</span>-axis) for each fiber type</p></li>
-<li><p><strong>i</strong> (<em>int</em>) – index</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
 </section>
-<section id="references">
-<h2>References<a class="headerlink" href="#references" title="Permalink to this heading"></a></h2>
+<section id="id1">
+<h2>References<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h2>
 <blockquote>
-<div><aside class="footnote brackets" id="id7" role="note">
+<div><aside class="footnote brackets" id="id2" role="note">
 <span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id2">2</a>,<a role="doc-backlink" href="#id3">3</a>)</span>
 <p>Yang D. M., Huettner J. E., Bretthorst G. L., Neil J. J., Garbow J. R., Ackerman J. J. H., “Intracellular water preexchange lifetime in neurons and astrocytes.” <em>Magn Reson Med.</em> <strong>2018</strong>; 79(3):1616-1627. <a class="reference external" href="http://doi.org/10.1002/mrm.26781/">DOI: 10.1002/mrm.26781</a>; <a class="reference external" href="https://pubmed.ncbi.nlm.nih.gov/28675497/">PMID: 28675497</a>; <a class="reference external" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5754269/">PMCID: PMC5754269</a>.</p>
 </aside>
-<aside class="footnote brackets" id="id8" role="note">
-<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">2</a><span class="fn-bracket">]</span></span>
+<aside class="footnote brackets" id="id3" role="note">
+<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
 <p>Garyfallidis E., Brett M., Amirbekian B., Rokem A., van der Walt S., Descoteaux M., Nimmo-Smith I., and Dipy Contributors (2014). “DIPY, a library for the analysis of diffusion MRI data.” Frontiers in Neuroinformatics, vol.8, no.8.</p>
 </aside>
-<aside class="footnote brackets" id="id9" role="note">
+<aside class="footnote brackets" id="id4" role="note">
 <span class="label"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a role="doc-backlink" href="#id5">1</a>,<a role="doc-backlink" href="#id6">2</a>)</span>
 <p>Hall, M. G., and Alexander, D. C. (2009). “Convergence and parameter choice for monte-carlo simulations of diffusion MRI.” <em>IEEE Trans. Med. Imaging</em> 28, 1354U+20131364. <a class="reference external" href="http://doi.org/10.1109/TMI.2009.2015756/">DOI: 10.1109/TMI.2009.2015756</a></p>
 </aside>
 </aside>
