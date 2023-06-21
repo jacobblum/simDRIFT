@@ -108,7 +108,7 @@ def test_fiber_physics_multi(input, expected):
     tenmodel = dti.TensorModel(gtab)
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     cmd = r"simDRIFT"
-    cmd += f" simulate --n_walkers 256000 --fiber_fractions .30,.30,.30 --fiber_diffusions {input[0]},{input[1]},{input[2]} --cell_fractions 0,0 --Delta 1 --voxel_dims 30 --buffer 0 --verbose no" 
+    cmd += f" simulate --n_walkers 256000 --fiber_fractions .30,.30,.30 --fiber_diffusions {input[0]},{input[1]},{input[2]} --thetas 0,0,0 --fiber_radii 1,1,1 --cell_fractions 0,0 --Delta 1 --voxel_dims 30 --buffer 0 --verbose no" 
     os.system(cmd)
 
     fiber_1_signal = nb.load(os.getcwd() + os.sep + 'signals' + os.sep + 'fiber_1_signal.nii').get_fdata()
