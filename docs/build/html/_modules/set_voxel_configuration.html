@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install-index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test-index.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart-index.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../theory-index.html">Theory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../simulation-index.html">Simulation Module</a></li>
@@ -81,13 +82,21 @@
 <span class="kn">from</span> <span class="nn">src.jp</span> <span class="kn">import</span> <span class="n">linalg</span>
 
 <div class="viewcode-block" id="_set_num_fibers"><a class="viewcode-back" href="../simulation-index.html#set_voxel_configuration._set_num_fibers">[docs]</a><span class="k">def</span> <span class="nf">_set_num_fibers</span><span class="p">(</span><span class="n">fiber_fractions</span><span class="p">,</span> <span class="n">fiber_radii</span><span class="p">,</span> <span class="n">voxel_dimensions</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">fiber_configuration</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculates the number of fibers that achieves the supplied fiber densities (fractions).</span>
-<span class="sd">    Args:</span>
-<span class="sd">    in_features (int): The size of each input sample.</span>
-<span class="sd">    out_features (int): The size of each output sample.</span>
-<span class="sd">    bias (bool, optional): If set to ``False``, the layer will not learn an additive bias. Default: ``True``.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculates the requisite number of fibers for the supplied fiber densities (volume fractions).</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    :param fiber_fractions: User-supplied fiber densities (volume fractions)</span>
+<span class="sd">    :type fiber_fractions: float, tuple</span>
+<span class="sd">    :param fiber_radii: User-supplied fiber radii, in units of :math:`{\mathrm{μm}}`.</span>
+<span class="sd">    :type fiber_radii: float, tuple</span>
+<span class="sd">    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`.</span>
+<span class="sd">    :type voxel_dimensions: float</span>
+<span class="sd">    :param buffer: User-supplied additional length to be added to the voxel size for placement routines, in units of :math:`{\mathrm{μm}}`.</span>
+<span class="sd">    :type buffer: float</span>
+<span class="sd">    :param fiber_configuration: Desired fiber geometry class name.</span>
+<span class="sd">    :type fiber_configuration: str</span>
+<span class="sd">    :return: List of grid sizes, float </span>
+<span class="sd">    :rtype: int, tuple</span>
+<span class="sd">    &quot;&quot;&quot;</span> 
 
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;------------------------------&#39;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Fiber Setup&#39;</span><span class="p">)</span>
@@ -108,7 +117,18 @@
 
 
 <div class="viewcode-block" id="_set_num_cells"><a class="viewcode-back" href="../simulation-index.html#set_voxel_configuration._set_num_cells">[docs]</a><span class="k">def</span> <span class="nf">_set_num_cells</span><span class="p">(</span><span class="n">cell_fraction</span><span class="p">,</span> <span class="n">cell_radii</span><span class="p">,</span> <span class="n">voxel_dimensions</span><span class="p">,</span> <span class="n">buffer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Calculates the number of cells required to acheive the supplied cell densities (fractions)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculates the requisite number of cells for the supplied cell densities (volume fractions).</span>
+
+<span class="sd">    :param cell_fraction: User-supplied cell densities (volume fractions).</span>
+<span class="sd">    :type cell_fraction: float, tuple</span>
+<span class="sd">    :param cell_radii: User-supplied cell radii, in units of :math:`{\mathrm{μm}}`.</span>
+<span class="sd">    :type cell_radii: float, tuple</span>
+<span class="sd">    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`.</span>
+<span class="sd">    :type voxel_dimensions: float</span>
+<span class="sd">    :param buffer: User-supplied additional length to be added to the voxel size for placement routines.</span>
+<span class="sd">    :type buffer: float</span>
+<span class="sd">    :return: List containing the number of each cell type.</span>
+<span class="sd">    :rtype: float, tuple</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;------------------------------&#39;</span><span class="p">)</span>
@@ -124,7 +144,33 @@
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; </span><span class="si">{}</span><span class="s1"> cells with radius = </span><span class="si">{}</span><span class="s1"> um&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_cells</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">cell_radii</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
     <span class="k">return</span> <span class="n">num_cells</span></div>
 
-<span class="k">def</span> <span class="nf">_place_fiber_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="_place_fiber_grid"><a class="viewcode-back" href="../simulation-index.html#set_voxel_configuration._place_fiber_grid">[docs]</a><span class="k">def</span> <span class="nf">_place_fiber_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;_summary_</span>
+
+<span class="sd">    :return: _description_</span>
+<span class="sd">    :rtype: _type_</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Routine for populating fiber grid within the simulated imaging voxel</span>
+
+<span class="sd">    :param fiber_fractions: User-supplied fiber densities (volume fractions)</span>
+<span class="sd">    :type fiber_fractions: float, tuple</span>
+<span class="sd">    :param fiber_radii: Radii of each fiber type</span>
+<span class="sd">    :type fiber_radii: float, tuple</span>
+<span class="sd">    :param fiber_diffusions: User-supplied diffusivities for each fiber type</span>
+<span class="sd">    :type fiber_diffusions: float, tuple</span>
+<span class="sd">    :param thetas: Desired alignment angle for each fiber type, relative to :math:`{\\vu{z}}`</span>
+<span class="sd">    :type thetas: float, tuple</span>
+<span class="sd">    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`</span>
+<span class="sd">    :type voxel_dimensions: float</span>
+<span class="sd">    :param buffer: User-supplied additional length to be added to the voxel size for placement routines, in units of :math:`{\mathrm{μm}}`</span>
+<span class="sd">    :type buffer: float</span>
+<span class="sd">    :param void_distance: Length of region for excluding fiber population, in units of :math:`{\mathrm{μm}}`</span>
+<span class="sd">    :type void_distance: float</span>
+<span class="sd">    :param fiber_configuration: Desired fiber geometry class. See `Class Objects`_ for further information.</span>
+<span class="sd">    :type fiber_configuration: str</span>
+<span class="sd">    :return: Class object containing fiber attributes. See `Class Objects`_ for further information.</span>
+<span class="sd">    :rtype: object</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
     <span class="n">num_fibers</span> <span class="o">=</span> <span class="n">_set_num_fibers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fiber_fractions</span><span class="p">,</span> 
                                  <span class="bp">self</span><span class="o">.</span><span class="n">fiber_radii</span><span class="p">,</span> 
                                  <span class="bp">self</span><span class="o">.</span><span class="n">voxel_dimensions</span><span class="p">,</span> 
@@ -156,10 +202,31 @@
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">fibers</span><span class="p">:</span>
         <span class="n">fibers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">objects</span><span class="o">.</span><span class="n">fiber</span><span class="p">(</span><span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">direction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">bundle</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">diffusivity</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">radius</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">fibers</span>
+    <span class="k">return</span> <span class="n">fibers</span></div>
 
 
-<span class="k">def</span> <span class="nf">_place_cells</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="_place_cells"><a class="viewcode-back" href="../simulation-index.html#set_voxel_configuration._place_cells">[docs]</a><span class="k">def</span> <span class="nf">_place_cells</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Routine for populating cells within the simulated imaging voxel</span>
+
+<span class="sd">    :param fibers: Class object containing fiber attributes. See `Class Objects`_ for further information.</span>
+<span class="sd">    :type fibers: object</span>
+<span class="sd">    :param cell_radii: Radii of each cell type, in units of :math:`{\mathrm{μm}}`</span>
+<span class="sd">    :type cell_radii: float, tuple</span>
+<span class="sd">    :param cell_fractions: User-supplied densities (volume fractions) for each cell type</span>
+<span class="sd">    :type cell_fractions: float, tuple</span>
+<span class="sd">    :param fiber_configuration: Desired fiber geometry class. See `Class Objects`_ for further information.</span>
+<span class="sd">    :type fiber_configuration: str</span>
+<span class="sd">    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`</span>
+<span class="sd">    :type voxel_dimensions: float</span>
+<span class="sd">    :param buffer: User-supplied additional length to be added to the voxel size for placement routines, in units of :math:`{\mathrm{μm}}`</span>
+<span class="sd">    :type buffer: float</span>
+<span class="sd">    :param void_distance: Length of region for excluding fiber population, in units of :math:`{\mathrm{μm}}`</span>
+<span class="sd">    :type void_distance: float</span>
+<span class="sd">    :param water_diffusivity: The user-supplied diffusivity for free water, in units of :math:`{\mathrm{μm}^2}\\, \mathrm{ms}^{-1}`.</span>
+<span class="sd">    :type water_diffusivity: float</span>
+<span class="sd">    :return: Class object containing cell attributes. See `Class Objects`_ for further information.</span>
+<span class="sd">    :rtype: object</span>
+<span class="sd">    &quot;&quot;&quot;</span> 
 
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;------------------------------&#39;</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39; Placing Cells...&#39;</span><span class="p">)</span>
@@ -253,10 +320,20 @@
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">output_arg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
             <span class="n">cells</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">objects</span><span class="o">.</span><span class="n">cell</span><span class="p">(</span><span class="n">cell_center</span> <span class="o">=</span> <span class="n">output_arg</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">],</span> <span class="n">cell_radius</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_radii</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cell_diffusivity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">water_diffusivity</span><span class="p">))</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">cells</span>
+    <span class="k">return</span> <span class="n">cells</span></div>
 
-<span class="k">def</span> <span class="nf">_place_spins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    
+<div class="viewcode-block" id="_place_spins"><a class="viewcode-back" href="../simulation-index.html#set_voxel_configuration._place_spins">[docs]</a><span class="k">def</span> <span class="nf">_place_spins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Routine for randomly populating spins in the imaging voxel following a uniform probability distribution</span>
+
+<span class="sd">    :param n_walkers: User-specified number of spins to simulate</span>
+<span class="sd">    :type n_walkers: int</span>
+<span class="sd">    :param voxel_dims: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`</span>
+<span class="sd">    :type voxel_dims: float</span>
+<span class="sd">    :param fibers: Class object ``objects.fibers`` containing fiber attributes. See `Class Objects`_ for further information.</span>
+<span class="sd">    :type fibers: object</span>
+<span class="sd">    :return: Class object ``objects.spins`` containing spin attributes. See `Class Objects`_ for further information.</span>
+<span class="sd">    :rtype: object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">zmin</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">fiber</span><span class="o">.</span><span class="n">center</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">fiber</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fibers</span><span class="p">])</span>
     <span class="n">zmax</span> <span class="o">=</span> <span class="n">zmin</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">voxel_dimensions</span>
 
@@ -265,11 +342,13 @@
                                     <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="n">zmin</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="n">zmax</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_walkers</span><span class="p">)])</span>
     
     <span class="n">spins</span> <span class="o">=</span> <span class="p">[</span><span class="n">objects</span><span class="o">.</span><span class="n">spin</span><span class="p">(</span><span class="n">spin_positions_t1m</span><span class="p">[:,</span><span class="n">ii</span><span class="p">])</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">spin_positions_t1m</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
-    <span class="k">return</span> <span class="n">spins</span>
+    <span class="k">return</span> <span class="n">spins</span></div>
 
 
 
 <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function to initiate relevant placement routines.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
     <span class="bp">self</span><span class="o">.</span><span class="n">fibers</span> <span class="o">=</span> <span class="n">_place_fiber_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">cells</span> <span class="o">=</span> <span class="n">_place_cells</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">spins</span> <span class="o">=</span> <span class="n">_place_spins</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>

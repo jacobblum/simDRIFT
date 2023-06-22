@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install-index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test-index.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart-index.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../theory-index.html">Theory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../simulation-index.html">Simulation Module</a></li>
@@ -77,97 +78,162 @@
 
 
 <div class="viewcode-block" id="fiber"><a class="viewcode-back" href="../simulation-index.html#objects.fiber">[docs]</a><span class="k">class</span> <span class="nc">fiber</span><span class="p">():</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">bundle</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">diffusivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        fiber information</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class object for fiber attributes</span>
+<span class="sd">    &quot;&quot;&quot;</span>  
+<div class="viewcode-block" id="fiber.__init__"><a class="viewcode-back" href="../simulation-index.html#objects.fiber.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">center</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">bundle</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">diffusivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fiber information and parameters</span>
 
-<span class="sd">        Attributes:</span>
-<span class="sd">            center (np.ndarray): (x,y,z) coordinates of the fiber center</span>
-<span class="sd">            bundle (int): constituent bundle index</span>
-<span class="sd">            direction (np.ndarray): unit vector pointed in the fiber direction</span>
-<span class="sd">            diffusivity (float): intrinsic fiber diffusivity</span>
-<span class="sd">            radius (float): fiber radius</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        :param center: (x,y,z) coordinates of the fiber center</span>
+<span class="sd">        :type center: np.ndarray</span>
+<span class="sd">        :param direction: Constituent bundle index</span>
+<span class="sd">        :type direction: np.ndarray</span>
+<span class="sd">        :param bundle: Unit vector pointed along the fiber direction</span>
+<span class="sd">        :type bundle: int</span>
+<span class="sd">        :param diffusivity: Intrinsic fiber diffusivity, square micrometers per millisecond</span>
+<span class="sd">        :type diffusivity: float</span>
+<span class="sd">        :param radius: Fiber radius, in micrometers</span>
+<span class="sd">        :type radius: float</span>
+<span class="sd">        &quot;&quot;&quot;</span> 
         <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">center</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bundle</span> <span class="o">=</span> <span class="n">bundle</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">direction</span> <span class="o">=</span> <span class="n">direction</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">diffusivity</span> <span class="o">=</span> <span class="n">diffusivity</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">radius</span>      <span class="o">=</span> <span class="n">radius</span>
-        <span class="k">return</span>
+        <span class="k">return</span></div>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Getters &quot;&quot;&quot;</span>
         
-    <span class="k">def</span> <span class="nf">_get_center</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span>
+<div class="viewcode-block" id="fiber._get_center"><a class="viewcode-back" href="../simulation-index.html#objects.fiber._get_center">[docs]</a>    <span class="k">def</span> <span class="nf">_get_center</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns an array containing coordinates for the center of the specified fiber</span>
+
+<span class="sd">        :return: An array of fiber center coordinates</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>  
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span></div>
     
-    <span class="k">def</span> <span class="nf">_get_bundle</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bundle</span>
+<div class="viewcode-block" id="fiber._get_bundle"><a class="viewcode-back" href="../simulation-index.html#objects.fiber._get_bundle">[docs]</a>    <span class="k">def</span> <span class="nf">_get_bundle</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the fiber bundle index for the specified fiber</span>
+
+<span class="sd">        :return: The bundle/type index for the specified fiber</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bundle</span></div>
     
-    <span class="k">def</span> <span class="nf">_get_direction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span>
+<div class="viewcode-block" id="fiber._get_direction"><a class="viewcode-back" href="../simulation-index.html#objects.fiber._get_direction">[docs]</a>    <span class="k">def</span> <span class="nf">_get_direction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the orientation vector for the specified fiber</span>
+
+<span class="sd">        :return: The orientation vector/rotation matrix for the specified fiber</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span></div>
     
-    <span class="k">def</span> <span class="nf">_get_diffusivity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusivity</span>
+<div class="viewcode-block" id="fiber._get_diffusivity"><a class="viewcode-back" href="../simulation-index.html#objects.fiber._get_diffusivity">[docs]</a>    <span class="k">def</span> <span class="nf">_get_diffusivity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the intra-axonal diffusivity for the specified fiber, in units of :math:`{\mathrm{μm}^2}\\, \mathrm{ms}^{-1}`</span>
+
+<span class="sd">        :return: The user-specified diffusivity within the specified fiber</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusivity</span></div>
     
-    <span class="k">def</span> <span class="nf">_get_radius</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span></div>
+<div class="viewcode-block" id="fiber._get_radius"><a class="viewcode-back" href="../simulation-index.html#objects.fiber._get_radius">[docs]</a>    <span class="k">def</span> <span class="nf">_get_radius</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the radius of the specified fiber, in units of :math:`{\mathrm{μm}}`</span>
+
+<span class="sd">        :return: The user-specified radius of the specified fiber</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span></div></div>
     
     
 
 
 
 <div class="viewcode-block" id="cell"><a class="viewcode-back" href="../simulation-index.html#objects.cell">[docs]</a><span class="k">class</span> <span class="nc">cell</span><span class="p">():</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_center</span><span class="p">,</span> <span class="n">cell_radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cell_diffusivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        cell information</span>
+<div class="viewcode-block" id="cell.__init__"><a class="viewcode-back" href="../simulation-index.html#objects.cell.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_center</span><span class="p">,</span> <span class="n">cell_radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cell_diffusivity</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cell information</span>
 
-<span class="sd">        Attributes:</span>
-<span class="sd">            center (np.ndarray): (x,y,z) coordinates of the cell center </span>
-<span class="sd">            diffusivity (float): intrinsic fiber diffusivity</span>
-<span class="sd">            radius (float): fiber radius</span>
+<span class="sd">        :param cell_center: (x,y,z) coordinates of the cell center </span>
+<span class="sd">        :type cell_center: np.ndarray</span>
+<span class="sd">        :param cell_radius: Intrinsic fiber diffusivity</span>
+<span class="sd">        :type cell_radius: float</span>
+<span class="sd">        :param cell_diffusivity: Fiber radius</span>
+<span class="sd">        :type cell_diffusivity: float</span>
 <span class="sd">        &quot;&quot;&quot;</span>
                 
         <span class="bp">self</span><span class="o">.</span><span class="n">center</span>      <span class="o">=</span> <span class="n">cell_center</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">diffusivity</span> <span class="o">=</span> <span class="n">cell_diffusivity</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">radius</span>      <span class="o">=</span> <span class="n">cell_radius</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radius</span>      <span class="o">=</span> <span class="n">cell_radius</span></div>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Setters &quot;&quot;&quot;</span>     
-    <span class="k">def</span> <span class="nf">_set_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_center</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<div class="viewcode-block" id="cell._set_center"><a class="viewcode-back" href="../simulation-index.html#objects.cell._set_center">[docs]</a>    <span class="k">def</span> <span class="nf">_set_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell_center</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Records the center coordinates for the specified cell</span>
+
+<span class="sd">        :param cell_center: An array containing the cell center coordinates</span>
+<span class="sd">        :type cell_center: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
         <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">cell_center</span>
-        <span class="k">return</span>
+        <span class="k">return</span></div>
     
-    <span class="k">def</span> <span class="nf">_set_diffusivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D0</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="cell._set_diffusivity"><a class="viewcode-back" href="../simulation-index.html#objects.cell._set_diffusivity">[docs]</a>    <span class="k">def</span> <span class="nf">_set_diffusivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D0</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Records the diffusivity within the specified cell in units of :math:`{\mathrm{μm}^2}\\, \mathrm{ms}^{-1}`</span>
+
+<span class="sd">        :param D0: The diffusivity within the cell, assumed to be equal to the user-specified free water diffusivity</span>
+<span class="sd">        :type D0: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>     
         <span class="bp">self</span><span class="o">.</span><span class="n">diffusivity</span> <span class="o">=</span> <span class="n">D0</span>
-        <span class="k">return</span>
+        <span class="k">return</span></div>
     
-    <span class="k">def</span> <span class="nf">_set_radius</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<div class="viewcode-block" id="cell._set_radius"><a class="viewcode-back" href="../simulation-index.html#objects.cell._set_radius">[docs]</a>    <span class="k">def</span> <span class="nf">_set_radius</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Records the radius of the specified cell, in units of :math:`{\mathrm{μm}}`</span>
+
+<span class="sd">        :param radius: The cell radius</span>
+<span class="sd">        :type radius: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
         <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">radius</span>
-        <span class="k">return</span>
+        <span class="k">return</span></div>
 <span class="w">    </span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Getters &quot;&quot;&quot;</span>
         
-    <span class="k">def</span> <span class="nf">_get_center</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span>
+<div class="viewcode-block" id="cell._get_center"><a class="viewcode-back" href="../simulation-index.html#objects.cell._get_center">[docs]</a>    <span class="k">def</span> <span class="nf">_get_center</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns an array containing coordinates for the center of the specified cell</span>
+
+<span class="sd">        :return: An array containing the cell center coordinates</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>    
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span></div>
     
-    <span class="k">def</span> <span class="nf">_get_diffusivity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusivity</span>
+<div class="viewcode-block" id="cell._get_diffusivity"><a class="viewcode-back" href="../simulation-index.html#objects.cell._get_diffusivity">[docs]</a>    <span class="k">def</span> <span class="nf">_get_diffusivity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the diffusivity within the specified cell in units of :math:`{\mathrm{μm}^2}\\, \mathrm{ms}^{-1}`</span>
+
+<span class="sd">        :return: The diffusivity within the cell</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>    
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">diffusivity</span></div>
     
-    <span class="k">def</span> <span class="nf">_get_radius</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span></div>
+<div class="viewcode-block" id="cell._get_radius"><a class="viewcode-back" href="../simulation-index.html#objects.cell._get_radius">[docs]</a>    <span class="k">def</span> <span class="nf">_get_radius</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the radius of the specified cell, in units of :math:`{\mathrm{μm}}`</span>
+
+<span class="sd">        :return: The cell radius</span>
+<span class="sd">        :rtype: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>   
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span></div></div>
     
     
 <div class="viewcode-block" id="spin"><a class="viewcode-back" href="../simulation-index.html#objects.spin">[docs]</a><span class="k">class</span> <span class="nc">spin</span><span class="p">():</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spin_position_t1m</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="spin.__init__"><a class="viewcode-back" href="../simulation-index.html#objects.spin.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spin_position_t1m</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Spin information</span>
 
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        spin information</span>
-
-<span class="sd">        Attributes:</span>
-<span class="sd">            position_t1m (np.ndarray): initial spin position</span>
-<span class="sd">            position_t2p (np.ndarray): final spin position</span>
-<span class="sd">            in_fiber_index (int): index of resident fiber (if the spin resides in a fiber)</span>
-<span class="sd">            in_cell_index (int): index of the resident cell (if the spin resides in a cell) </span>
-<span class="sd">            in_water_index (int): spin index if in water</span>
+<span class="sd">        :param spin_position_t1m: Initial spin position</span>
+<span class="sd">        :type spin_position_t1m: np.ndarray</span>
+<span class="sd">        :param spin_position_t1m: Final spin position</span>
+<span class="sd">        :type spin_position_t1m: np.ndarray</span>
+<span class="sd">        :param in_fiber_index: Index of resident fiber (if the spin resides in a fiber)</span>
+<span class="sd">        :type in_fiber_index: int</span>
+<span class="sd">        :param fiber_bundle: Index of resident fiber bundle (if the spin resides in a fiber)</span>
+<span class="sd">        :type fiber_bundle: int</span>
+<span class="sd">        :param in_cell_index: Index of the resident cell (if the spin resides in a cell) </span>
+<span class="sd">        :type in_cell_index: int</span>
+<span class="sd">        :param in_water_index: Spin index if in water</span>
+<span class="sd">        :type in_water_index: int</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">position_t1m</span> <span class="o">=</span> <span class="n">spin_position_t1m</span>
@@ -177,59 +243,114 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">in_cell_index</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">in_water_index</span> <span class="o">=</span> <span class="kc">None</span>
         
-        <span class="k">return</span> 
+        <span class="k">return</span> </div>
     
-    <span class="k">def</span> <span class="nf">_set_fiber_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span> <span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<div class="viewcode-block" id="spin._set_fiber_index"><a class="viewcode-back" href="../simulation-index.html#objects.spin._set_fiber_index">[docs]</a>    <span class="k">def</span> <span class="nf">_set_fiber_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span> <span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Records the index of the fiber in which the spin resides.</span>
+
+<span class="sd">        :param index: Index of resident fiber (if the spin resides in a fiber)</span>
+<span class="sd">        :type index: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
         <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">in_fiber_index</span> <span class="o">=</span> <span class="n">index</span>
-        <span class="k">return</span>
+        <span class="k">return</span></div>
     
-    <span class="k">def</span> <span class="nf">_set_fiber_bundle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span> <span class="p">:</span> <span class="nb">int</span><span class="p">):</span> <span class="c1"># call after _set_fiber_index</span>
+<div class="viewcode-block" id="spin._set_fiber_bundle"><a class="viewcode-back" href="../simulation-index.html#objects.spin._set_fiber_bundle">[docs]</a>    <span class="k">def</span> <span class="nf">_set_fiber_bundle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span> <span class="p">:</span> <span class="nb">int</span><span class="p">):</span> <span class="c1"># call after _set_fiber_index</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Records the fiber bundle for a spin residing in a fiber </span>
+
+<span class="sd">        :param index: Index of the resident fiber bundle (if the spin resides in a fiber) </span>
+<span class="sd">        :type index: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>     
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_fiber_index</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fiber_bundle</span> <span class="o">=</span> <span class="n">index</span>
             <span class="k">return</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span>
+            <span class="k">return</span></div>
 
-    <span class="k">def</span> <span class="nf">_set_position_t2p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<div class="viewcode-block" id="spin._set_position_t2p"><a class="viewcode-back" href="../simulation-index.html#objects.spin._set_position_t2p">[docs]</a>    <span class="k">def</span> <span class="nf">_set_position_t2p</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Records the position of the spin after diffusion time :math:`\Delta`.</span>
+
+<span class="sd">        :param position: Final spin position </span>
+<span class="sd">        :type position: np.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">position_t2p</span> <span class="o">=</span> <span class="n">position</span>
-        <span class="k">return</span>
+        <span class="k">return</span></div>
     
-    <span class="k">def</span> <span class="nf">_set_cell_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span> <span class="p">:</span> <span class="nb">int</span><span class="p">):</span> <span class="c1"># don&#39;t call this before _set_fiber_index ! </span>
+<div class="viewcode-block" id="spin._set_cell_index"><a class="viewcode-back" href="../simulation-index.html#objects.spin._set_cell_index">[docs]</a>    <span class="k">def</span> <span class="nf">_set_cell_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span> <span class="p">:</span> <span class="nb">int</span><span class="p">):</span> <span class="c1"># don&#39;t call this before _set_fiber_index! </span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Records the index of the spin if it resides in a cell </span>
+
+<span class="sd">        :param index: Index of the resident cell (if the spin resides in a cell) </span>
+<span class="sd">        :type index: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_fiber_index</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">in_cell_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
             <span class="k">return</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">in_cell_index</span> <span class="o">=</span> <span class="n">index</span>
-        <span class="k">return</span>
-    <span class="k">def</span> <span class="nf">_set_water_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span> <span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span></div>
+<div class="viewcode-block" id="spin._set_water_index"><a class="viewcode-back" href="../simulation-index.html#objects.spin._set_water_index">[docs]</a>    <span class="k">def</span> <span class="nf">_set_water_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span> <span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Records the index of the spin if it resides in water </span>
+
+<span class="sd">        :param index: Spin index if in water</span>
+<span class="sd">        :type index: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>             
         <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">in_water_index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
             <span class="k">return</span> 
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">in_water_index</span> <span class="o">=</span> <span class="n">index</span>
-        <span class="k">return</span>
+        <span class="k">return</span></div>
             
     
-    <span class="k">def</span> <span class="nf">_get_position_t1m</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_t1m</span>
+<div class="viewcode-block" id="spin._get_position_t1m"><a class="viewcode-back" href="../simulation-index.html#objects.spin._get_position_t1m">[docs]</a>    <span class="k">def</span> <span class="nf">_get_position_t1m</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the initial position of the spin</span>
+
+<span class="sd">        :return: Initial spin position</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_t1m</span></div>
     
-    <span class="k">def</span> <span class="nf">_get_position_t2p</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_t2p</span>
+<div class="viewcode-block" id="spin._get_position_t2p"><a class="viewcode-back" href="../simulation-index.html#objects.spin._get_position_t2p">[docs]</a>    <span class="k">def</span> <span class="nf">_get_position_t2p</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the final position of the spin</span>
+
+<span class="sd">        :return: Final spin position</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_t2p</span></div>
     
-    <span class="k">def</span> <span class="nf">_get_fiber_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_fiber_index</span>
+<div class="viewcode-block" id="spin._get_fiber_index"><a class="viewcode-back" href="../simulation-index.html#objects.spin._get_fiber_index">[docs]</a>    <span class="k">def</span> <span class="nf">_get_fiber_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the index of the fiber in which the spin resides.</span>
+
+<span class="sd">        :return: Index of the resident fiber bundle (if the spin resides in a fiber) </span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_fiber_index</span></div>
     
-    <span class="k">def</span> <span class="nf">_get_bundle_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fiber_bundle</span>
+<div class="viewcode-block" id="spin._get_bundle_index"><a class="viewcode-back" href="../simulation-index.html#objects.spin._get_bundle_index">[docs]</a>    <span class="k">def</span> <span class="nf">_get_bundle_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the fiber bundle index for a spin residing in a fiber </span>
+
+<span class="sd">        :return: Index of the resident fiber bundle (if the spin resides in a fiber) </span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fiber_bundle</span></div>
     
-    <span class="k">def</span> <span class="nf">_get_cell_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_cell_index</span>
+<div class="viewcode-block" id="spin._get_cell_index"><a class="viewcode-back" href="../simulation-index.html#objects.spin._get_cell_index">[docs]</a>    <span class="k">def</span> <span class="nf">_get_cell_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the index of the spin if it resides in a cell </span>
+
+<span class="sd">        :return: Index of the resident cell (if the spin resides in a cell) </span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_cell_index</span></div>
     
-    <span class="k">def</span> <span class="nf">_get_water_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_water_index</span></div>
+<div class="viewcode-block" id="spin._get_water_index"><a class="viewcode-back" href="../simulation-index.html#objects.spin._get_water_index">[docs]</a>    <span class="k">def</span> <span class="nf">_get_water_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the water index of the specified spin</span>
+
+<span class="sd">        :return: Spin index if in water</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_water_index</span></div></div>
     
 
 

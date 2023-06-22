@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install-index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test-index.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart-index.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../theory-index.html">Theory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../simulation-index.html">Simulation Module</a></li>
@@ -94,18 +95,24 @@
                                 <span class="n">cell_radii_cuda</span><span class="p">:</span>           <span class="n">numba</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">cudadrv</span><span class="o">.</span><span class="n">devicearray</span><span class="o">.</span><span class="n">DeviceNDArray</span><span class="p">,</span>
                                 <span class="n">spin_positions_cuda</span><span class="p">:</span>       <span class="n">numba</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">cudadrv</span><span class="o">.</span><span class="n">devicearray</span><span class="o">.</span><span class="n">DeviceNDArray</span>
                                 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Locate spins within resident microstructural elements</span>
-<span class="sd">    </span>
-<span class="sd">    Args:</span>
-<span class="sd">        resident_fiber_indxs_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): Array to write resident fiber indices to</span>
-<span class="sd">        resident_cell_indxs_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): Array to write resident cell indicies to</span>
-<span class="sd">        fiber_centers_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): coordinates of the fiber centers</span>
-<span class="sd">        fiber_directions_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): directions of the fibers</span>
-<span class="sd">        fiber_radii_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): fiber radii</span>
-<span class="sd">        cell_centers_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): coordinates of the cell centers</span>
-<span class="sd">        cell_radii_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): cell radii</span>
-<span class="sd">        spin_positions_cuda (numba.cuda.cudadrv.devicearray.DeviceNDArray): initial spin positions</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Locate spins within resident microstructural elements</span>
+
+<span class="sd">    :param resident_fiber_indxs_cuda: Array to write resident fiber indices to</span>
+<span class="sd">    :type resident_fiber_indxs_cuda: CUDA Device Array</span>
+<span class="sd">    :param resident_cell_indxs_cuda: Array to write resident cell indices to</span>
+<span class="sd">    :type resident_cell_indxs_cuda: CUDA Device Array</span>
+<span class="sd">    :param fiber_centers_cuda:  Coordinates for the centers of each fiber</span>
+<span class="sd">    :type fiber_centers_cuda: CUDA Device Array</span>
+<span class="sd">    :param fiber_directions_cuda: Direction of each fiber</span>
+<span class="sd">    :type fiber_directions_cuda: CUDA Device Array</span>
+<span class="sd">    :param fiber_radii_cuda: Radii of each fiber</span>
+<span class="sd">    :type fiber_radii_cuda: CUDA Device Array</span>
+<span class="sd">    :param cell_centers_cuda: Coordinates for the centers of each cell</span>
+<span class="sd">    :type cell_centers_cuda: CUDA Device Array</span>
+<span class="sd">    :param cell_radii_cuda: Radii of each cell</span>
+<span class="sd">    :type cell_radii_cuda: CUDA Device Array</span>
+<span class="sd">    :param spin_positions_cuda: Initial spin positions</span>
+<span class="sd">    :type spin_positions_cuda: CUDA Device Array</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">i</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
   
@@ -131,8 +138,7 @@
     <span class="k">return</span></div>
 
 <div class="viewcode-block" id="_find_spin_locations"><a class="viewcode-back" href="../simulation-index.html#spin_init_positions._find_spin_locations">[docs]</a><span class="k">def</span> <span class="nf">_find_spin_locations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    helper function to find initial spin locations</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function to find initial spin locations</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">resident_fiber_indxs_cuda</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">to_device</span><span class="p">(</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">),),</span> <span class="n">dtype</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span>
     <span class="n">resident_cell_indxs_cuda</span>  <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">to_device</span><span class="p">(</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">),),</span> <span class="n">dtype</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span>

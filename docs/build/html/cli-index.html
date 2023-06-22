@@ -43,11 +43,33 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install-index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="test-index.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart-index.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="theory-index.html">Theory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="simulation-index.html">Simulation Module</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Command Line Interface</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#arguments">Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#top-level-cli-module-selection">Top-Level CLI (Module Selection)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#master_cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#simulation-cli">Simulation CLI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#src.cli.CLI"><code class="docutils literal notranslate"><span class="pre">CLI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#src.cli.CLI.add_subparser_args"><code class="docutils literal notranslate"><span class="pre">CLI.add_subparser_args()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.cli.CLI.run"><code class="docutils literal notranslate"><span class="pre">CLI.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#src.cli.CLI.validate_args"><code class="docutils literal notranslate"><span class="pre">CLI.validate_args()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#testing-cli">Testing CLI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#tests.cli.CLI"><code class="docutils literal notranslate"><span class="pre">CLI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#tests.cli.CLI.add_subparser_args"><code class="docutils literal notranslate"><span class="pre">CLI.add_subparser_args()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.cli.CLI.run"><code class="docutils literal notranslate"><span class="pre">CLI.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.cli.CLI.validate_args"><code class="docutils literal notranslate"><span class="pre">CLI.validate_args()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -78,15 +100,127 @@
              
   <section id="command-line-interface">
 <h1>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Permalink to this heading"></a></h1>
-<section id="arguments">
-<h2>Arguments<a class="headerlink" href="#arguments" title="Permalink to this heading"></a></h2>
+<section id="top-level-cli-module-selection">
+<h2>Top-Level CLI (Module Selection)<a class="headerlink" href="#top-level-cli-module-selection" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="master_cli.main">
+<span class="sig-prename descclassname"><span class="pre">master_cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/master_cli.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#master_cli.main" title="Permalink to this definition"></a></dt>
+<dd><p>Parses module selection (<code class="docutils literal notranslate"><span class="pre">simulate</span></code> or <code class="docutils literal notranslate"><span class="pre">run_tests</span></code>) and invokes the relevant functions</p>
 <dl class="simple">
-<dt>This is a list</dt><dd><ol class="arabic simple">
-<li><p>Arg1</p></li>
-<li><p>Arg2</p></li>
+<dt>Arguments</dt><dd><ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">simulate</span></code>: Used to run the simulator normally. See <a class="reference internal" href="#simulation-cli">Simulation CLI</a> below.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">run_tests</span></code>: Used to run the installation and accuracy tests. See <a class="reference internal" href="#testing-cli">Testing CLI</a> below.</p></li>
 </ol>
 </dd>
 </dl>
+</dd></dl>
+
+</section>
+<section id="simulation-cli">
+<span id="id1"></span><h2>Simulation CLI<a class="headerlink" href="#simulation-cli" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.cli.CLI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.cli.</span></span><span class="sig-name descname"><span class="pre">CLI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subparsers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/cli.html#CLI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cli.CLI" title="Permalink to this definition"></a></dt>
+<dd><p>Command line interface for running the simDRIFT diffusion MR simulator</p>
+<dl class="simple">
+<dt>Arguments</dt><dd><ol class="arabic simple">
+<li></li>
+</ol>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.cli.CLI.add_subparser_args">
+<span class="sig-name descname"><span class="pre">add_subparser_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">&lt;module</span> <span class="pre">'argparse'</span> <span class="pre">from</span> <span class="pre">'C:\\Users\\kainen.utt\\AppData\\Local\\Programs\\Python\\Python38\\lib\\argparse.py'&gt;</span></span></span><a class="reference internal" href="_modules/src/cli.html#CLI.add_subparser_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cli.CLI.add_subparser_args" title="Permalink to this definition"></a></dt>
+<dd><p>Defines subparsers for each simulation parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>argparse object containing subparsers for each simulation parameter</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>argparse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.cli.CLI.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/cli.html#CLI.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cli.CLI.run" title="Permalink to this definition"></a></dt>
+<dd><p>Run simulation using parsed user inputs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>dictionary</em>) – User inputs for relevant parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.cli.CLI.validate_args">
+<span class="sig-name descname"><span class="pre">validate_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/cli.html#CLI.validate_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.cli.CLI.validate_args" title="Permalink to this definition"></a></dt>
+<dd><p>Validation step for parsed user input arguments</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>dictionary</em>) – Parsed user inputs</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed and validated arguments</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dictionary</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="testing-cli">
+<span id="id2"></span><h2>Testing CLI<a class="headerlink" href="#testing-cli" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.cli.CLI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.cli.</span></span><span class="sig-name descname"><span class="pre">CLI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subparsers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/cli.html#CLI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.cli.CLI" title="Permalink to this definition"></a></dt>
+<dd><p>Command line interface for running the simDRIFT test suite</p>
+<dl class="simple">
+<dt>Arguments</dt><dd><p>.None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.cli.CLI.add_subparser_args">
+<span class="sig-name descname"><span class="pre">add_subparser_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/cli.html#CLI.add_subparser_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.cli.CLI.add_subparser_args" title="Permalink to this definition"></a></dt>
+<dd><p>Adds subparser for the <code class="docutils literal notranslate"><span class="pre">run_tests</span></code> command.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>argparse object containing of subparsers for each input parameter</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>argparse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.cli.CLI.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/cli.html#CLI.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.cli.CLI.run" title="Permalink to this definition"></a></dt>
+<dd><p>Passes to the test suite file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>str</em>) – input arguments (Note, <code class="docutils literal notranslate"><span class="pre">run_tests</span></code> accepts no arguments)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.cli.CLI.validate_args">
+<span class="sig-name descname"><span class="pre">validate_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/cli.html#CLI.validate_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tests.cli.CLI.validate_args" title="Permalink to this definition"></a></dt>
+<dd><p>Function to validate input arguments for testing</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<em>str</em>) – input arguments (Note, <code class="docutils literal notranslate"><span class="pre">run_tests</span></code> accepts no arguments)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 </section>
 

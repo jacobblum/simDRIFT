@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install-index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test-index.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart-index.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../theory-index.html">Theory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../simulation-index.html">Simulation Module</a></li>
@@ -89,6 +90,11 @@
 
 
 <div class="viewcode-block" id="_caclulate_volumes"><a class="viewcode-back" href="../simulation-index.html#diffusion._caclulate_volumes">[docs]</a><span class="k">def</span> <span class="nf">_caclulate_volumes</span><span class="p">(</span><span class="n">spins</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculates emprical volume fraction for each simulated compartment (i.e., fibers, cells, and water)</span>
+
+<span class="sd">    :param spins: A one-dimensional list (length = ``n_walkers``) containing each instance of ``objects.spin()``. Each entry corresponds to one spin from the spin ensemble. </span>
+<span class="sd">    :type spins: list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">fiber_spins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">spin</span><span class="o">.</span><span class="n">_get_bundle_index</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">spin</span><span class="o">.</span><span class="n">_get_bundle_index</span><span class="p">()</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">])</span>
     <span class="n">cells</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">spin</span><span class="o">.</span><span class="n">_get_cell_index</span><span class="p">()</span> <span class="k">for</span> <span class="n">spin</span> <span class="ow">in</span> <span class="n">spins</span><span class="p">])</span>
 
@@ -103,41 +109,20 @@
         <span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">[</span><span class="n">cells</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">spins</span><span class="p">)))</span></div>
         
 <div class="viewcode-block" id="_simulate_diffusion"><a class="viewcode-back" href="../simulation-index.html#diffusion._simulate_diffusion">[docs]</a><span class="k">def</span> <span class="nf">_simulate_diffusion</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Iterates over the range :math:`t \in [0, \Delta ]` with a step size of :math:`\dd{t}`.</span>
 
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">         Helper function to simulate the diffusion</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">         - self  : the dmri_simulation object</span>
-
-<span class="sd">         - spins : list of spin objects</span>
-
-<span class="sd">         - cells : list of cell objects</span>
-
-<span class="sd">         - fibers : list of fiber objects</span>
-
-<span class="sd">         - Delta : The diffusion time</span>
-
-<span class="sd">         - dt: Time discretization parameter. Also, by the narrow pulse approximation dt is also equal to delta</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">         - Updated spin trajectories within each instance of the spin object in the spin list</span>
-
-<span class="sd">        Notes</span>
-<span class="sd">        -----</span>
-<span class="sd">         - Rejection Sampling</span>
-
-<span class="sd">        References</span>
-<span class="sd">        ----------</span>
-<span class="sd">         - Discussions with S.K. Song</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-<span class="w">    </span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot; Declare Cuda Device Arrays</span>
-
-<span class="sd">    - Remark: At each iteration the updated spin position is written to spin_positions_cuda </span>
-<span class="sd">      </span>
+<span class="sd">    :param spins: A one-dimensional list (length = ``n_walkers``) containing each instance of ``objects.spin()``. Each entry corresponds to one spin from the spin ensemble. </span>
+<span class="sd">    :type spins: list</span>
+<span class="sd">    :param cells: A one-dimensional list (length = ``n_cells``) containing each instance of ``objects.cell()``. Each entry corresponds to one cell within the simulated imaging voxel. </span>
+<span class="sd">    :type cells: list</span>
+<span class="sd">    :param fibers: A list (size = ``n_fibers``\ :math:`\\times`\ ``n_fibers``) containing each instance of ``objects.fiber()``. Each entry corresponds to one fiber within the simulated imaging voxel. </span>
+<span class="sd">    :type fibers: list</span>
+<span class="sd">    :param Delta: The diffusion time supplied by the user, in units of milliseconds.</span>
+<span class="sd">    :type Delta: float</span>
+<span class="sd">    :param dt: The user-supplied duration for each time step, in units of milliseconds. Assumed to be equal to :math:`\delta` under the narrow-pulse approximation.</span>
+<span class="sd">    :type dt: float</span>
+<span class="sd">    :param water_diffusivity: The user-supplied diffusivity for free water, in units of :math:`{\mathrm{μm}^2}\\, \mathrm{ms}^{-1}`.</span>
+<span class="sd">    :type water_diffusivity: float</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_caclulate_volumes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spins</span><span class="p">)</span>
@@ -207,12 +192,21 @@
                                <span class="n">cell_radii</span><span class="p">,</span>
                                <span class="n">water_step</span><span class="p">,</span>  
                                <span class="n">void</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Parameters:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function to segment each spin into the relevant ``physics`` module for its resident compartment</span>
 
-<span class="sd">    rng_states:</span>
-<span class="sd">    spinPositions: (N_spins, 3) numpy array</span>
-<span class="sd">    spin_in_fiber_key: (N_spins, ) numpy array, the spin_in_fiber[i] is the fiber index of the i-th spin. -1 if spin not in fiber.</span>
+<span class="sd">    :param random_states: Randomized states</span>
+<span class="sd">    :param spin_positions: Initial spin positions</span>
+<span class="sd">    :param spin_in_fiber_at_index: Spin indices for each fiber</span>
+<span class="sd">    :param fiber_centers: Geometric centers of each fiber</span>
+<span class="sd">    :param fiber_step: Length of diffusion step to take for each fiber type, in units of micrometers</span>
+<span class="sd">    :param fiber_radii: Radius of each fiber, in units of micrometers</span>
+<span class="sd">    :param fiber_directions: Relative fiber rotations</span>
+<span class="sd">    :param spin_in_cell_at_index: Spin indices for each cell</span>
+<span class="sd">    :param cell_centers: Geometric centers for each cell</span>
+<span class="sd">    :param cell_step: Length of diffusion step to take for each cell type, in units of micrometers</span>
+<span class="sd">    :param cell_radii: Radius of each cell, in units of micrometers</span>
+<span class="sd">    :param water_step: Length of diffusion step to take in free water, in units of micrometers</span>
+<span class="sd">    :param void: Boolean argument, True if fiber configuration is void, False otherwise</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">i</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="n">spin_positions</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>

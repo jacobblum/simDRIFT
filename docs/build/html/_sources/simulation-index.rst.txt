@@ -4,8 +4,18 @@ Simulation Module
 
 .. _mainEx:
 
-Main Script
+Inputs and Launchers
 ==============================================
+
+Parameters Class
+------------------
+.. _Parameters:
+
+.. autoclass:: simulation.Parameters
+     :members: 
+
+Simulation Class
+-------------------
 
 .. autoclass:: simulation.dmri_simulation
      :members: 
@@ -46,7 +56,7 @@ Setup Functions
         :param spin_positions_cuda: Array containing the initial spin positions
         :type spin_positions_cuda: CUDA ND Array
 
-.. _classObjs:
+.. _Class Objects:
 
 Class Objects
 =============================================
@@ -57,7 +67,7 @@ Cells
 -------------------------------
 
 .. autoclass:: objects.cell
-     :members: _set_center, _set_diffusivity, _set_radius, _get_center, _get_diffusivity, _get_radius
+     :members: __init__, _set_center, _set_diffusivity, _set_radius, _get_center, _get_diffusivity, _get_radius
 
 .. _fiberObj:
 
@@ -65,7 +75,7 @@ Fibers
 -------------------------------
 
 .. autoclass:: objects.fiber
-     :members: _get_center, _get_bundle, _get_direction, _get_diffusivity, _get_radius, 
+     :members: __init__, _get_center, _get_bundle, _get_direction, _get_diffusivity, _get_radius
 
 .. _spinObj:
 
@@ -73,7 +83,7 @@ Spins
 -------------------------------
 
 .. autoclass:: objects.spin
-     :members:
+     :members: __init__, _set_fiber_index, _set_fiber_bundle, _set_position_t2p, _set_cell_index, _set_water_index, _get_position_t1m, _get_position_t2p, _get_fiber_index, _get_bundle_index, _get_cell_index, _get_water_index
 
 Diffusion Physics
 =============================================

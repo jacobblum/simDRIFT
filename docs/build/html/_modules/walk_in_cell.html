@@ -41,6 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../install-index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../test-index.html">Test Suite</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../quickstart-index.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../theory-index.html">Theory</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../simulation-index.html">Simulation Module</a></li>
@@ -81,33 +82,43 @@
 
 <div class="viewcode-block" id="_diffusion_in_cell"><a class="viewcode-back" href="../simulation-index.html#walk_in_cell._diffusion_in_cell">[docs]</a><span class="nd">@numba</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_diffusion_in_cell</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">random_states</span><span class="p">,</span> <span class="n">cell_center</span><span class="p">,</span> <span class="n">cell_radii</span><span class="p">,</span> <span class="n">cell_step</span><span class="p">,</span> <span class="n">fiber_centers</span><span class="p">,</span> <span class="n">fiber_radii</span><span class="p">,</span> <span class="n">fiber_directions</span><span class="p">,</span> <span class="n">spin_positions</span><span class="p">,</span> <span class="n">void</span><span class="p">):</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Rejection-sample random steps of a spin residing within a cell in the imaging voxel. Note that the rejection criteria is if the spin steps outside of the cell. Thus, the </span>
-<span class="sd">    spin is confined to the cell. This is reasonable so long as the diffusion times simulated does not exceed the intra-cellular pre-exchangle lifetime. </span>
-<span class="sd">    </span>
-<span class="sd">    Args:</span>
-<span class="sd">        i (int): The absolute position of the current thread in the entire grid of blocks</span>
-<span class="sd">        random_states (numba.cuda.cudadrv.devicearray.DeviceNDArray): xoroshiro128p random states</span>
-<span class="sd">        cell_center (numba.cuda.cudadrv.devicearray.DeviceNDArray): cordinates of the cell center</span>
-<span class="sd">        cell_radii (float): the radius of the cell (um)</span>
-<span class="sd">        cell_step (float): step size</span>
-<span class="sd">        fiber_centers (numba.cuda.cudadrv.devicearray.DeviceNDArray): cordinates of the fiber centers</span>
-<span class="sd">        fiber_radii (numba.cuda.cudadrv.devicearray.DeviceNDArray): radii of the fibers</span>
-<span class="sd">        fiber_directions (numba.cuda.cudadrv.devicearray.DeviceNDArray): directions of the fiber centers</span>
-<span class="sd">        spin_positions (numba.cuda.cudadrv.devicearray.DeviceNDArray: array to write updated spin positions to</span>
-<span class="sd">        void (bool): void configuration </span>
-<span class="sd">    </span>
-<span class="sd">    Shapes:</span>
-<span class="sd">        random_states: (n_walkers,) where n_walkers is an input parameter denoting the number of spins in the ensemble</span>
-<span class="sd">        cell_center: (3,)</span>
-<span class="sd">        fiber_centers: (n_fibers x n_fibers, 3) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel</span>
-<span class="sd">        fiber_radii (n_fibers x n_fibers, ) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel</span>
-<span class="sd">        fiber_directions: (n_fibers x n_fibers, 3) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel</span>
-<span class="sd">        spin_positions: (n_walkers, 3) where n_walkers is an input parameter denoting the number of spins in the ensemble  </span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simulated Brownian motion of a spin confined to within in a cell, implemented via random walk with rejection sampling for proposed steps beyond the cell membrane. Note that this implementation assumes zero exchange between compartments and is therefore only pysically-accurate for :math:`\Delta &lt; {\\tau_{i}}` [1]_. </span>
 
-<span class="sd">    References:</span>
-<span class="sd">    [1] Yang DM, Huettner JE, Bretthorst GL, Neil JJ, Garbow JR, Ackerman JJH. Intracellular water preexchange lifetime in neurons and astrocytes. Magn Reson Med. 2018 Mar;79(3):1616-1627. doi: 10.1002/mrm.26781. Epub 2017 Jul 4. PMID: 28675497; PMCID: PMC5754269.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    :param i: Absolute index of the current thread within the block grid</span>
+<span class="sd">    :type i: int</span>
+<span class="sd">    :param random_states: ``xoroshiro128p`` random states</span>
+<span class="sd">    :type random_states: numba.cuda.cudadrv.devicearray.DeviceNDArray</span>
+<span class="sd">    :param cell_center: Coordinates of the cell centers</span>
+<span class="sd">    :type cell_center: numba.cuda.cudadrv.devicearray.DeviceNDArray</span>
+<span class="sd">    :param cell_radii: Cell radius, in units of :math:`{\mathrm{μm}}`</span>
+<span class="sd">    :type cell_radii: float</span>
+<span class="sd">    :param cell_step: Distance travelled by resident spins for each time step :math:`\dd{t}`</span>
+<span class="sd">    :type cell_step: float</span>
+<span class="sd">    :param fiber_centers: Coordinates of the fiber centers</span>
+<span class="sd">    :type fiber_centers: numba.cuda.cudadrv.devicearray.DeviceNDArray</span>
+<span class="sd">    :param fiber_radii: Radii of each fiber type</span>
+<span class="sd">    :type fiber_radii: numba.cuda.cudadrv.devicearray.DeviceNDArray</span>
+<span class="sd">    :param fiber_directions: Orientation of each fiber type</span>
+<span class="sd">    :type fiber_directions: numba.cuda.cudadrv.devicearray.DeviceNDArray</span>
+<span class="sd">    :param spin_positions: Array containing the updated spin positions</span>
+<span class="sd">    :type spin_positions: numba.cuda.cudadrv.devicearray.DeviceNDArray</span>
+<span class="sd">    :param void: Logical condition that is ``True`` if ``fiber_configuration`` = ``Void`` and ``False`` otherwise</span>
+<span class="sd">    :type void: bool</span>
+<span class="sd">    </span>
+<span class="sd">    **Shapes**</span>
+<span class="sd">        :random_states: </span>
+<span class="sd">            (n_walkers,) where n_walkers is an input parameter denoting the number of spins in the ensemble</span>
+<span class="sd">        :cell_center: </span>
+<span class="sd">            (3,)</span>
+<span class="sd">        :fiber_centers: </span>
+<span class="sd">            (n_fibers x n_fibers, 3) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel</span>
+<span class="sd">        :fiber_radii: </span>
+<span class="sd">            (n_fibers x n_fibers, ) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel</span>
+<span class="sd">        :fiber_directions: </span>
+<span class="sd">            (n_fibers x n_fibers, 3) where n_fibers is computed in a manner such that the fibers occupy the supplied fiber fraction of the imaging voxel</span>
+<span class="sd">        :spin_positions: </span>
+<span class="sd">            (n_walkers, 3) where n_walkers is an input parameter denoting the number of spins in the ensemble  </span>
+<span class="sd">    &quot;&quot;&quot;</span>    
 
     <span class="n">previous_position</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">shape</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">numba</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="n">proposed_new_position</span> <span class="o">=</span> <span class="n">cuda</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">shape</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">numba</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
