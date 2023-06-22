@@ -4,15 +4,9 @@
 # Required
 version: 2
 
-# Set the OS, Python version and other tools you might need
-build:
-  tools:
-    python: "3.10"
-    # You can also specify other tool versions:
-    # nodejs: "19"
-    # rust: "1.64"
-    # golang: "1.19"
-
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
-   configuration: docs/source/conf.py
+  builder: html
+  configuration: 
+  fail_on_warning: true
+   
