@@ -33,7 +33,7 @@ def test_trajectory_types(expected):
     for trajectory in trajectories:
         assert os.path.splitext(trajectory)[-1:] == (expected,)
 
-@pytest.mark.parametrize("input, expected", [('DBSI_99', 99), ('ABCD_102', 102), ('NODDI_145', 145)])
+@pytest.mark.parametrize("input, expected", [('DBSI_99', 99), ('ABCD', 103), ('NODDI_145', 145)])
 def test_signal_shapes(input, expected):
     """1. Check that the forward simulated signal matches the number of bvals and bvecs used in the 'imaging' experiment 
     """
