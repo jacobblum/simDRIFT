@@ -53,7 +53,7 @@ def _DBSI_99():
 
 
 def _ABCD():
-   """Returns b-values and (normalized) b-vectors for the popular aABCD scheme
+    """Returns b-values and (normalized) b-vectors for the popular aABCD scheme
 
     :return: b-values and (normalized) b-vectors
     :rtype: np.ndarray
