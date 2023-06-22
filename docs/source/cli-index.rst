@@ -2,10 +2,35 @@
 Command Line Interface
 ************************
 
-Arguments
-===============
+Top-Level CLI (Module Selection)
+==================================
 
-This is a list
-    1. Arg1
-    2. Arg2
+.. autofunction:: master_cli.main
+
+    Arguments
+        1. ``simulate``: Used to run the simulator normally. See `Simulation CLI`_ below.
+        2. ``run_tests``: Used to run the installation and accuracy tests. See `Testing CLI`_ below.
+
+.. _Simulation CLI:
+
+Simulation CLI
+==================================
+
+.. autoclass:: src.cli.CLI
+    :members:
+
+    Arguments
+        1. 
+
+.. _Testing CLI:
+
+Testing CLI
+==================================
+
+.. autoclass:: tests.cli.CLI
+    :members:
+
+    Arguments
+        None
+
     

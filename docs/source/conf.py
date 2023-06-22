@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath('../../src/configs'))
 sys.path.insert(0, os.path.abspath('../../src/data'))
 sys.path.insert(0, os.path.abspath('../../src/gui'))
 sys.path.insert(0, os.path.abspath('../../src/jp'))
+sys.path.insert(0, os.path.abspath('../../tests'))
 
 # Configuration file for the Sphinx documentation builder.
 #
