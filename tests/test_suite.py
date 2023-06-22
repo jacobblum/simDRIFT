@@ -10,8 +10,7 @@ import glob as glob
 ## Test Signals
 @pytest.mark.parametrize("expected", [('.nii',)])
 def test_signal_types(expected):
-    """
-    1. Check that the forward simulated signal is a Nifti file
+    """1. Check that the forward simulated signal is a Nifti file
     """
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     cmd = r"simDRIFT"
@@ -24,8 +23,7 @@ def test_signal_types(expected):
 
 @pytest.mark.parametrize("expected", [('.npy'),])
 def test_trajectory_types(expected):
-    """
-    1. Check that the forward simulated trajectory is a .npy file
+    """1. Check that the forward simulated trajectory is a .npy file
     """
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     cmd = r"simDRIFT"
@@ -37,8 +35,7 @@ def test_trajectory_types(expected):
 
 @pytest.mark.parametrize("input, expected", [('DBSI_99', 99), ('ABCD_102', 102), ('NODDI_145', 145)])
 def test_signal_shapes(input, expected):
-    """
-    1. Check that the forward simulated signal matches the number of bvals and bvecs used in the 'imaging' experiment 
+    """1. Check that the forward simulated signal matches the number of bvals and bvecs used in the 'imaging' experiment 
     """
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     cmd = r"simDRIFT"
@@ -49,8 +46,7 @@ def test_signal_shapes(input, expected):
 
 @pytest.mark.parametrize("input, expected", [((r'C:\Users\Jacob\Desktop\dMRI-MCSIM-Jacob-s-Version-Updated\Version_2.1.0\src\data\bval99', r'C:\Users\Jacob\Desktop\dMRI-MCSIM-Jacob-s-Version-Updated\Version_2.1.0\src\data\bvec99'), 99)])
 def test_custom_diffusion_scheme(input, expected):
-    """
-    1. Check that the forward simulated signal matches the number of bvals and bvecs used in the PGSE experiment w/ 'custom' 
+    """1. Check that the forward simulated signal matches the number of bvals and bvecs used in the PGSE experiment w/ 'custom' 
        bvals and bvecs (i.e., loaded in from a path)
     """
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -63,8 +59,7 @@ def test_custom_diffusion_scheme(input, expected):
 
 @pytest.mark.parametrize("input, expected", [(99, 99), (256 * 1e3, 256 * 1e3), (1e6,1e6,)])
 def test_trajectory_shapes(input, expected):
-    """
-    1. Check that the forward simulated trajectories match the number of simulated spins
+    """1. Check that the forward simulated trajectories match the number of simulated spins
     """
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     cmd = r"simDRIFT"
@@ -83,8 +78,7 @@ bvals, bvecs = diffusion_schemes.get_from_default('DBSI_99')
 
 @pytest.mark.parametrize("input, expected", [(3.0, 3.0), (1.0, 1.0), (2.0, 2.0)])
 def test_water_physics(input, expected):
-    """
-    1. Check that the forward simulated water-only signal corresponds to a diffusion tensor matching the input water diffusivity
+    """1. Check that the forward simulated water-only signal corresponds to a diffusion tensor matching the input water diffusivity
     2. Check that the forward simulated water-only signal corresponds to an isotropic diffusion tensor 
     """
     gtab = gradient_table(bvals, bvecs)
@@ -100,9 +94,8 @@ def test_water_physics(input, expected):
 
 @pytest.mark.parametrize("input, expected", [((1.0,2.0,2.5), (1.0,2.0,2.5)), ((1.0,1.5,2.0), (1.0,1.5,2.0)), ((1.0,1.0,1.5), (1.0,1.0,1.5))])
 def test_fiber_physics_multi(input, expected):
-    """
-    1. Check that the forward simulated fiber-only signal corresponds to a diffusion tensor matching the input fiber diffusivities
-    2. Check that the forward simulated fiber-only signal corresponds to an anisotropic diffusion tensor 
+    """1. Check that the forward simulated fiber-only signal corresponds to a diffusion tensor matching the input fiber diffusivities (with multiple fibers)
+    2. Check that the forward simulated fiber-only signal corresponds to an anisotropic diffusion tensor (with multiple fibers)
     """
     gtab = gradient_table(bvals, bvecs)
     tenmodel = dti.TensorModel(gtab)
@@ -123,6 +116,9 @@ def test_fiber_physics_multi(input, expected):
 
 @pytest.mark.parametrize("input, expected", [(1.0, 1.0)])
 def test_fiber_physics_single(input, expected):
+    """1. Check that the forward simulated fiber-only signal corresponds to a diffusion tensor matching the input fiber diffusivities (with only one fiber)
+    2. Check that the forward simulated fiber-only signal corresponds to an anisotropic diffusion tensor (with only one fiber)
+    """
     gtab = gradient_table(bvals, bvecs)
     tenmodel = dti.TensorModel(gtab)
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -135,10 +131,8 @@ def test_fiber_physics_single(input, expected):
 
 @pytest.mark.parametrize("input", [(1.0,1.0), (1.5,1.5), (2.0,2.0)])
 def test_cell_physics_multi(input):
-    """
-    1. Check that the forward simulated cell-only signal corresponds to an isotropic diffusion tensor
-       RMK: the inverse problem measured diffusivity here will strongly depend on the diffusion time, thus, this test only requires that 
-           the cell diffusion be isotropic  
+    """1. Check that the forward simulated cell-only signal corresponds to an isotropic diffusion tensor (for multiple cells)
+    'Note': the inverse problem measured diffusivity here will strongly depend on the diffusion time, thus, this test only requires that the cell diffusion be isotropic  
     """
     gtab = gradient_table(bvals, bvecs)
     tenmodel = dti.TensorModel(gtab)
@@ -152,10 +146,8 @@ def test_cell_physics_multi(input):
 
 @pytest.mark.parametrize("input", [(1.0)])
 def test_cell_physics_single(input):
-    """
-    1. Check that the forward simulated cell-only signal corresponds to an isotropic diffusion tensor
-       RMK: the inverse problem measured diffusivity here will strongly depend on the diffusion time, thus, this test only requires that 
-           the cell diffusion be isotropic  
+    """1. Check that the forward simulated cell-only signal corresponds to an isotropic diffusion tensor (for only one cell)
+    'Note': the inverse problem measured diffusivity here will strongly depend on the diffusion time, thus, this test only requires that the cell diffusion be isotropic    
     """
     gtab = gradient_table(bvals, bvecs)
     tenmodel = dti.TensorModel(gtab)
