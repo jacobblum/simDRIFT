@@ -61,7 +61,7 @@ To confirm that everything is working as expected, run the test suite:
 
 .. code-block:: bash
 
-     (simDRIFT) > simDRIFT run_tests
+     (simDRIFT) >simDRIFT run_tests
 
 
 Citing simDRIFT
