@@ -6,6 +6,8 @@ import nibabel as nb
 from dipy.core.gradients import gradient_table
 import dipy.reconst.dti as dti
 import glob as glob
+from pathlib import Path
+from src.data import diffusion_schemes
 
 ## Test Signals
 @pytest.mark.parametrize("expected", [('.nii',)])
@@ -44,7 +46,7 @@ def test_signal_shapes(input, expected):
     signal = nb.load(os.getcwd() + os.sep + 'signals' + os.sep + 'water_signal.nii').get_fdata()  
     assert signal.shape == (expected,)
 
-@pytest.mark.parametrize("input, expected", [((r'C:\Users\Jacob\Desktop\dMRI-MCSIM-Jacob-s-Version-Updated\Version_2.1.0\src\data\bval99', r'C:\Users\Jacob\Desktop\dMRI-MCSIM-Jacob-s-Version-Updated\Version_2.1.0\src\data\bvec99'), 99)])
+@pytest.mark.parametrize("input, expected", [((os.path.join(Path(__file__).parents[1], 'src' + os.sep + 'data' + os.sep + 'bval99'), os.path.join(Path(__file__).parents[1], 'src' + os.sep + 'data' + os.sep + 'bvec99')), 99)])
 def test_custom_diffusion_scheme(input, expected):
     """1. Check that the forward simulated signal matches the number of bvals and bvecs used in the PGSE experiment w/ 'custom' 
        bvals and bvecs (i.e., loaded in from a path)
@@ -70,8 +72,7 @@ def test_trajectory_shapes(input, expected):
 
 ## Test Physics
 
-sys.path.append(r"C:\Users\Jacob\Desktop\dMRI-MCSIM-Jacob-s-Version-Updated\Version_2.1.0")
-from src.data import diffusion_schemes
+
 bvals, bvecs = diffusion_schemes.get_from_default('DBSI_99')
 
 # RMK: All Diffusivity units are in um^2 / ms 
