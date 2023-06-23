@@ -106,7 +106,7 @@ This section guides you through submitting improvements to the documentation. Fo
 
 #### Submitting a Documentation Improvement Suggestion
 
-- Make sure that you have read the latest version of the [simDRIFT documentation] (https://simDRIFT.readthedocs.io/).
+- Make sure that you have read the latest version of the [simDRIFT documentation](https://simDRIFT.readthedocs.io/).
 - Catalog the scope of your suggested change – is it a change specific to one function or entry, or will it affect other documentation entries?
 - Determine whether the suggested change requires substantial restructuring or reformatting of the documentation?
 - Ensure that you have a concrete change to suggest – nebulous suggestions will be returned for further detail.
