@@ -124,6 +124,7 @@ def _place_fiber_grid(self):
 
 def _place_cells(self):
     """Routine for populating cells within the simulated imaging voxel
+    
     :param fibers: Class object containing fiber attributes. See `Class Objects`_ for further information.
     :type fibers: object
     :param cell_radii: Radii of each cell type, in units of :math:`{\mathrm{μm}}`
