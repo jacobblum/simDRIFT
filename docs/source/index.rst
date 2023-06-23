@@ -9,7 +9,7 @@ SimDRIFT Documentation Home
 
 SimDRIFT allows users to **Sim**\ ulate **D**\ iffusion in **R**\ ealistic **I**\ maging **F**\ eatures of **T**\ issue.
 
-This library exists to serve as a general and customizable Monte Carlo simulator for the forward problem of diffusion-weighted magnetic resonance imaging (dMRI) signal acquisition within complex, biophysically-relevant domains.
+This library exists to serve as a mesh-free, general and customizable Monte Carlo simulator for the forward problem of diffusion-weighted magnetic resonance imaging (dMRI) signal acquisition within complex, biophysically-relevant domains.
 
 Contents
 ----------------------
