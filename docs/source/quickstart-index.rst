@@ -106,14 +106,14 @@ that the diffusion process was indeed isotropic and that ``simDRIFT`` faithfully
 
 Three Crossing Fibers 
 ----------------
-Now, let's simulate an more complicated imaging voxel featuring three crossing fibers with intrinsic diffusivities :math:`1.0`, :math:`2.0`, and :math:`3.0`, and orientations :math:`0^{\circ}`, 
+Now, let's simulate a more complicated imaging voxel featuring three crossing fibers with intrinsic diffusivities :math:`1.0`, :math:`2.0`, and :math:`3.0`, and orientations :math:`0^{\circ}`, 
 :math:`45^{\circ}`, :math:`135^{\circ}` respectively
 
 .. code-block:: bash 
     
     (simDRIFT) > simDRIFT simulate --n_walkers 256000 --fiber_fractions .1,.1,.1 --fiber_diffusivities 1.,2.,3. --thetas 0,45,135 --fiber_radii 2.5,2.5,2.5 --cell_fractions 0.,0.
 
-The computation should finish within a five or 6 minutes.
+The computation should finish within a five or six minutes.
 
 .. code-block:: python
 
