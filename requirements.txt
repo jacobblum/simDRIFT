@@ -39,7 +39,7 @@ pluggy==1.2.0
     # via pytest
 pytest==7.4.0
     # via simDRIFT (setup.py)
-pytorch 
+torch 
     # via simDRIFT
 torchvision
     # via simDRIFT
