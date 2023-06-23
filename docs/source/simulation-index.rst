@@ -33,28 +33,7 @@ Setup Functions
      :members: _set_num_fibers, _set_num_cells, _place_fiber_grid, _place_cells, _place_spins
 
 .. automodule:: spin_init_positions
-     :members: _find_spin_locations
-     
-     .. py:function:: _find_spin_locations_kernel(resident_fiber_indxs_cuda, resident_cell_indxs_cuda, fiber_centers_cuda, fiber_directions_cuda, fiber_radii_cuda, cell_centers_cuda, cell_radii_cuda, spin_positions_cuda)
-     
-        Locate spins within resident microstructural elements
-
-        :param resident_fiber_indxs_cuda: Array to write resident fiber indices
-        :type resident_fiber_indxs_cuda: CUDA ND Array
-        :param resident_cell_indxs_cuda: Array to write resident cell indicies
-        :type resident_cell_indxs_cuda: CUDA ND Array
-        :param fiber_centers_cuda: Fiber coordinates
-        :type fiber_centers_cuda: CUDA ND Array
-        :param fiber_directions_cuda: Fiber direction vectors
-        :type fiber_directions_cuda: CUDA ND Array
-        :param fiber_radii_cuda: Fiber radii (µm)
-        :type fiber_radii_cuda: CUDA ND Array
-        :param cell_centers_cuda: Cell coordinates
-        :type cell_centers_cuda: CUDA ND Array
-        :param cell_radii_cuda: Cell radii (µm)
-        :type cell_radii_cuda: CUDA ND Array
-        :param spin_positions_cuda: Array containing the initial spin positions
-        :type spin_positions_cuda: CUDA ND Array
+     :members: _find_spin_locations, _find_spin_locations_kernel
 
 .. _Class Objects:
 
