@@ -4,7 +4,7 @@ Installation
 ----------------------
 
 Manual installation
-~~~~~~~~~~~~~~~~~~~
+----------------------
 
 The recommended installation is as follows. Create a conda environment and activate it:
 
