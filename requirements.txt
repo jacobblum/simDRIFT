@@ -44,3 +44,8 @@ tqdm==4.65.0
     # via dipy
 zipp==3.15.0
     # via importlib-resources
+
+furo==2021.11.16
+sphinx_rtd_theme==1.2.2
+sphinx==5.3.0
+
