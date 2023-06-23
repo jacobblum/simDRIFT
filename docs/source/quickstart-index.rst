@@ -107,7 +107,7 @@ that the diffusion process was indeed isotropic and that ``simDRIFT`` faithfully
 Three Crossing Fibers 
 ----------------
 Now, let's simulate a more complicated imaging voxel featuring three crossing fibers with intrinsic diffusivities :math:`1.0`, :math:`2.0`, and :math:`3.0`, and orientations :math:`0^{\circ}`, 
-:math:`45^{\circ}`, :math:`135^{\circ}` respectively
+:math:`45^{\circ}`, :math:`135^{\circ}` respectively. To do so, type the following command:
 
 .. code-block:: bash 
     
