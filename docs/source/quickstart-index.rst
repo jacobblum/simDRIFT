@@ -144,7 +144,7 @@ The computation should finish within a five or six minutes.
     :align: center
 
 
-The signal can by analyzed by...
+The signal can by analyzed with the below script
 
 .. code-block:: python 
 
