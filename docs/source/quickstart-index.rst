@@ -4,7 +4,6 @@ Quickstart
 In this tutorial, we will show how to use ``simDRIFT`` to execute some example simulations. 
 Throughout, we will make use of a few Python libraries.
 
-
 .. code-block:: python
     
     import numpy as np     
@@ -12,7 +11,8 @@ Throughout, we will make use of a few Python libraries.
     import matplotlib.pyplot as plt 
     import dipy.reconst.dti as dti
     from dipy.core.gradients import gradient_table
-  
+
+If you have an NVIDA-Cuda capable GPU, install ``simDRIFT`` by following these `instructions <https://simdrift.readthedocs.io/en/latest/install-index.html>`_ . If not, scroll to the bottom of the page and we will breifly go through an example using `Google Colab <https://colab.research.google.com/?utm_source=scs-index>`_. 
 
 Isotropic Diffusion
 ----------------
@@ -214,3 +214,56 @@ For the fibers, are estimated axial diffusivities are :math:`\lambda_{||}^{(1)} 
 The fiber values are exactly in the range that we would expect. Of course, although the water diffusivity is set to 3.0, because of the diffusion
 restricting barriers imposed by the fiber bundles, we can no longer hope to recover this number exactly (at reasonably high fiber densities).
 
+Google Colab
+--------------
+First, open a new Google Colab notebook. Then, nagivate to Edit> Notebook Settings and change the ``Hardware Accelorator`` to GPU. 
+To install Conda, type the following commands. 
+
+.. code-block:: python 
+   
+    [ ] #Install Conda
+        !pip install -q condacolab
+        import condacolab
+        condacolab.install()
+
+Now, we create the ``simDRIFT`` environment:
+
+.. code-block:: python 
+   
+   [1] #Create Conda Environment 
+       !conda create -n simDRIFT    
+
+To activate the environment:
+
+
+.. code-block:: python 
+   
+   [2] #Activate Conda Environment 
+       !source activate simDRIFT
+
+Now that the environment is activated, we can install the dependencies:
+
+
+.. code-block:: python 
+   
+   [3] #Install Numba
+       !conda install numba
+        #Install PyTorch
+       !pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
+
+Now, we install ``simDRIFT``
+
+.. code-block:: python 
+   
+   [4] #Install simDRIFT
+       !git clone https://github.com/jacobblum/simDRIFT.git
+       !pip install -e simDRIFT 
+
+Finally, now that everything is installed let's run a basic simulation of isotropic diffusion. 
+
+.. code-block:: python 
+   
+   [5] !simDRIFT simulate --n_walkers 256000 --water_diffusivity 3.0 --fiber_fractions 0. --diff_scheme DBSI_99 --fiber_diffusions 0. -- fiber_radii 1. --theta 0.
+
+The simulation should complete in about two or three minutes! The results can be analyzed by following the directions used for the 
+NVIDA-Cuda capable GPU instructions above. Subsequent simulations may also be performed in an analgous manner by tweaking the input parameters in the ``simulate`` command. 
