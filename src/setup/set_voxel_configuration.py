@@ -166,10 +166,10 @@ def _place_cells(self):
         cellCenters = np.zeros((num_cells[i], 4))
         for j in range(cellCenters.shape[0]):
             if i == 0:
-                sys.stdout.write('\r' + 'dMRI-SIM:  ' + str(j+1) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
+                sys.stdout.write('\r' + 'dMRI-SIM:  ' + str(j+1) + '/' + str(sum(num_cells)) + ' cells placed')
                 sys.stdout.flush()
             else:
-                sys.stdout.write('\r' + 'dMRI-SIM:  ' + str(num_cells[0]+(j+1)) + '/' + str(num_cells[0]+num_cells[1]) + ' cells placed')
+                sys.stdout.write('\r' + 'dMRI-SIM:  ' + str(num_cells[range(i)]+(j+1)) + '/' + str(sum(num_cells)) + ' cells placed')
                 sys.stdout.flush()
             if j == 0:
                 invalid = True
