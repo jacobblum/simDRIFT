@@ -18,7 +18,7 @@ Contents
    
    install-index
    test-index
-   Quickstart-index
+   quickstart-index
    theory-index
    simulation-index
    cli-index
