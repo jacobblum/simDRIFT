@@ -19,7 +19,7 @@ The current release contains the following modules:
 
   this module runs the test suite for ``simDRIFT``
 
-Installation
+Installation and Usage 
 ----------------------
 
 Manual installation
@@ -63,6 +63,7 @@ To confirm that everything is working as expected, run the test suite:
 
      (simDRIFT) >simDRIFT run_tests
 
+For a quick tutorial on using``simDRIFT``, please refer to our documentation's `quickstart guide <https://simdrift.readthedocs.io/en/latest/quickstart-index.html>`_.   
 
 Citing simDRIFT
 -----------------
