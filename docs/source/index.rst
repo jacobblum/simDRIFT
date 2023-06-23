@@ -17,10 +17,10 @@ Contents
    :maxdepth: 2
    
    install-index
-   test-index
    quickstart-index
    theory-index
    simulation-index
+   test-index
    cli-index
    
 
