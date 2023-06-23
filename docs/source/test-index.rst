@@ -20,6 +20,10 @@ Test Physics
 
 .. autofunction:: test_suite.test_water_physics
 
-.. autofunction:: test_suite.test_fiber_physics
+.. autofunction:: test_suite.test_fiber_physics_multi
+    
+.. autofunction:: test_suite.test_fiber_physics_single
 
-.. autofunction:: test_suite.test_cell_physics
+.. autofunction:: test_suite.test_cell_physics_multi
+
+.. autofunction:: test_suite.test_cell_physics_single
