@@ -45,7 +45,6 @@ tqdm==4.65.0
 zipp==3.15.0
     # via importlib-resources
 
-furo==2021.11.16
 sphinx_rtd_theme==1.2.2
-sphinx==5.3.0
+sphinx==7.1.0
 
