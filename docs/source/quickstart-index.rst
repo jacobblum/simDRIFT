@@ -210,8 +210,7 @@ The signal can by analyzed by...
     print(1e3 * tenfit_1.ad, 1e3 * tenfit_2.ad, 1e3 * tenfit_3.ad, 1e3 * tenfit_water.ad, 1e3 * tenfit_water.rd)
 
 For the fibers, are estimated axial diffusivities are :math:`\lambda_{||}^{(1)} =` 0.996, :math:`\lambda_{||}^{(2)} =` 2.007,
-:math:`\lambda_{||}^{(3)} =` 2.996, and for the water, we get that: :math:`\lambda_{||} =` 2.82 and :math:`\lambda_{\perp} =` 2.73
-The fiber values are exactly in the range that we would expect. Of course, although the water diffusivity is set to 3.0, because of the diffusion
+:math:`\lambda_{||}^{(3)} =` 2.996, and for the water, we get that: :math:`\lambda_{||} =` 2.82 and :math:`\lambda_{\perp} =` 2.73. The fiber values are exactly in the range that we would expect. Of course, although the water diffusivity is set to 3.0, because of the diffusion
 restricting barriers imposed by the fiber bundles, we can no longer hope to recover this number exactly (at reasonably high fiber densities).
 
 Google Colab
