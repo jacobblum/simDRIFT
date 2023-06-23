@@ -68,7 +68,7 @@ def affine_transformation(xv: np.ndarray, x: float, y: float, thetas, i):
     return Ax + b
 
 
-@cuda.jit(device = True)
+@cuda.jit(device = True,nopython = False)
 def dL2(x,y,v, project_along):
     """Internal linear algebra function for projecting along transformed vectors.
 
