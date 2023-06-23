@@ -14,16 +14,17 @@ This library exists to serve as a general and customizable Monte Carlo simulator
 Contents
 ----------------------
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+
    
    install-index
    quickstart-index
-   theory-index
    simulation-index
    test-index
    cli-index
+   theory-index
+  
    
-
 Indices and tables
 ----------------------
 
