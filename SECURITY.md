@@ -2,8 +2,7 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Below are the currently supported versions of simDRIFT. Un-supported versions will be promptly migrated to the ``legacy`` branch.
 
 |    Version    | Supported          |
 | ------------- | ------------------ |
