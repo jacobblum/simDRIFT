@@ -22,6 +22,9 @@ nibabel==5.1.0
     # via
     #   dipy
     #   simDRIFT (setup.py)
+numba 
+    # via
+    #   simDRIFT
 numpy==1.24.3
     # via
     #   h5py
