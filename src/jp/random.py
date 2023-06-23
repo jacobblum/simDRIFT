@@ -7,7 +7,7 @@ from numba.cuda import random
 from numba.cuda.random import xoroshiro128p_normal_float32,  create_xoroshiro128p_states
 import math
 
-@cuda.jit(device = True)
+@cuda.jit(device = True,nopython = False)
 def random_on_S2(rng_states, an_array, thread_id):
     sum = 0
     for i in range(an_array.shape[0]):
