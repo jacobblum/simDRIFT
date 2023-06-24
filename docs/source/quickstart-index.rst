@@ -71,7 +71,7 @@ and to check that the ``simDRIFT`` reproduced the input ``water_diffusivity``:
     water_signal = nb.load(r'.../signals/water_signal.nii').get_fdata()
 
     fig, ax = plt.subplots(figsize = (5,5))
-
+    ax.plot(bvals, water_signal, 'mx)
     ax.set_yticks([0, 0.2, 0.6, 0.8, 1.0])
     ax.set_yticklabels([0, 0.2, 0.6, 0.8, 1.0], fontsize = 12, fontweight = 'bold')
     ax.set_xticks([0, 250, 500, 750, 1000, 1250, 1500])
