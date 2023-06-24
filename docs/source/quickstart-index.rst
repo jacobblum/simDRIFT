@@ -23,7 +23,7 @@ and run ``simulate`` using
 
 .. code-block:: bash 
     
-    (simDRIFT) >simDRIFT simulate --n_walkers 256000 --water_diffusivity 3.0 --fiber_fractions 0. --diff_scheme DBSI_99 --fiber_diffusions 0. -- fiber_radii 1. --theta 0.
+    (simDRIFT) >simDRIFT simulate --n_walkers 256000 --water_diffusivity 3.0 --fiber_fractions 0. --diff_scheme DBSI_99 --fiber_diffusions 0. --fiber_radii 1. --theta 0.
 
 The computation should finish within a minute or two, and the tool will produce the following files and directories:
 
@@ -45,7 +45,10 @@ We can analyze the results using a simple python script:
 
     # Plot Results 
     ax = plt.figure(figsize = (10,10)).add_subplot(projection = '3d')
-    ax.scatter(water_trajectories[:,0], water_trajectories[:,1], water_trajectories[:,2], alpha = 0.05, color = 'purple', s = 1)
+    ax.scatter(water_trajectories[1:,0], water_trajectories[1:,1], water_trajectories[1:,2], alpha = 0.05, color = 'purple', s = 1)
+
+    # For the figure legend
+    ax.scatter(water_trajectories[0,0], water_trajectories[0,1], water_trajectories[0,2], alpha = 0.5, color = 'purple', s = 50, label = 'water spin')
     
     ax.view_init(elev = 20., azim = 135)
     ax.set_xlabel('x ($\mathbf{\mu m}$)', fontsize = 14, fontweight = 'bold')
@@ -71,11 +74,11 @@ and to check that the ``simDRIFT`` reproduced the input ``water_diffusivity``:
     water_signal = nb.load(r'.../signals/water_signal.nii').get_fdata()
 
     fig, ax = plt.subplots(figsize = (5,5))
-    ax.plot(bvals, water_signal, 'mx)
+    ax.plot(bvals, water_signal, 'mx')
     ax.set_yticks([0, 0.2, 0.6, 0.8, 1.0])
     ax.set_yticklabels([0, 0.2, 0.6, 0.8, 1.0], fontsize = 12, fontweight = 'bold')
     ax.set_xticks([0, 250, 500, 750, 1000, 1250, 1500])
-    ax.set_xticklabels([0, 250, 500, 750, 1000, 1250, 1500], fontsizse = 10, fontweight = 'bold')
+    ax.set_xticklabels([0, 250, 500, 750, 1000, 1250, 1500], fontsize = 10, fontweight = 'bold')
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_linewidth(2)
@@ -111,9 +114,9 @@ Now, let's simulate a more complicated imaging voxel featuring three crossing fi
 
 .. code-block:: bash 
     
-    (simDRIFT) > simDRIFT simulate --n_walkers 256000 --fiber_fractions .1,.1,.1 --fiber_diffusivities 1.,2.,3. --thetas 0,45,135 --fiber_radii 2.5,2.5,2.5 --cell_fractions 0.,0.
+    (simDRIFT) >simDRIFT simulate --n_walkers 256000 --fiber_fractions .1,.1,.1 --fiber_diffusions 1.,2.,3. --thetas 0,45,135 --fiber_radii 2.5,2.5,2.5 --cell_fractions 0.,0. --voxel_dims 150
 
-The computation should finish within a five or six minutes.
+The computation should finish within about five or six minutes.
 
 .. code-block:: python
 
@@ -124,19 +127,21 @@ The computation should finish within a five or six minutes.
     fiber_3_trajectories = np.load('path_to_results/trajectories/fiber_3_trajectories_t2p.npy')
     water_trajectories   = np.load(r'path_to_results/trajectories/water_trajectories_t1m.npy')
 
-    # Plot Results
+     # Plot Results
     ax = plt.figure(figsize = (10,10)).add_subplot(projection = '3d')
-    ax.scatter(fiber_1_trajectories[:,0], fiber_1_trajectories[:,1], fiber_1_trajectories[:,2], alpha = 0.05, color = 'green', s = 1)
-    ax.scatter(fiber_2_trajectories[:,0], fiber_2_trajectories[:,1], fiber_2_trajectories[:,2], alpha = 0.05, color = 'red', s = 1)
-    ax.scatter(fiber_3_trajectories[:,0], fiber_3_trajectories[:,1], fiber_3_trajectories[:,2], alpha = 0.05, color = 'blue', s = 1)
-    ax.scatter(water_trajectories[:,0], water_trajectories[:,1], water_trajectories[:,2], alpha = 0.05, color = 'purple', s = 1)
-    
+    ax.scatter(water_trajectories[1:,0], water_trajectories[1:,1], water_trajectories[1:,2], alpha = 0.1, color = 'purple', s = 1)
+    # For the figure legend
+    ax.scatter(water_trajectories[0,0], water_trajectories[0,1], water_trajectories[0,2], alpha = 0.5, color = 'purple', label = 'water spin')
+    ax.scatter(fiber_1_trajectories[:,0], fiber_1_trajectories[:,1], fiber_1_trajectories[:,2], color = 'green', label = 'fiber 1 spin')
+    ax.scatter(fiber_2_trajectories[:,0], fiber_2_trajectories[:,1], fiber_2_trajectories[:,2], color = 'red',   label = 'fiber 2 spin')
+    ax.scatter(fiber_3_trajectories[:,0], fiber_3_trajectories[:,1], fiber_3_trajectories[:,2], color = 'blue',  label = 'fiber 3 spin')
+
     ax.view_init(elev = 20., azim = 135)
     ax.set_xlabel('x ($\mathbf{\mu m}$)', fontsize = 14, fontweight = 'bold')
     ax.set_ylabel('x ($\mathbf{\mu m}$)', fontsize = 14, fontweight = 'bold')
     ax.set_zlabel('x ($\mathbf{\mu m}$)', fontsize = 14, fontweight = 'bold')
     ax.legend(loc = 'center left', bbox_to_anchor = (1.07, 0.5), fancybox = True,
-              shadow = True, prop = {'weight': 'bold', 'size': 15})
+          shadow = True, prop = {'weight': 'bold', 'size': 15})
 
     plt.show()
 
@@ -165,12 +170,11 @@ The signal can by analyzed with the below script
     axs[1,0].plot(bvals, fiber_3_signal, 'bx')
     axs[1,1].plot(bvals, water_signal,   'mx')
 
-
-    for ax in axs.flatten()
+    for ax in axs.flatten():
         ax.set_yticks([0, 0.2, 0.6, 0.8, 1.0])
         ax.set_yticklabels([0, 0.2, 0.6, 0.8, 1.0], fontsize = 12, fontweight = 'bold')
         ax.set_xticks([0, 250, 500, 750, 1000, 1250, 1500])
-        ax.set_xticklabels([0, 250, 500, 750, 1000, 1250, 1500], fontsizse = 10, fontweight = 'bold')
+        ax.set_xticklabels([0, 250, 500, 750, 1000, 1250, 1500], fontsize = 10, fontweight = 'bold')
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.spines['left'].set_linewidth(2)
@@ -181,12 +185,12 @@ The signal can by analyzed with the below script
     axs[1,0].set_ylabel('Signal Attenuation', fontsize = 12, fontweight = 'bold')
     axs[1,0].set_xlabel('b $\mathbf{s / ms^{2}}$', fontsize = 12, fontweight = 'bold')
     axs[1,1].set_xlabel('b $\mathbf{s / ms^{2}}$', fontsize = 12, fontweight = 'bold')
-
+    
     axs[0,0].set_title('Fiber 1 Signal', fontsize = 12, fontweight = 'bold')
     axs[0,1].set_title('Fiber 2 Signal', fontsize = 12, fontweight = 'bold')
     axs[1,0].set_title('Fiber 3 Signal', fontsize = 12, fontweight = 'bold')
     axs[1,1].set_title('Water Signal', fontsize = 12, fontweight = 'bold')
-
+    
     plt.show()
 
 .. figure:: 3_fiber_signal.png 
