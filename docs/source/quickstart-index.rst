@@ -18,8 +18,7 @@ Isotropic Diffusion
 ----------------
 As a first example, let's simulate isotropic diffusion in an imaging voxel featuring only water. That is,
 our imaging voxel will feature no microstructural elements. To perform this simulation, nagivate to a directory of your choice
-and run ``simulate`` using 
- with the following command:
+and run ``simulate`` with the following command:
 
 .. code-block:: bash 
     
