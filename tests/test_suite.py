@@ -93,7 +93,7 @@ def test_water_physics(input, expected):
     assert np.isclose(1e3 * tenfit.ad, expected, atol = .1) 
     assert np.isclose(1e3 * tenfit.ad, 1e3 * tenfit.rd, atol=.1)
 
-@pytest.mark.parametrize("input, expected", [((1.0,2.0,2.5), (1.0,2.0,2.5)), ((1.0,1.5,2.0), (1.0,1.5,2.0)), ((1.0,1.0,1.5), (1.0,1.0,1.5))])
+@pytest.mark.parametrize("input, expected", [((1.0,2.0,2.0), (1.0,2.0,2.0)), ((1.0,1.5,2.0), (1.0,1.5,2.0)), ((1.0,1.0,1.5), (1.0,1.0,1.5))])
 def test_fiber_physics_multi(input, expected):
     """1. Check that the forward simulated fiber-only signal corresponds to a diffusion tensor matching the input fiber diffusivities (with multiple fibers)
     2. Check that the forward simulated fiber-only signal corresponds to an anisotropic diffusion tensor (with multiple fibers)
