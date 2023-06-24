@@ -29,14 +29,14 @@ The recommended installation is as follows. Create a conda environment and activ
 
 .. code-block:: bash
 
-   >conda create -n simDRIFT 
+   >conda create -n simDRIFT python=3.8
    >conda activate simDRIFT
 
 Then, install `numba <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_ :  
 
 .. code-block:: bash
    
-  (simDRIFT) >conda install numba
+  (simDRIFT) >conda install numba==0.56.0
 
 After numba has been installed, please download and install the appropriate `NVIDIA Drivers <https://www.nvidia.com/Download/index.aspx>`_ . Afer the driver installation is complete, install ``cudatoolkit``:
 
@@ -48,7 +48,7 @@ Also, please install the appropriate version of `pytorch <https://pytorch.org>`_
 
 .. code-block:: bash
    
-  (simDRIFT) >conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
+  (simDRIFT) >conda install pytorch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 pytorch-cuda=11.7 -c pytorch -c nvidia
 
 Clone this repository and install simDRIFT:
 
