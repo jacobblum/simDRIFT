@@ -29,7 +29,7 @@ The recommended installation is as follows. Create a conda environment and activ
 
 .. code-block:: bash
 
-   >conda create -n simDRIFT python=3.8
+   >conda create -n simDRIFT python=3.8.9
    >conda activate simDRIFT
 
 Then, install `numba <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_ :  
