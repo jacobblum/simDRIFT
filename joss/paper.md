@@ -1,5 +1,5 @@
 ---
-title: 'Simulated Diffusion in Realistic Imagaing Features of Tissue (Sim-DRIFT)'
+title: 'Simulated Diffusion in Realistic Imaging Features of Tissue (Sim-DRIFT)'
 tags:
   - Python
   - Diffusion MRI
@@ -11,10 +11,10 @@ authors:
   - name: Jacob Blum
     orcid: 0000-0002-4156-4094
     affiliation: 1
+    corresponding: true
   - name: Kainen L. Utt
     orcid: 0000-0002-8555-9000
     affiliation: 1
-    corresponding: true
 affiliations:
  - name: Washington University in St. Louis, USA
    index: 1
@@ -26,7 +26,7 @@ bibliography: paper.bib
 This library, `simDRIFT`, provides rapid and flexible Monte-Carlo simulations of diffusion-weighted magnetic resonance imaging (dMRI), which we expect to be useful for dMRI signal processing model development and validation purposes. The primary focus of this library is forward simulations of modular self-diffusion processes within an ensemble of nuclear magnetic resonance (NMR) active nuclei ("spins") residing in complex, biophysical tissue systems. To acheive a large variety of tissue configurations, `simDRIFT` provides support for $n$ fiber bundles (with user-defined radii, intrinsic diffusivities, orientation angles, and densities) and $m$ cells (with user-defined radii and volume fractions). simDrift is written in Python [Python Software Foundation, @VanRossum2010] and supported by a Numba [@Lam2015] backend. Thus, `simDRIFT` benefits from Numba's CUDA API, allowing the simulation of individual spin trajectories to be performed in parallel on single Graphics Processing Unit (GPU) threads. The resulting performance gains support `simDRIFT`'s aim to provide a customizable tool for the rapid prototyping of diffusion models, ground-truth model validation, and in silico phantom production.
 
 # Statement of need
-Monte Carlo simulations are particularly effective at generating synthetic diffusion MRI data from complex, biophysically-accurate imaging voxels with known ground-truth microstructural parameters. Consequently, such simulations of the Brownian self-diffusion process have proven useful for developing and validating signal processing models [@Chiang2014; @Ye2020]. Existing Monte Carlo simulators typically rely on meshes to discretize the computational domain [see, e.g., @Panagiotaki2010, @Yeh2013, @Ianus2016, @Kerkelae2020, @RafaelPatino2020]. While this approach does allow for the representation of complex and finely-detailed microstructural elements, creating meshes for the biologically-relevant 3D geometries found in typical imaging voxels can be difficult and may therefore present a barrier to wide use among researchers who lack experience and training in computational mathematics. The software encompassed by `simDRIFT` therefore fulfills a presently-unmet need by allowing for mesh-free Monte Carlo simulations of dMRI that unifies researcher's needs for computational performance and biophysical realism with an easy-to-use and highly-configurable software.
+Monte Carlo simulations are particularly effective at generating synthetic diffusion MRI data from complex, biophysically-accurate imaging voxels with known ground-truth microstructural parameters. Consequently, such simulations of the Brownian self-diffusion process have proven useful for developing and validating signal processing models [@Chiang2014; @Ye2020]. Existing Monte Carlo simulators typically rely on meshes to discretize the computational domain [see, e.g., @Panagiotaki2010, @Yeh2013, @Ianus2016, @Kerkelae2020, @RafaelPatino2020]. While this approach does allow for the representation of complex and finely-detailed microstructural elements, creating meshes for the biologically-relevant 3D geometries found in typical imaging voxels can be difficult and may therefore present a barrier to wide use among researchers who lack experience and training in computational mathematics. The software encompassed by `simDRIFT` therefore fulfills a presently-unmet need by allowing for mesh-free Monte Carlo simulations of dMRI that unify researchers' needs for computational performance and biophysical realism with easy-to-use and highly-configurable software.
 
 `simDRIFT` was designed to be used by researchers of all disciplines and focuses who are working with diffusion MRI. Multiple scientific publications which utilize this library are currently in production. The wide customizability, high computational speed, and massively-parallel design will provide avenues for improved model development pipelines and thorough inter-model comparisons, among other potential applications. These same traits may also make `simDRIFT` useful for instructors of signal processing or diffusion imaging courses. 
 
@@ -40,6 +40,6 @@ For each time step $\mathrm{d}t$ in the simulation, each tissue compartment’s 
 
 
 # Acknowledgments
-This work was funded in part via support from NIH NINDS R01 NS11691 and R01 NS047592. The authors would like to acknowledge the early contributions of Chunyu Song and Anthony Wu. We are also immensly grateful for the supportive and clarifying discussions with Professor Sheng-Kwei Song, whose insight helped to clarify the trajectory of this project.
+This work was funded in part via support from NIH NINDS R01 NS11691 and R01 NS047592. The authors would like to acknowledge the early contributions of Chunyu Song and Anthony Wu. We are also immensely grateful for the supportive and clarifying discussions with Professor Sheng-Kwei Song, whose insight helped clarify this project's trajectory.
 
 # References---
