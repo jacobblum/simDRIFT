@@ -36,7 +36,7 @@ Then, install `numba <https://numba.pydata.org/numba-doc/latest/user/installing.
 
 .. code-block:: bash
    
-  (simDRIFT) >conda install numba==0.56.0
+  (simDRIFT) >conda install -c numba numba=0.56.0
 
 After numba has been installed, please download and install the appropriate `NVIDIA Drivers <https://www.nvidia.com/Download/index.aspx>`_ . Afer the driver installation is complete, install ``cudatoolkit``:
 
