@@ -42,7 +42,7 @@ After numba has been installed, please download and install the appropriate `NVI
 
 .. code-block:: bash
    
-  (simDRIFT) >conda install cudatoolkit
+  (simDRIFT) >pip install cudatoolkit
 
 Also, please install the appropriate version of `pytorch <https://pytorch.org>`_ (shown below using the syntax for our lab's GPUs; however, the specific syntax will vary based on your CUDA Toolkit version) :
 
