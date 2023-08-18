@@ -3,7 +3,7 @@
 import os
 import setuptools
 
-install_requires  = ['numpy==1.22.4', 'scipy==1.7.1', 'nibabel==3.2.1', 'dipy', 'pytest==7.3.1', 'matplotlib==3.7.2']
+install_requires  = ['numpy==1.22.4', 'scipy==1.7.2', 'nibabel==3.2.1', 'dipy', 'pytest==7.3.1', 'matplotlib==3.7.2']
 setuptools.setup(
     name='simDRIFT',
     description='A software package for forward simulating diffusion weighted MRI',
