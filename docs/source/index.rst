@@ -26,7 +26,8 @@ Contents
 .. toctree::
    :maxdepth: 1
 
-   
+
+   introduction-index
    install-index
    usage-index
    quickstart-index
