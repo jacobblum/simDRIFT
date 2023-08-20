@@ -7,9 +7,19 @@
 SimDRIFT Documentation Home
 **************************************
 
-SimDRIFT allows users to **Sim**\ ulate **D**\ iffusion in **R**\ ealistic **I**\ maging **F**\ eatures of **T**\ issue.
+*simDRIFT* is software package for massively parallel forward simulation of diffusion weighted MRI on biophysically accurate tissue systems
 
-This library exists to serve as a general, mesh-free, and customizable Monte Carlo simulator for the forward problem of diffusion-weighted magnetic resonance imaging (dMRI) signal acquisition within complex, biophysically-relevant domains.
+For a brief survey of the package and its current capabilities, you can read
+the `introduction <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_ 
+
+For an explanation of how to choose parameter settings, and
+tips on quality control, read the `usage <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_ .
+
+For a step-by-step tutorial on running simulations with ``simDRIFT``, see the
+`quickstart <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_  section.
+
+For details on input arguments and the output file format,
+see the `reference <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_  section.
 
 Contents
 ----------------------
