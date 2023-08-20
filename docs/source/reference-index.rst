@@ -6,6 +6,7 @@ simulate
 
 Command Line Options
 ~~~~~~~~~~~~~~~~~~~
+Typically, ``simDRIFT`` is run from the command line using the following command:
 
 .. code-block :: bash
 
@@ -13,7 +14,7 @@ Command Line Options
 
 Inputs
 ~~~~~~~~~~~~~~~~~
-`simDRIFT` is run from the command line, and relies on a CONFIGURATION.INI file to set important simulation parameters. These parameters include:
+`simDRIFT` relies on a CONFIGURATION.INI file to set important simulation parameters. These parameters include:
 
 **Named Parameters**
 
@@ -81,4 +82,4 @@ Under the directory specified by the **output_directory** parameter, simDRIFT wi
 
 * ``log`` : A text file that contains a detailed description of the input parameters and a record of the simulation's execution.
 
-* ``input_configuration``: A copy of the input INI configuration file so that simulation input parameters may be referenced or simulations may be reproduced. 
+* ``input_configuration``: A copy of the input INI configuration file so that simulation input parameters may be referenced or simulations may be reproduced in the future. 
