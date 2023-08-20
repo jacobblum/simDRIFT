@@ -1,30 +1,14 @@
 .. image:: https://github.com/jacobblum/dMRI-MCSIM/blob/main/joss/figs/logo.png
   :alt: simDRIFT logo
 
-This library, ``simDRIFT``, provides for rapid and flexible Monte Carlo simulations of diffusion-weighted magnetic resonance imaging (dMRI), which we expect to be useful for dMRI signal processing model development and validation purposes. The primary focus of this library is forward simulations of molecular self-diffusion processes within an ensemble of nuclear magnetic resonance (NMR) active nuclei ("spins") residing in complex, biophysical tissue systems. ``simDRIFT`` is written in Python and supported by a Numba backend. Thus, ``simDRIFT`` benefits from Numba's CUDA API, allowing individual spin trajectories to be simulated in parallel on single Graphics Processing Unit (GPU) threads. The resulting performance gains support ``simDRIFT``'s aim to provide a customizable tool for rapidly prototyping diffusion models, ground-truth model validation, and in silico phantom production.
+This library, ``simDRIFT``, provides for rapid and flexible Monte Carlo simulations of Pulsed Gradient Spin Echo (PGSE) diffusion-weighted magnetic resonance imaging (dMRI) experiments, which we expect to be useful for dMRI signal processing model development and validation purposes. The primary focus of this library is forward simulations of molecular self-diffusion processes within an ensemble of nuclear magnetic resonance (NMR) active nuclei ("spins") residing in complex, biophysical tissue systems. ``simDRIFT`` is written in Python and supported by a Numba backend. Thus, ``simDRIFT`` benefits from Numba's CUDA API, allowing individual spin trajectories to be simulated in parallel on single Graphics Processing Unit (GPU) threads. The resulting performance gains support ``simDRIFT``'s aim to provide a customizable tool for rapidly prototyping diffusion models, ground-truth model validation, and in silico phantom production.
 
-The current release contains the following modules:
-
-* ``simulate``
-
-  this module supports $n$ fiber bundles (with user-defined radii, intrinsic diffusivities, orientation angles, and densities) and   
-  $m$ cells (with user-defined radii and volume fractions). Given the coarse-graining of detailed microstructural features (fiber bending, 
-  etc...) observed at experimentally realistic diffusion times and voxel sizes, `simDRIFT` represents fibers as narrow cylinders, 
-  or "sticks", and cells as isotropic spheres, or "balls". The module executes the forward diffusion MRI simulation on voxel geometries described
-  by user-defined microstructural and scanning parameters. 
-  A quick start tutorial can be found
-  `here <https://simdrift.readthedocs.io/en/latest/quickstart-index.html>`_.
-
-* ``run_tests``
-
-  this module runs the test suite for ``simDRIFT``
+- **Documentation:** https://simdrift.readthedocs.io/en/latest/
+- **Source Code:** https://github.com/jacobblum/simDRIFT/tree/main/src
+- **Bug Reports:** https://github.com/jacobblum/simDRIFT/issues
 
 Installation and Usage 
 ----------------------
-
-Manual installation
-~~~~~~~~~~~~~~~~~~~
-
 The recommended installation is as follows. Create a conda environment and activate it:
 
 .. code-block:: bash
@@ -62,8 +46,6 @@ To confirm that everything is working as expected, run the test suite:
 .. code-block:: bash
 
      (simDRIFT) >simDRIFT run_tests
-
-For a quick tutorial on using ``simDRIFT``, please refer to our documentation's `quickstart guide <https://simdrift.readthedocs.io/en/latest/quickstart-index.html>`_.   
 
 Citing simDRIFT
 -----------------
