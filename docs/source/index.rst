@@ -28,7 +28,9 @@ Contents
 
    
    install-index
+   usage-index
    quickstart-index
+   refence-index
    simulation-index
    test-index
    cli-index
