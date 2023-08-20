@@ -12,14 +12,11 @@ SimDRIFT Documentation Home
 For a brief survey of the package and its current capabilities, you can read
 the `introduction <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_ 
 
-For an explanation of how to choose parameter settings, and
-tips on quality control, read the `usage <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_ .
+For details on input arguments and the output file format,
+see the `reference <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_  section.
 
 For a step-by-step tutorial on running simulations with ``simDRIFT``, see the
 `quickstart <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_  section.
-
-For details on input arguments and the output file format,
-see the `reference <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_  section.
 
 Contents
 ----------------------
@@ -29,9 +26,8 @@ Contents
 
    introduction-index
    install-index
-   usage-index
-   quickstart-index
    refence-index
+   quickstart-index
    simulation-index
    test-index
    cli-index
