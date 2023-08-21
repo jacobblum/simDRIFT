@@ -10,7 +10,7 @@ Typically, ``simDRIFT`` is run from the command line using the following command
 
 .. code-block :: bash
 
-  (simDRIFT) >simDRIFT simulate --configuration CONFIGURATION.INI FILE
+  (simDRIFT) >simDRIFT simulate --configuration PATH_TO_CONFIGURATION.INI FILE
 
 Inputs
 --------------------
