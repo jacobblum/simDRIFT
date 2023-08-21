@@ -13,7 +13,7 @@ Throughout, we will make use of a few Python libraries.
     import dipy.reconst.dti as dti
     from dipy.core.gradients import gradient_table
 
-If you have an NVIDA-Cuda capable GPU, install ``simDRIFT`` by following these `instructions <https://simdrift.readthedocs.io/en/latest/install-index.html>`_ . If not, scroll to the bottom of the page and we will breifly go through an example using `Google Colab <https://colab.research.google.com/?utm_source=scs-index>`_. 
+If you have an NVIDA-Cuda capable GPU, install ``simDRIFT`` by following these `instructions <https://simdrift.readthedocs.io/en/latest/installation/index.html>`_ . If not, scroll to the bottom of the page and we will breifly go through an example using `Google Colab <https://colab.research.google.com/?utm_source=scs-index>`_. 
 
 Isotropic Diffusion
 ----------------
