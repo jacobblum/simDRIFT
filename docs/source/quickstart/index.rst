@@ -18,27 +18,24 @@ If you have an NVIDA-Cuda capable GPU, install ``simDRIFT`` by following these `
 Isotropic Diffusion
 ----------------
 As a first example, let's simulate isotropic diffusion in an imaging voxel featuring only water. That is,
-our imaging voxel will feature no microstructural elements. To perform this simulation, nagivate to a directory of your choice
-and run ``simulate`` with the following command:
+our imaging voxel will feature no microstructural elements. First, navigate to ``examples/`` under your 
+``simDRIFT`` installation root directory and run the following command in the console (if you're outside of the ``examples/`` directory, then you must enter the absolute path to the configuration file):
 
 .. code-block:: bash 
     
-    (simDRIFT) >simDRIFT simulate --n_walkers 256000 --water_diffusivity 3.0 --fiber_fractions 0. --diff_scheme DBSI_99 --fiber_diffusions 0. --fiber_radii 1. --theta 0.
+    (simDRIFT) >simDRIFT simulate --configuration qs_isotropic_config.ini
 
-The computation should finish within a minute or two, and the tool will produce the following files and directories:
+The computation should finish within a minute or two, and the tool will produce a results directory, titled ``DATE_TIME_simDRIFT_Results/``, under which the following files and directories can be found:
 
 * ``trajectories`` : A directory under which .npy files corresponding to the by-compartment *(cells, fiber, water, etc...)* and total initial (*trajectories_t1m*) and final (*trajectories_t2p*)
   spin positions are stored. The trajectory files may be useful for generating signals using a different diffusion scheme than the one provided 
   by the ``diff_scheme`` argument post-hoc. 
-
 
 * ``signals`` : A directory under which NIfTI files containing the by-compartment and total signals generated from ``simDRIFT`` are stored. 
 
 * ``log`` : A text file that contains a detailed description of the input parameters and a record of the simulation's execution
 
 * ``input_configuration``: A copy of the input INI configuration file so that simulation input parameters may be referenced or simulations may be reproduced in the future. 
-
-
 
 We can analyze the results using a simple python script:
 
@@ -114,11 +111,11 @@ that the diffusion process was indeed isotropic and that ``simDRIFT`` faithfully
 Three Crossing Fibers 
 ----------------
 Now, let's simulate a more complicated imaging voxel featuring three crossing fibers with intrinsic diffusivities :math:`1.0`, :math:`2.0`, and :math:`3.0`, and orientations :math:`0^{\circ}`, 
-:math:`45^{\circ}`, :math:`135^{\circ}` respectively. To do so, type the following command:
+:math:`45^{\circ}`, :math:`135^{\circ}` respectively. To do so, ensure you're current working directory is still the ``examples/`` directory, and type the following command:
 
 .. code-block:: bash 
     
-    (simDRIFT) >simDRIFT simulate --n_walkers 256000 --fiber_fractions .1,.1,.1 --fiber_diffusions 1.,2.,3. --thetas 0,45,135 --fiber_radii 2.5,2.5,2.5 --cell_fractions 0.,0. --voxel_dims 150
+    (simDRIFT) >simDRIFT simulate --configuration qs_three_fibers_config.ini
 
 The computation should finish within about five or six minutes.
 
@@ -270,7 +267,4 @@ Finally, now that everything is installed let's run a basic simulation of isotro
 
 .. code-block:: python 
    
-   [5] !simDRIFT simulate --n_walkers 256000 --water_diffusivity 3.0 --fiber_fractions 0. --diff_scheme DBSI_99 --fiber_diffusions 0. -- fiber_radii 1. --theta 0.
-
-The simulation should complete in about two or three minutes! The results can be analyzed by following the directions used for the 
-NVIDA-Cuda capable GPU instructions above. Subsequent simulations may also be performed in an analgous manner by tweaking the input parameters in the ``simulate`` command. 
+   [5] !simDRIFT simulate --configuration PATH_TO_CONFIG.INI file
