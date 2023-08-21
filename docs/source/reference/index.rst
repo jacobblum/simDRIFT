@@ -2,10 +2,10 @@ Reference
 =========
 
 simulate
------------------
+~~~~~~~~~~~
 
 Command Line Options
-~~~~~~~~~~~~~~~~~~~
+--------------------
 Typically, ``simDRIFT`` is run from the command line using the following command:
 
 .. code-block :: bash
@@ -13,7 +13,7 @@ Typically, ``simDRIFT`` is run from the command line using the following command
   (simDRIFT) >simDRIFT simulate --configuration CONFIGURATION.INI FILE
 
 Inputs
-~~~~~~~~~~~~~~~~~
+--------------------
 `simDRIFT` relies on a CONFIGURATION.INI file to set important simulation parameters. These parameters include:
 
 **Named Parameters**
@@ -38,7 +38,7 @@ Inputs
 - **water_diffusivity (float) -** The intrinsic diffusivity, in  :math:`μm^{2}/ms`, of the extra-fiber water. For simulations of in-vivo diffusion, we reccomend 3.0 :math:`μm^{2}/ms` and for ex-vivo simulations, :math:`2.0 μm^{2}/ms`.
 
 Example configuration file
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------
 Below, please find an example of the structure of the CONFIGURATION.INI file used to run ``simDRIFT``.
 
 .. code-block:: bash
@@ -71,7 +71,7 @@ Below, please find an example of the structure of the CONFIGURATION.INI file use
 
 
 Outputs
-~~~~~~~~~~~~~~~~~
+--------------------
 Under the directory specified by the **output_directory** parameter, simDRIFT will create a directory titled ``DATE_TIME_simDRIFT_results``. Within this directory the tool will produce the following files and directories:
 
 * ``trajectories`` : A directory under which .npy files corresponding to the by-compartment *(cells, fiber, water, etc...)* and total initial (*trajectories_t1m*) and final (*trajectories_t2p*)
@@ -83,3 +83,87 @@ Under the directory specified by the **output_directory** parameter, simDRIFT wi
 * ``log`` : A text file that contains a detailed description of the input parameters and a record of the simulation's execution.
 
 * ``input_configuration``: A copy of the input INI configuration file so that simulation input parameters may be referenced or simulations may be reproduced in the future. 
+
+
+Editing the Configuration File Within a Python Script
+--------------------
+For the purposes of running batches of many number of simulations, an existing ``CONFIGURATION.INI`` file may easily be modified from within a Python script. Below, please 
+find an example code snippet used to modify a ``CONFIGURATION.INI`` used in the ``test suite``:
+
+.. code-block:: Python
+
+    import configparser
+
+    cfg_file = configparser.ConfigParser()
+    cfg_file.read(PATH_TO_CONFIG.INI FILE)
+
+    cfg_file['SIMULATION']['n_walkers'] = '256000'
+    cfg_file['SIMULATION']['DELTA'] = '.001'
+    cfg_file['SIMULATION']['dt'] = '.001'
+    cfg_file['SIMULATION']['voxel_dims'] = '10'
+    cfg_file['SIMULATION']['buffer'] = '0'
+    cfg_file['SIMULATION']['void_distance'] = '0'
+    cfg_file['SIMULATION']['bvals'] = "'N/A'"
+    cfg_file['SIMULATION']['bvecs'] = "'N/A'"
+    cfg_file['SIMULATION']['diffusion_scheme'] = "'DBSI_99'"
+    cfg_file['SIMULATION']['output_directory'] = "'N/A'"
+    cfg_file['SIMULATION']['verbose'] = "'no'"
+
+
+    cfg_file['FIBERS']['fiber_fractions'] = '0,0'
+    cfg_file['FIBERS']['fiber_radii']= '1.0,1.0'
+    cfg_file['FIBERS']['thetas'] = '0,0'
+    cfg_file['FIBERS']['fiber_diffusions'] = '1.0,2.0'
+    
+    
+    cfg_file['CELLS']['cell_fractions'] = '0,0'
+    cfg_file['CELLS']['cell_radii'] = '1.0,1.0'
+
+    cfg_file['WATER']['water_diffusivity'] = '3.0'
+
+    with open(PATH_TO_CONFIG.INI FILE), 'w') as configfile:
+        cfg_file.write(configfile)
+
+Creating a Configuration File Within a Python Script
+--------------------
+If you wish to create a ``CONFIGURATION.INI`` file from within a Python script, please use the following example code as a reference:
+
+.. code-block:: Python
+
+    import configparser
+
+    Config = configparser.ConfigParser()
+    cfg_file = open(PATH_TO_CONFIG.INI FILE, 'w')
+
+    Config.add_section('SIMULATION')
+    Config.set('SIMULATION','n_walkers','256000')
+    Config.set('SIMULATION','DELTA','.001')
+    Config.set('SIMULATION','dt','.001')
+    Config.set('SIMULATION','voxel_dims','10')
+    Config.set('SIMULATION','buffer','0')
+    Config.set('SIMULATION','void_distance','0')
+    Config.set('SIMULATION','bvals', "'N/A'")
+    Config.set('SIMULATION','bvecs', "'N/A'")
+    Config.set('SIMULATION','diffusion_scheme',"'DBSI_99'")
+    Config.set('SIMULATION','output_directory',"'N/A'")
+    Config.set('SIMULATION','verbose',"'no'")
+
+    Config.add_section('FIBERS')
+    Config.set('FIBERS','fiber_fractions','0,0')
+    Config.set('FIBERS','fiber_radii','1.0,1.0')
+    Config.set('FIBERS','thetas','0,0')
+    Config.set('FIBERS','fiber_diffusions','1.0,2.0')
+    
+    Config.add_section('CELLS')
+    Config.set('CELLS','cell_fractions','0,0')
+    Config.set('CELLS','cell_radii','1.0,1.0')
+
+    Config.add_section('WATER')
+    Config.set('WATER','water_diffusivity','3.0')
+
+    Config.write(cfg_file)
+
+
+
+
+
