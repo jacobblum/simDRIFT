@@ -55,3 +55,7 @@ To confirm that everything is working as expected, run the test suite:
 .. code-block:: bash
 
      (simDRIFT) >simDRIFT run_tests
+
+Developement
+----------------
+To contribute to ``simDRIFT`` , or to seek support and report any issues or problems with the software, please follow the instructions laid out `here <https://github.com/jacobblum/simDRIFT/blob/main/CONTRIBUTING.md>`_!
