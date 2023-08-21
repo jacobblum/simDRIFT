@@ -110,7 +110,7 @@ that the diffusion process was indeed isotropic and that ``simDRIFT`` faithfully
 
 Three Crossing Fibers 
 ----------------
-Now, let's simulate a more complicated imaging voxel featuring three crossing fibers with intrinsic diffusivities :math:`1.0`, :math:`2.0`, and :math:`3.0`, and orientations :math:`0^{\circ}`, 
+Now, let's simulate a more complicated imaging voxel featuring three crossing fibers with intrinsic diffusivities :math:`1.0 \mu m^{2} / ms`, :math:`2.0 \mu m^{2} / ms`, and :math:`3.0 \mu m^{2} / ms`, and orientations :math:`0^{\circ}`, 
 :math:`45^{\circ}`, :math:`135^{\circ}` respectively. To do so, ensure you're current working directory is still the ``examples/`` directory, and type the following command:
 
 .. code-block:: bash 
@@ -214,9 +214,8 @@ The signal can by analyzed with the below script
 
     print(1e3 * tenfit_1.ad, 1e3 * tenfit_2.ad, 1e3 * tenfit_3.ad, 1e3 * tenfit_water.ad, 1e3 * tenfit_water.rd)
 
-For the fibers, are estimated axial diffusivities are :math:`\lambda_{||}^{(1)} =` 0.996, :math:`\lambda_{||}^{(2)} =` 2.007,
-:math:`\lambda_{||}^{(3)} =` 2.996, and for the water, we get that: :math:`\lambda_{||} =` 2.82 and :math:`\lambda_{\perp} =` 2.73. The fiber values are exactly in the range that we would expect. Of course, although the water diffusivity is set to 3.0, because of the diffusion
-restricting barriers imposed by the fiber bundles, we can no longer hope to recover this number exactly (at reasonably high fiber densities).
+For the fibers, are estimated axial diffusivities are :math:`\lambda_{||}^{(1)} = 0.996 \mu m^{2} / ms`, :math:`\lambda_{||}^{(2)} = 2.007 \mu m^{2} / ms`,
+:math:`\lambda_{||}^{(3)} = 2.996 \mu m^{2} / ms`, and for the water, we get that: :math:`\lambda_{||} = 2.82 \mu m^{2} / ms` and :math:`\lambda_{\perp} = 2.73 \mu m^{2} / ms`. The fiber values are exactly in the range that we would expect. Of course, although the water diffusivity is set to :math:`3.0 :math:`, because of the diffusion restricting barriers imposed by the fiber bundles, we can no longer hope to recover this number exactly (at reasonably high fiber densities).
 
 Google Colab
 --------------
