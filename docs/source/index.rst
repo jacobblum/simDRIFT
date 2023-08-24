@@ -28,6 +28,7 @@ Contents
    reference/index
    quickstart/index
    simulation/index
+   test_suite/index
    theory/index
   
    
