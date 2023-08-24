@@ -17,9 +17,9 @@ The current release contains the following modules:
 
 * ``simulate``
 
-  this module supports :math:`$n$` fiber bundles (with user-defined radii, intrinsic diffusivities, orientations, and densities) and   
-  :math:`$m$` cells (with user-defined radii and volume fractions). Given the coarse graining of detailed microstructural features (fiber bending, 
-  etc...) observed at experimentally comperable diffusion times and voxel sizes, `simDRIFT` represents fibers as narrow cylinders, 
+  this module supports :math:`n` fiber bundles (with user-defined radii, intrinsic diffusivities, orientations, and densities) and   
+  :math:`m` cells (with user-defined radii and volume fractions). Given the coarse graining of detailed microstructural features (fiber bending, 
+  etc...) observed at experimentally comperable diffusion times and voxel sizes, ``simDRIFT`` represents fibers as narrow cylinders, 
   or "sticks", and cells as isotropic spheres, or "balls". The module executes the forward DWI simulation on voxel geometries described
   by user defined microstructural and scanning parameters. 
 
