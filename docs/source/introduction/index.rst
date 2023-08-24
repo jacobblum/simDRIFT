@@ -1,4 +1,4 @@
-What is simDRIFT 
+What is simDRIFT? 
 ===================
 ``simDRIFT`` is a software package for massively parallel forward simulation of diffusion weighted MRI on biophysically mimicking tissue systems
 
