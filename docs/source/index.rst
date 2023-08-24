@@ -7,10 +7,10 @@
 SimDRIFT Documentation Home
 **************************************
 
-*simDRIFT* is software package for massively parallel forward simulation of diffusion weighted MRI on biophysically accurate tissue systems
+``simDRIFT`` is software package for massively parallel forward simulation of diffusion weighted MRI on biophysically accurate tissue systems
 
 For a brief survey of the package and its current capabilities, you can read
-the `introduction <https://simdrift.readthedocs.io/en/latest/introduction/index.html>`_ 
+the `introduction <https://simdrift.readthedocs.io/en/latest/introduction/index.html>`_. 
 
 For details on input arguments and the output file format, as well as how to edit and create the required configuration file, please
 see the `reference <https://simdrift.readthedocs.io/en/latest/reference/index.html>`_  section.
