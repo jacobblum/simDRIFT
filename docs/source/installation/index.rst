@@ -4,7 +4,7 @@ Installation
 
 Compatibility
 ~~~~~~~~~~~~~~~~~~~~~
-``simDRIFT`` is compatible with Python 3.8 or later, and requires a CUDA device with a compute capability of 3 or higher. We find that in typical use-case simulations on isotropic imaging voxels on the micometer size scale, ``simDRIFT`` will use less than 1.5 Gb of VRAM. For much larger simulations of imaging voxels on the millimeter size scale, typical GPU memory consumption doesn't exceed 2.0 Gb. Thus, we don't anticipate any memory issues given the available memory of compatible GPUs. 
+``simDRIFT`` is compatible with Python 3.8 or later and requires a CUDA device with a compute capability of 3 or higher. We find that in typical use-case simulations on isotropic imaging voxels on the micrometer size scale, ``simDRIFT`` will use less than 1.5 Gb of VRAM. For much larger simulations of image voxels on the millimeter size scale, typical GPU memory consumption doesn't exceed 2.0 Gb. Thus, we don't anticipate any memory issues given the available memory of compatible GPUs. 
 
 Installing
 ~~~~~~~~~~~~~~~~~~~~
