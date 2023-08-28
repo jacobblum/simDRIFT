@@ -128,7 +128,7 @@ find an example code snippet used to modify a ``CONFIGURATION.INI`` used in the 
 
     cfg_file['WATER']['water_diffusivity'] = '3.0'
 
-    with open(PATH_TO_CONFIG.INI FILE), 'w') as configfile:
+    with open(PATH_TO_CONFIG.INI FILE, 'w') as configfile:
         cfg_file.write(configfile)
 
 Creating a Configuration File Within a Python Script
