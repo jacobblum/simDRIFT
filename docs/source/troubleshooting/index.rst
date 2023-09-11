@@ -1,9 +1,9 @@
 Troubleshooting
 ===================
-If you encounter any issues not covered here, please report them in the `issues section <https://github.com/jacobblum/simDRIFT/issues>`_ of this repository.
+If you encounter any issues not covered here, please report them in the `issues section <https://github.com/jacobblum/simDRIFT/issues>`_ of this repository and we will work to address them as quickly as possible
 
 
-Installation 
+Installation via pip
 ~~~~~~~~~~~~~~~~~
 For certain hardware configurations, we have received notice 
 that installation via ``conda`` triggers incompatibilities between
