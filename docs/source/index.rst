@@ -29,6 +29,7 @@ Contents
    quickstart/index
    simulation/index
    test_suite/index
+   troubleshooting/index
    theory/index
   
    
