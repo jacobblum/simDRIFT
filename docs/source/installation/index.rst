@@ -17,7 +17,7 @@ First, create a conda environment and activate it:
    >conda create -n simDRIFT python=3.8
    >conda activate simDRIFT
 
-Then, install `numba <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_  by following the linked instructions. For different hardware platforms, the specific numba installation syntax may varry. These instructions are covered in the `numba installation guide <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_. Shown below are the commands for installation on our lab's computers, which are x64-based windows machines.  
+Then, install `numba <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_  by following the linked instructions. For different hardware platforms, the specific numba installation syntax may varry. These instructions are covered in the `numba installation guide <https://numba.pydata.org/numba-doc/latest/user/installing.html>`_. Shown below are the commands for installation on our lab's computers, which are x64-based windows machines. If you encounter any difficulties with this step, please see our `troubleshooting guide <https://simdrift.readthedocs.io/en/latest/troubleshooting/index.html>`_ for an alternative installation procedure. 
 
 .. code-block:: bash
    
@@ -47,3 +47,4 @@ To confirm that everything is working as expected, run the test suite:
 .. code-block:: bash
 
      (simDRIFT) >simDRIFT run_tests
+
