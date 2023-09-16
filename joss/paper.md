@@ -40,7 +40,7 @@ The library allows users to construct voxel geometries described by user-defined
 
 ![Example simulated spin trajectories from an imaging voxel featuring two fiber bundles (red, blue) with various orientations ($\theta$ = 0°, 30°, 60°, 90°), along with extra-fiber spins (purple) .\label{fig:examples}](figs/joss_paper_figure.png){ width=70% }
 
-For each time step $\mathrm{d}t$ in the simulation, each tissue compartment’s resident spins are displaced along a randomly chosen direction with a compartment-dependent distance $\mathrm{d}L = \sqrt{6D_{0}dt}$. This process is repeated until the target diffusion time of $\Delta$ is reached. For diffusion times shorter than the expected pre-exchange lifetime of intracellular water, it is safe to assume no exchange between tissue microstructures. The inter-compartmental exchange of water is computationally forbidden via within-timestep rejection of proposed moves beyond the boundaries of each spin’s domain.
+For each time step $\mathrm{d}t$ in the simulation, each tissue compartment’s resident spins are displaced along a randomly chosen direction with a compartment-dependent distance $\mathrm{d}L = \sqrt{6D_{0}\mathrm{d}t}$. This process is repeated until the target diffusion time of $\Delta$ is reached. For diffusion times shorter than the expected pre-exchange lifetime of intracellular water, it is safe to assume no exchange between tissue microstructures. The inter-compartmental exchange of water is computationally forbidden via within-timestep rejection of proposed moves beyond the boundaries of each spin’s domain.
 
 
 # Acknowledgments
