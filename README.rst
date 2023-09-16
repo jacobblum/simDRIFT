@@ -1,3 +1,6 @@
+.. image:: https://zenodo.org/badge/504191828.svg
+   :target: https://zenodo.org/badge/latestdoi/504191828
+
 .. image:: https://github.com/jacobblum/dMRI-MCSIM/blob/main/joss/figs/logo.png
   :alt: simDRIFT logo
 
