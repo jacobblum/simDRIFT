@@ -1,5 +1,5 @@
-.. image:: https://zenodo.org/badge/504191828.svg
-   :target: https://zenodo.org/badge/latestdoi/504191828
+.. image:: https://joss.theoj.org/papers/10.21105/joss.05621/status.svg
+   :target: https://doi.org/10.21105/joss.05621
 
 .. image:: https://github.com/jacobblum/dMRI-MCSIM/blob/main/joss/figs/logo.png
   :alt: simDRIFT logo
