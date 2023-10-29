@@ -368,7 +368,7 @@ actual PGSE experiment, the gradient pulse is instead defined by a scaled Dirac
 delta so that the Fourier relationship between the signal echo and the diffusion
 propagator is more explicit.
 
-The Sjejskal-Tanner Equation
+The Stejskal-Tanner Equation
 ----------------------------
 By the general solution we found for the Bloch-Torrey equations, the bulk magnetization vector,
 :math:`\hat{\mathbf{M}}(\mathbf{r}, t)`, is the product of two independent sources of decay.
