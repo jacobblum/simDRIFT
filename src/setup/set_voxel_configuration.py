@@ -27,14 +27,17 @@ def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fibe
     logging.info(' Fiber Setup')
     logging.info('------------------------------') 
 
+ 
     num_fibers = []
     for i in range(len(fiber_fractions)):
-        num_fiber = int(np.sqrt(
-            (fiber_fractions[i] * (voxel_dimensions**2))/(np.pi*fiber_radii[i]**2)))
+
+        vl = (voxel_dimensions + buffer) ** 2
+        num_fiber = int(np.sqrt( len(fiber_fractions) * ( vl * fiber_fractions[i])/(np.pi*fiber_radii[i]**2)))  
         num_fibers.append(num_fiber)
+        
         logging.info(' {} fibers of type {} (R{} = {})'.format(int(num_fibers[i]**2),int(i),int(i),fiber_radii[i]))
     logging.info(' Fiber geometry: {}'.format(fiber_configuration))
-    
+
     return num_fibers
 
 
@@ -95,8 +98,9 @@ def _place_fiber_grid(self):
                                  self.fiber_configuration)
  
     rotation_matrices = linalg.Ry(self.thetas)
-
     fibers = []
+    ymin   = -0.5 * self.buffer
+    stride = (self.buffer + self.voxel_dimensions) / len(self.fiber_fractions)  
 
     for i in range(len(self.fiber_fractions)):
         yv, xv = np.meshgrid(np.linspace((-0.5*self.buffer)+max(self.fiber_radii), self.voxel_dimensions+(0.5*self.buffer)-max(self.fiber_radii), num_fibers[i]),
@@ -106,17 +110,16 @@ def _place_fiber_grid(self):
             for jj in range(yv.shape[1]):
                 fiber_cfg_bools = {'Penetrating': True,
                                    'Void': np.logical_or(xv[ii, jj] <= np.median(yv[0,:]) - 0.5 * self.void_distance, xv[ii, jj] > np.median(yv[0,:]) + 0.5 * self.void_distance)}    
-                
-                if np.logical_and((i)*(yv[0,:].max()-yv[0,:].min())/len(self.fiber_fractions) <= yv[ii,jj], yv[ii,jj] <= (i+1)*(yv[0,:].max()-yv[0,:].min())/len(self.fiber_fractions)):         
-                    if fiber_cfg_bools[self.fiber_configuration]:
+                if np.logical_and( ymin <= yv[ii,jj], yv[ii,jj] <= ymin + stride ):         
+                    if fiber_cfg_bools[self.fiber_configuration]:    
                             fibers.append(objects.fiber(center=linalg.affine_transformation(xv, xv[ii, jj], yv[ii, jj], self.thetas, i),
                                                         direction=rotation_matrices[i, :, :].dot(np.array([0., 0., 1.])),
                                                         bundle=i,
                                                         diffusivity=self.fiber_diffusions[i],
                                                         radius=self.fiber_radii[i]
                                                         )
-                                          ) 
-
+                                          )
+        ymin += stride 
     if not fibers:
         fibers.append(objects.fiber(center = np.zeros(3), direction = np.zeros(3), bundle = 0, diffusivity = 0., radius = -1.))
     return fibers
@@ -253,14 +256,11 @@ def _place_spins(self):
     zmin = min([fiber.center[2] for fiber in self.fibers])
     zmax = zmin + self.voxel_dimensions
 
-    spin_positions_t1m = np.vstack([np.random.uniform(low=0, high = self.voxel_dimensions, size=self.n_walkers),
-                                    np.random.uniform(low=0, high = self.voxel_dimensions, size=self.n_walkers),
-                                    np.random.uniform(low=zmin, high=zmax, size = self.n_walkers)])
-    
+    spin_positions_t1m = np.vstack([np.random.uniform(low=0,    high = self.voxel_dimensions, size=self.n_walkers),
+                                    np.random.uniform(low=0,    high = self.voxel_dimensions, size=self.n_walkers),
+                                    np.random.uniform(low=zmin, high=zmax,                    size = self.n_walkers)])
     spins = [objects.spin(spin_positions_t1m[:,ii]) for ii in range(spin_positions_t1m.shape[1])]
     return spins
-
-
 
 def setup(self):
     """Helper function to initiate relevant placement routines.
@@ -268,4 +268,12 @@ def setup(self):
     self.fibers = _place_fiber_grid(self)
     self.cells = _place_cells(self)
     self.spins = _place_spins(self)
+
     spin_init_positions._find_spin_locations(self)
+
+    
+
+
+
+
+
