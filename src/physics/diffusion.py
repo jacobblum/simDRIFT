@@ -23,6 +23,8 @@ def _caclulate_volumes(spins):
     fiber_spins = np.array([-1 if spin._get_bundle_index() is None else spin._get_bundle_index() for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
 
+    water_spins = np.array([1 if np.logical_and(spin._get_bundle_index() is None, spin._get_cell_index() == -1) else -1 for spin in spins])
+
     logging.info('------------------------------')  
     logging.info(' Empirical Volume Fractions')
     logging.info('------------------------------')   
@@ -30,9 +32,24 @@ def _caclulate_volumes(spins):
     for i in range(1, int(np.amax(fiber_spins))+1):
         logging.info(f" Fiber {i} Volume: {len(fiber_spins[np.where(fiber_spins == i)]) / len(fiber_spins)}")
 
-    logging.info('    Cell Volume: {} '.format(
-        len(cells[cells > -1]) / len(spins)))
-        
+    logging.info(' Cell Volume:    {} '.format(
+        len(cells[cells > -1]) / len(spins))
+        )
+    
+    logging.info(' Water Volume:   {} '.format(
+        len(water_spins[water_spins > -1]) / len(spins))
+        )
+    
+    v = 0
+
+    for i in range(1, int(np.amax(fiber_spins))+1): v+= len(fiber_spins[np.where(fiber_spins == i)]) / len(fiber_spins)
+    v += len(cells[cells > -1]) / len(spins)
+    v +=  len(water_spins[water_spins > -1]) / len(spins)
+
+    logging.info(' Total Volume:   {}'.format(v))
+
+    return
+    
 def _simulate_diffusion(self) -> None:
     """Iterates over the range :math:`t \in [0, \Delta ]` with a step size of :math:`\dd{t}`.
 
@@ -64,12 +81,31 @@ def _simulate_diffusion(self) -> None:
     fiber_step_cuda               = cuda.to_device(np.array([math.sqrt(6*fiber._get_diffusivity()*self.dt) for fiber in self.fibers], dtype= np.float32))
     fiber_radii_cuda              = cuda.to_device(np.array([fiber._get_radius() for fiber in self.fibers], dtype= np.float32))
     spin_positions_cuda           = cuda.to_device(np.array([spin._get_position_t1m() for spin in self.spins], dtype= np.float32))
-    spin_in_fiber_at_index_cuda  = cuda.to_device(np.array([-1 if spin._get_bundle_index() is None else spin._get_fiber_index() for spin in self.spins]))
+    spin_in_fiber_at_index_cuda   = cuda.to_device(np.array([-1 if spin._get_bundle_index() is None else spin._get_fiber_index() for spin in self.spins]))
     cell_centers_cuda             = cuda.to_device(np.array([cell._get_center() for cell in self.cells], dtype=np.float32))
     spin_in_cell_at_index_cuda    = cuda.to_device(np.array([spin._get_cell_index() for spin in self.spins]))
     cell_step_cuda                = cuda.to_device(np.array([math.sqrt(6*cell._get_diffusivity()*self.dt) for cell in self.cells], dtype= np.float32))
     cell_radii_cuda               = cuda.to_device(np.array([cell._get_radius() for cell in self.cells], dtype=np.float32)) 
-    water_step                    = cuda.to_device(np.array([math.sqrt(6*self.water_diffusivity*self.dt)])) 
+    spin_in_water_at_index_cuda   = cuda.to_device(spin_in_cell_at_index_cuda)  
+
+    spin_in_water_at_index_cuda = []
+    water_step = []
+    for ii in range(len(self.spins)):
+        if np.logical_and(spin_in_cell_at_index_cuda[ii] == -1, spin_in_fiber_at_index_cuda[ii] == -1):
+            spin_in_water_at_index_cuda.append(1)
+            
+            if np.random.rand() > 0.5:
+                water_step.append(math.sqrt(6*self.water_diffusivity*self.dt))
+            else: 
+                spin_in_water_at_index_cuda[ii] = 2
+                water_step.append(math.sqrt(6*10.0*self.dt))
+
+        else:
+            spin_in_water_at_index_cuda.append(-1)
+            water_step.append(math.sqrt(6*self.water_diffusivity*self.dt))
+
+    spin_in_water_at_index_cuda = cuda.to_device(np.array(spin_in_water_at_index_cuda))
+    water_step                  = cuda.to_device(np.array(water_step))
 
 
     Start = time.time()
@@ -93,6 +129,7 @@ def _simulate_diffusion(self) -> None:
                                                                       cell_centers_cuda, 
                                                                       cell_step_cuda,
                                                                       cell_radii_cuda,
+                                                                      spin_in_water_at_index_cuda,
                                                                       water_step, 
                                                                       self.fiber_configuration == 'Void'
                                                                       )
@@ -102,6 +139,9 @@ def _simulate_diffusion(self) -> None:
     sys.stdout.write('\n')
     logging.info(' Simulation complete!')
     logging.info(' Elapsed time: {} seconds'.format(round((End-Start)),3))
+    
+    self.water_key = spin_in_water_at_index_cuda.copy_to_host()
+    
     spin_positions_t2p = spin_positions_cuda.copy_to_host()
     for ii, spin in enumerate(self.spins):
         spin._set_position_t2p(spin_positions_t2p[ii,:])
@@ -121,6 +161,7 @@ def _diffusion_context_manager(random_states,
                                cell_centers,
                                cell_step,
                                cell_radii,
+                               spin_in_water_at_index,
                                water_step,  
                                void):
     """Helper function to segment each spin into the relevant ``physics`` module for its resident compartment
@@ -168,7 +209,7 @@ def _diffusion_context_manager(random_states,
         
         return
         
-    else:
+    if spin_in_water_at_index[i] > -1:
         walk_in_water._diffusion_in_water(i,
                                           random_states,
                                           fiber_centers,
@@ -177,7 +218,12 @@ def _diffusion_context_manager(random_states,
                                           cell_centers,
                                           cell_radii, 
                                           spin_positions, 
-                                          water_step[0])
+                                          water_step[i])
+        
+    else:
+        raise Exception('Spin not in fiber, cell, or water? Not good... if this happens call me @ 612-214-6025')
+        
+
     return
 
 

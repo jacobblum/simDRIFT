@@ -164,8 +164,8 @@ class spin():
         self.position_t1m = spin_position_t1m
         self.position_t2p = np.empty(shape=(3,), dtype=np.float32)
         self.in_fiber_index = None
-        self.fiber_bundle = None
-        self.in_cell_index = None
+        self.fiber_bundle   = None
+        self.in_cell_index  = None
         self.in_water_index = None
         
         return 

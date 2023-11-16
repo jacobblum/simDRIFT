@@ -81,8 +81,7 @@ def _generate_signals_and_trajectories(self):
   
     fiber_spins = np.array([-1 if spin._get_bundle_index() is None else spin._get_bundle_index() for spin in self.spins])
     cells  = np.array([spin._get_cell_index() for spin in self.spins])
-    water  = np.array([spin._get_water_index() for spin in self.spins])
-
+    water  = self.water_key
 
     logging.info('------------------------------')
     logging.info(' Signal Generation') 
@@ -125,7 +124,6 @@ def _generate_signals_and_trajectories(self):
         signals_dict['total_fiber_signal'] = total_fiber_signal
         trajectories_dict['total_fiber_trajectories'] = (total_fiber_trajectory_t1m, total_fiber_trajectory_t2p)
 
-
     """ Cell Signal """
  
     cell_spins = np.array(self.spins)[cells > -1]
@@ -147,11 +145,29 @@ def _generate_signals_and_trajectories(self):
 
     """ Water Signal """
 
-    water_spins = np.array(self.spins)[water > -1]
+    total_water_spins = np.array(self.spins)[water > -1]
     
-    if any(water_spins):
+    if any(total_water_spins):
         logging.info(' Computing water signal...')
         Start = time.time()
+        total_water_signal, total_water_trajectory_t1m, total_water_trajectory_t2p = _signal(total_water_spins,
+                                                                                             bvals,
+                                                                                             bvecs,
+                                                                                             self.Delta, 
+                                                                                             self.dt)
+        
+        End = time.time()
+        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+        signals_dict['total_water_signal'] = total_water_signal
+        trajectories_dict['total_water_trajectories'] = (total_water_trajectory_t1m, total_water_trajectory_t2p)
+
+    
+    water_spins = np.array(self.spins)[water == 1]
+
+    if any(water_spins):
+
+        logging.info(' Computing D0 = {} water signal ...'.format(self.water_diffusivity))
+
         water_signal, water_trajectory_t1m, water_trajectory_t2p = _signal(water_spins,
                                                                             bvals,
                                                                             bvecs,
@@ -162,6 +178,22 @@ def _generate_signals_and_trajectories(self):
         logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
         signals_dict['water_signal'] = water_signal
         trajectories_dict['water_trajectories'] = (water_trajectory_t1m, water_trajectory_t2p)
+
+    flow_spins = np.array(self.spins)[water == 2]
+
+    if any(flow_spins):
+        
+        logging.info(' Computing D0 = {} water signal ...'.format('10'))
+        flow_signal, flow_trajectory_t1m, flow_trajectory_t2p = _signal(flow_spins,
+                                                                        bvals,
+                                                                        bvecs,
+                                                                        self.Delta, 
+                                                                        self.dt)
+        
+        End = time.time()
+        logging.info('     Done! Signal computed in {} sec'.format(round(End-Start),4))
+        signals_dict['flow_signal'] = flow_signal
+        trajectories_dict['flow_trajectories'] = (flow_trajectory_t1m, flow_trajectory_t2p)
 
     """ Total Signal """
     logging.info(' Computing total signal...')
@@ -181,7 +213,6 @@ def _generate_signals_and_trajectories(self):
 def _save_data(self):
     """Helper function that saves signals and trajectories to the current directory.
     """
-
 
     SAVE_PARENT_DIR = self.output_directory
     time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')

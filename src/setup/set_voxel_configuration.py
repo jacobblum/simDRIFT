@@ -27,7 +27,6 @@ def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fibe
     logging.info(' Fiber Setup')
     logging.info('------------------------------') 
 
- 
     num_fibers = []
     for i in range(len(fiber_fractions)):
 
@@ -268,12 +267,6 @@ def setup(self):
     self.fibers = _place_fiber_grid(self)
     self.cells = _place_cells(self)
     self.spins = _place_spins(self)
-
     spin_init_positions._find_spin_locations(self)
 
     
-
-
-
-
-
