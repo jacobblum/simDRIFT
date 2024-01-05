@@ -98,7 +98,7 @@ def _simulate_diffusion(self) -> None:
                 water_step.append(math.sqrt(6*self.water_diffusivity*self.dt))
             else: 
                 spin_in_water_at_index_cuda[ii] = 2
-                water_step.append(math.sqrt(6*10.0*self.dt))
+                water_step.append(math.sqrt(6*self.flow_diffusivity*self.dt))
 
         else:
             spin_in_water_at_index_cuda.append(-1)

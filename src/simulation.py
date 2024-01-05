@@ -94,6 +94,15 @@ class Parameters:
         """  
         return self.args_dict['water_diffusivity']
     
+
+    @property
+    def flow_diffusivity(self):
+        """Class property containing the diffusivity of free water
+
+        :return: Dictionary entry for ``flow_diffusivity``
+        """  
+        return self.args_dict['flow_diffusivity']
+    
     @property
     def Delta(self):
         """Class property containing the diffusion time to simulate

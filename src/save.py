@@ -183,7 +183,7 @@ def _generate_signals_and_trajectories(self):
 
     if any(flow_spins):
         
-        logging.info(' Computing D0 = {} water signal ...'.format('10'))
+        logging.info(' Computing D0 = {} water signal ...'.format(self.flow_diffusivity))
         flow_signal, flow_trajectory_t1m, flow_trajectory_t2p = _signal(flow_spins,
                                                                         bvals,
                                                                         bvecs,
@@ -215,7 +215,7 @@ def _save_data(self):
     """
 
     SAVE_PARENT_DIR = self.output_directory
-    time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    time = datetime.now().strftime('%Y%m%d_%H%M')
     RESULTS_DIR = os.path.join(SAVE_PARENT_DIR, f"{time}_simDRIFT_Results")
     SIGNALS_DIR = os.path.join(RESULTS_DIR, 'signals')
     TRAJ_DIR    = os.path.join(RESULTS_DIR, 'trajectories')

@@ -142,6 +142,23 @@ class cell():
         """   
         return self.radius
     
+
+    r"""
+    spin_in_water_at_index_cuda  = np.array([1 if np.logical_and(spin_in_cell_at_index_cuda[ii] == -1, spin_in_fiber_at_index_cuda[ii] == -1) else -1 for ii in range(len(self.spins))])
+    water_step                   = np.sqrt(6*self.water_diffusivity*self.dt) * np.ones(len(self.spins))  
+    flow_spins                   = np.random.choice(a = np.where(spin_in_water_at_index_cuda == 1)[0], size = (np.where(spin_in_water_at_index_cuda == 1)[0].shape[0] // 2, ), replace=False)
+    
+    spin_in_fiber_at_index_cuda[flow_spins] = 2
+    water_step[flow_spins] = np.sqrt(6 * self.flow_diffusivity * self.dt)
+
+    spin_in_water_at_index_cuda = cuda.to_device(spin_in_water_at_index_cuda)
+    water_step                  = cuda.to_device(water_step)
+
+    spin_in_fiber_at_index_cuda = cuda.to_device(spin_in_fiber_at_index_cuda)
+    spin_in_cell_at_index_cuda  = cuda.to_device(spin_in_cell_at_index_cuda)
+    """
+
+
     
 class spin():
     def __init__(self, spin_position_t1m : np.ndarray) -> None:

@@ -81,6 +81,11 @@ class CLI:
         # Water Diffusivity
         cli_args['water_diffusivity'] = float(cfg_file['WATER']['water_diffusivity'])
         assert cli_args['water_diffusivity'] >= 0.0, "--water_diffusivity must be non-negative"
+
+
+        # Flow Diffusivity
+        cli_args['flow_diffusivity'] = float(cfg_file['WATER']['flow_diffusivity'])
+        assert cli_args['flow_diffusivity'] >= 0.0, "--flow_diffusivity must be non-negative"
         
         # Delta
         cli_args['Delta'] = float(cfg_file['SIMULATION']['Delta'])
