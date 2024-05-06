@@ -4,6 +4,14 @@
 .. image:: https://github.com/jacobblum/dMRI-MCSIM/blob/main/joss/figs/logo.png
   :alt: simDRIFT logo
 
+ISMRM 2024 Update...
+----------------------
+If you found this repository through any of the material related to ISMRM 2024, please note that the most up-to-date version of the code used to produce the results and figures in my Power Pitch / Poster can be found under the ``ISMRM2024`` branch. Please also note that the code under this branch is yet to be rigorously tested to the standards whereby I would feel comfortable pushing it to the main branch; however, given that I used it in the presentation I beleive that it should be included somewhere in the repository. I anticipate finishing the testing + documentation no later than May 9th. Also, as a remark, the code under the ``main`` branch includes many, but not all, of the features mentioned in my pitch, but notably lacks the ability to account for fiber bending and non-PGSE experiments. 
+
+Thank you for your patience. - Jacob    
+
+Introduction
+----------------------
 This library, ``simDRIFT``, provides for rapid and flexible Monte Carlo simulations of Pulsed Gradient Spin Echo (PGSE) diffusion-weighted magnetic resonance imaging (dMRI) experiments, which we expect to be useful for dMRI signal processing model development and validation purposes. The primary focus of this library is forward simulations of molecular self-diffusion processes within an ensemble of nuclear magnetic resonance (NMR) active nuclei ("spins") residing in complex, biophysical tissue systems. ``simDRIFT`` is written in Python and supported by a Numba backend. Thus, ``simDRIFT`` benefits from Numba's CUDA API, allowing individual spin trajectories to be simulated in parallel on single Graphics Processing Unit (GPU) threads. The resulting performance gains support ``simDRIFT``'s aim to provide a customizable tool for rapidly prototyping diffusion models, ground-truth model validation, and in silico phantom production.
 
 - **Documentation:** https://simdrift.readthedocs.io/en/latest/
