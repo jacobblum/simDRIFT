@@ -176,14 +176,10 @@ def _save_data(self):
     """Helper function that saves signals and trajectories to the current directory.
     """
 
-    SAVE_PARENT_DIR = self.output_directory
-    time = datetime.now().strftime('%Y%m%d_%H%M')
-    RESULTS_DIR = os.path.join(SAVE_PARENT_DIR, f"{time}_simDRIFT_Results")
+    RESULTS_DIR = self.results_directory
     SIGNALS_DIR = os.path.join(RESULTS_DIR, 'signals')
     TRAJ_DIR    = os.path.join(RESULTS_DIR, 'trajectories')
     GRAD_DIR    = os.path.join(RESULTS_DIR, 'gradients')
-
-    if not os.path.exists(RESULTS_DIR): os.mkdir(RESULTS_DIR)
 
     shutil.copyfile(src = self.cfg_path, dst = os.path.join(RESULTS_DIR, 'input_simulation_parameters.ini'))
     shutil.copyfile(src = os.path.join(os.getcwd(),'log'), dst = os.path.join(RESULTS_DIR, 'log'))
@@ -196,10 +192,6 @@ def _save_data(self):
     for key in signals_dict.keys():        
         Nifti = nb.Nifti1Image(signals_dict[key], affine = np.eye(4))
         nb.save(Nifti, os.path.join(SIGNALS_DIR, '{}.nii'.format(key)))
-
-
-    #if not os.path.exists(GRAD_DIR): os.mkdir(GRAD_DIR)
-    #_plot_gradients(self, GRAD_DIR)
 
     if not os.path.exists(TRAJ_DIR): os.mkdir(TRAJ_DIR)
     for key in trajectories_dict.keys():        

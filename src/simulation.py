@@ -4,6 +4,7 @@ from numba import jit, njit, cuda, int32, float32
 import os
 import glob as glob
 import contextlib
+from datetime import datetime
 import sys
 import src.physics.diffusion as diffusion
 import src.save as save 
@@ -118,7 +119,7 @@ class Parameters:
 
         :return: Dictionary entry for ``delta``
         """  
-        return np.array([1.0]).astype(np.float32) * 1e-3                   #seconds, assumes input of ms  
+        return np.array(self.args_dict['delta']).astype(np.float32)*1e-3 #seconds, assumes input of ms  
     
     @property
     def dt(self):
@@ -134,7 +135,7 @@ class Parameters:
         
         :return: TE
         """
-        return np.array(float(1.0) + float(self.args_dict['Delta'])).astype(np.float32) * 1e-3
+        return np.array(float(self.args_dict['delta']) + float(self.args_dict['Delta'])).astype(np.float32) * 1e-3
     
     @property
     def voxel_dimensions(self):
@@ -154,15 +155,15 @@ class Parameters:
     
     @property
     def kappa(self):
-        return 1.0
+        return np.array(self.args_dict['kappa']).astype(np.float32)
     
     @property
     def A(self):
-        return 10.0
+        return np.array(self.args_dict['A']).astype(np.float32)*1e-6 #meters, assumes input of um
     
     @property
     def P(self):
-        return 1.0
+        return np.array(self.args_dict['P']).astype(np.float32)
     
     @property 
     def bvecs(self):
@@ -251,19 +252,14 @@ class dmri_simulation(Parameters):
         fibers = []
         spins  = []
         cells  = []
-        self.G = gradients.pgse(
-                                Delta = self.Delta, 
-                                delta = self.delta, 
-                                dt    = self.dt, 
-                                bvals = self.bvals, 
-                                bvecs = self.bvecs
-                                )
+        self.G = gradients.pgse(self)
 
         return
     
     def run(self,):
         """Runs simDRIFT with user inputs
-        """        
+        """      
+  
         verbose = {'yes': logging.INFO,'no': logging.WARNING}
         log_file = os.path.join(os.getcwd(),'log')
         
@@ -277,10 +273,13 @@ class dmri_simulation(Parameters):
         formatter = logging.Formatter("simDRIFT: %(message)s")
         console.setFormatter(formatter)
         logging.getLogger('').addHandler(console)
-
         logging.info('Running simDRIFT')
 
         try:
+            
+            self.results_directory = os.path.join(self.output_directory, f"{datetime.now().strftime('%Y%m%d_%H%M')}_simDRIFT_Results")
+            if not os.path.exists(self.results_directory): os.mkdir(self.results_directory)
+
             set_voxel_configuration.setup(self)
             diffusion._simulate_diffusion(self)
             save._save_data(self)

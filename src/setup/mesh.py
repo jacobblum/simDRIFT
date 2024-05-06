@@ -4,10 +4,12 @@ import math
 from tqdm import tqdm
 from typing import Union, Type, Dict, List
 import time 
-from src.setup.objects import fiber, spin
+from src.setup.objects import fiber, spin, cell
+import os 
+import logging
 
-Npts   = 64 + 1
-Ntheta = 32
+Npts   = 128 + 1
+Ntheta = 64
 def vec_2_frame(n : np.ndarray) -> np.ndarray:
     if np.ndim(n) < 3:
         n = n.reshape(1, n.shape[0], n.shape[1])
@@ -34,13 +36,14 @@ def Ru(u : np.ndarray, theta : float) -> np.ndarray:
     Ru = np.stack([np.einsum('n, ij -> nij', np.cos(theta), np.eye(3)) + np.einsum('n, ij -> nij', np.sin(theta), np.cross(np.eye(3), u[ii, :])) + np.einsum('n, ij -> nij', (1.0 - np.cos(theta)), np.outer(u[ii, :], u[ii, :])) for ii in range(u.shape[0])], axis = 0)
     return Ru # Ru [NFrames, Nthetas, 3, 3]
 
-
 class VoxelSurfaceMesh:
-    def __init__(self, fibers_list: Type[fiber], verbose : bool = False) -> None:
-        self.verbose = verbose
-        self._fibers_list = fibers_list
+    def __init__(self, fibers_list: Type[fiber], cell_list: Type[cell], results_directory : str ) -> None:
+        self.geom_dir           = os.path.join(results_directory, 'geometry')
+        self._fibers_list       = fibers_list
+        self._cell_list         = cell_list
+
         self._bundle_props_list = self._parse_fiber_properties()
-        self._calculate_discretized_fiber_geometry()
+        self._calculate_discretized_voxel_geometry()
         pass
     
     def _parse_fiber_properties(self) -> List[Dict[str, Union[Type[fiber], float, np.ndarray]]]:
@@ -67,7 +70,13 @@ class VoxelSurfaceMesh:
             
         return Output_Args
     
-    def _calculate_discretized_fiber_geometry(self) -> List[Dict[str, np.ndarray]]:
+    def _calculate_discretized_voxel_geometry(self) -> List[Dict[str, np.ndarray]]:
+
+        logging.info('------------------------------')
+        logging.info(' Plotting Voxel Surface Mesh  ')
+        logging.info('------------------------------')    
+        
+        if not os.path.exists(self.geom_dir): os.mkdir(self.geom_dir)
 
         VERTICIES  = []
         FACES      = []
@@ -75,7 +84,6 @@ class VoxelSurfaceMesh:
         Output_Args = []
         ax = plt.figure(figsize=(10,10)).add_subplot(projection='3d')  
         colors = ['orchid', 'limegreen', 'deeppink']
-
 
         bdyXmin = []
         bdyXmax = []
@@ -172,8 +180,6 @@ class VoxelSurfaceMesh:
                 Triangles_Linear = Triangles.reshape(-1, 3)
                 Triangles_Linear = np.concatenate([Triangles_Linear, Endcaps_Linear], axis = 0)
             
-
-          
                 ax.plot_trisurf(surf_verticies_reshaped[Nfiber, :, 0].flatten(), 
                                 surf_verticies_reshaped[Nfiber, :, 1].flatten(), 
                                 surf_verticies_reshaped[Nfiber, :, 2].flatten(), 
@@ -189,9 +195,8 @@ class VoxelSurfaceMesh:
         VERTICIES_npy, FACES_npy = np.concatenate(VERTICIES, axis = 0), np.concatenate(FACES, axis = 0)
         
         
-        np.save(file = r"c:\Users\Jacob\Box\MCSIM_for_ISMRM\disimpy\disimpy\tests\simDRIFT_verts_k.npy", arr = VERTICIES_npy)
-        np.save(file = r"c:\Users\Jacob\Box\MCSIM_for_ISMRM\disimpy\disimpy\tests\simDRIFT_faces_k.npy", arr = FACES_npy )        
-        
+        np.save(file = os.path.join(self.geom_dir, 'verticies.npy'), arr = VERTICIES_npy)
+        np.save(file = os.path.join(self.geom_dir, 'faces.npy')    , arr = FACES_npy )        
         
         ### Plot Boundary ###
 
@@ -235,15 +240,12 @@ class VoxelSurfaceMesh:
                         color = 'lightskyblue', 
                         alpha = .15,
                         shade = False)
-
+        
         # Plot Spins
         Nspins = 500
         spin_positions_t1m = np.vstack([np.random.uniform(low=bdyXmin, high = bdyXmax, size=Nspins),
                                         np.random.uniform(low=bdyYmin, high = bdyYmax, size=Nspins),
                                         np.random.uniform(low=bdyZmin, high = bdyZmax, size=Nspins)])
-        
-
-
         
 
         ax.scatter(spin_positions_t1m[0, :],
@@ -254,13 +256,6 @@ class VoxelSurfaceMesh:
                    alpha = .20)
 
 
-        # Plot Cells
-        Ncells = 75
-        Radius = 4.0
-        cell_ctrs = np.stack([np.random.uniform(low=bdyXmin + buffer, high = bdyXmax - buffer, size=Ncells),
-                              np.random.uniform(low=bdyYmin + buffer, high = bdyYmax - buffer, size=Ncells),
-                              np.random.uniform(low=bdyZmin + buffer, high = bdyZmax - buffer, size=Ncells)], axis = 1)
-
         def plt_sphere(list_center, list_radius):
             for c, r in zip(list_center, list_radius):
                 # draw sphere
@@ -268,23 +263,40 @@ class VoxelSurfaceMesh:
                 x = r*np.cos(u)*np.sin(v)
                 y = r*np.sin(u)*np.sin(v)
                 z = r*np.cos(v)
-                ax.plot_surface(x+c[0], y+c[1], z+c[2], color='orange', alpha=0.5*np.random.random()+0.5)
-        #plt_sphere(cell_ctrs, [Radius for ii in range(Ncells)])
-        # Format Plot
+                ax.plot_surface(x+c[0], y+c[1], z+c[2], color='orange', alpha=0.5)
+        
+        for cell in self._cell_list:
+            plt_sphere([cell.center], [cell.radius])
 
+        # Format Plot
         ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
         ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
         ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
+
         # make the grid lines transparent
         ax.xaxis._axinfo["grid"]['color'] =  (1,1,1,0)
         ax.yaxis._axinfo["grid"]['color'] =  (1,1,1,0)
         ax.zaxis._axinfo["grid"]['color'] =  (1,1,1,0)
         ax.view_init(elev = 25, azim = 45)
-        ax.set_xlabel(r'$x \; [m]$')
-        ax.set_ylabel(r'$y \; [m]$')
-        ax.set_zlabel(r'$z \; [m]$')
-        plt.show()
-        plt.savefig(r"c:\Users\Jacob\Box\MCSIM_for_ISMRM\h2h\fiber_setup.png")
+
+        # Format Ticks and Tick Labels
+       
+        ax.xaxis.set_ticks(ax.get_xticks())
+        ax.xaxis.set_ticklabels( np.around(ax.get_xticks() * 1e6, 3))
+
+        ax.yaxis.set_ticks(ax.get_yticks())
+        ax.yaxis.set_ticklabels( np.around(ax.get_yticks() * 1e6, 3))
+
+        ax.zaxis.set_ticks(ax.get_zticks())
+        ax.zaxis.set_ticklabels( np.around(ax.get_zticks() * 1e6, 3))
+
+        ax.set_xlabel(r'$x \; [\mu m]$')
+        ax.set_ylabel(r'$y \; [\mu m]$')
+        ax.set_zlabel(r'$z \; [\mu m]$')
+        plt.savefig(os.path.join(self.geom_dir, 'meshed_voxel_geometry.png'))
+
+        logging.info(' Plotting complete!')
+        logging.info('------------------------------')    
 
         return Output_Args
 
