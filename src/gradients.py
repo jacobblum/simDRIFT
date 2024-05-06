@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 from typing import Union, Tuple
 import os 
+from src.data import diffusion_schemes
 
 GAMMA = 267.513e6 # (sT)^-1
 
@@ -164,11 +165,7 @@ def interpolate_gradient(waveforms: np.ndarray, TE : float, dt : float) -> np.nd
 
     return interp_g
 
-def pgse(Delta : float, 
-         delta : float, 
-         dt    : float, 
-         bvals : Union[str, np.ndarray], 
-         bvecs : Union[str, np.ndarray]) -> np.ndarray:
+def pgse(sim_class) -> np.ndarray:
     """Generate a pulsed gradient spin echo gradient array.
 
     Parameters
@@ -196,14 +193,20 @@ def pgse(Delta : float,
         Journal of Open Source Software, 5(52), 2527. https://doi.org/10.21105/joss.02527
     
     """
-    Delta = Delta 
-    delta = delta  
-    dt    = dt    
-    TE = Delta + delta 
-    
-    if all([type(bvals) is str, type(bvecs) is str]):
-        bvals, bvecs = load_diffusion_scheme_file(bvals, bvecs)
-    
+
+
+    Delta = sim_class.Delta 
+    delta = sim_class.delta  
+    dt    = sim_class.dt    
+    TE    = sim_class.TE
+
+    if sim_class.custom_diff_scheme_flag:
+        if all([type(sim_class.bvals) is str, type(sim_class.bvecs) is str]):
+            bvals, bvecs = load_diffusion_scheme_from_txt_file(sim_class.bvals, sim_class.bvecs)
+
+    else:
+        bvals, bvecs = diffusion_schemes.get_from_default(sim_class.diff_scheme)
+       
     gradient = np.zeros((bvals.shape[0], int( TE / dt ), 3)) 
     gradient[:,  1:int(delta / dt),    0] =  1
     gradient[:, -1*int(delta / dt):-1, 0] = -1
@@ -213,19 +216,21 @@ def pgse(Delta : float,
     for i, bvecs in enumerate(bvecs):
         Rs[i] = vec2vec_rotmat(np.array([1.0, 0.0, 0.0]), bvecs) 
     gradient = rotate_gradient(gradient, Rs)
+    
     return gradient
 
 
-def load_diffusion_scheme_file(bvals : str, bvecs : str) -> Tuple[np.ndarray, np.ndarray]:
+def load_diffusion_scheme_from_txt_file(bvals : str, bvecs : str) -> Tuple[np.ndarray, np.ndarray]:
     if all([os.path.exists(path) for path in [bvals, bvecs]]):
-
         bvals_np = np.loadtxt(bvals).astype(np.float32)
         bvecs_np = np.loadtxt(bvecs).astype(np.float32)
 
         if bvecs_np.shape[-1] != 3:
             bvecs_np = bvecs_np.T
-
+        
+        bvecs_np[(bvecs_np == 0).all(dim = 1)] = 1e-5
         bvals_np = bvals_np * 1e6 # convert to s / m^2 
+        
         return bvals_np, bvecs_np
     
     else:
