@@ -7,7 +7,17 @@ import operator
 
 
 @numba.cuda.jit(nopython=True, parallel=True)
-def _diffusion_in_water(i,random_states,fiber_centers,fiber_directions,fiber_radii,cell_centers,cell_radii,spin_positions,step):
+def _diffusion_in_water(i,
+                        random_states,
+                        fiber_centers,
+                        fiber_directions,
+                        fiber_radii,
+                        cell_centers,
+                        cell_radii,
+                        spin_positions,
+                        step, 
+                        thetas,
+                        curvature_params):
     """Simulated Brownian motion of a spin confined to the extra-cellular/axonal water, implemented via random walk with rejection sampling for proposed steps into cells or fibers. Note that this implementation assumes zero exchange between compartments and is therefore only pysically-accurate for :math:`\Delta < {\\tau_{i}(\text{cells})}` and :math:`\Delta < {\\tau_{i}(\text{fibers})}` [1]_. 
 
     :param i: Absolute index of the current thread within the block grid
@@ -46,6 +56,8 @@ def _diffusion_in_water(i,random_states,fiber_centers,fiber_directions,fiber_rad
 
     previous_position = cuda.local.array(shape=3, dtype=numba.float32)
     proposed_new_position = cuda.local.array(shape=3, dtype=numba.float32)
+    dynamic_fiber_center    = cuda.local.array(shape = 3, dtype = numba.float32)
+    dynamic_fiber_direction = cuda.local.array(shape = 3, dtype = numba.float32)
 
     u3 = cuda.local.array(shape=3, dtype=numba.float32)
 
@@ -54,9 +66,8 @@ def _diffusion_in_water(i,random_states,fiber_centers,fiber_directions,fiber_rad
 
     invalid_step = True
     while invalid_step:
-
         stepped_into_fiber = False
-        stepped_into_cell = False
+        stepped_into_cell  = False
         proposed_new_position = random.random_on_S2(random_states,
                                                     proposed_new_position,
                                                     i)
@@ -65,11 +76,33 @@ def _diffusion_in_water(i,random_states,fiber_centers,fiber_directions,fiber_rad
             previous_position[k] = spin_positions[i, k]
             proposed_new_position[k] = previous_position[k] + (step*proposed_new_position[k])
 
-        for k in range(fiber_centers.shape[0]):
-            dFv = linalg.dL2(proposed_new_position, fiber_centers[k, :], fiber_directions[k, :], True)
-            if dFv < fiber_radii[k]:
-                stepped_into_fiber = True
-                break
+        for j in range(fiber_centers.shape[0]):
+                dynamic_fiber_center = linalg.gamma(proposed_new_position, 
+                                                    fiber_directions[j,:], 
+                                                    thetas[j],
+                                                    dynamic_fiber_center,
+                                                    curvature_params[j, :]
+                                                    )
+        
+                dynamic_fiber_direction = linalg.d_gamma__d_t(proposed_new_position,
+                                                              fiber_directions[j,:], 
+                                                              thetas[j],
+                                                              dynamic_fiber_direction,
+                                                              curvature_params[j, :]
+                                                              )
+        
+                for k in range(dynamic_fiber_center.shape[0]): 
+                    dynamic_fiber_center[k] = dynamic_fiber_center[k] + fiber_centers[j, k]
+
+                dFv = linalg.dL2(proposed_new_position, 
+                                 dynamic_fiber_center, 
+                                 dynamic_fiber_direction, 
+                                 True
+                                )
+
+                if dFv < fiber_radii[k]:
+                    stepped_into_fiber = True
+                    break
 
         if not (stepped_into_fiber):
             for k in range(cell_centers.shape[0]):

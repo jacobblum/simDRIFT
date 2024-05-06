@@ -81,6 +81,11 @@ class CLI:
         # Water Diffusivity
         cli_args['water_diffusivity'] = float(cfg_file['WATER']['water_diffusivity'])
         assert cli_args['water_diffusivity'] >= 0.0, "--water_diffusivity must be non-negative"
+
+
+        # Flow Diffusivity
+        cli_args['flow_diffusivity'] = float(cfg_file['WATER']['flow_diffusivity'])
+        assert cli_args['flow_diffusivity'] >= 0.0, "--flow_diffusivity must be non-negative"
         
         # Delta
         cli_args['Delta'] = float(cfg_file['SIMULATION']['Delta'])
@@ -107,8 +112,8 @@ class CLI:
         assert cli_args['verbose'] == 'yes' or cli_args['verbose'] == 'no', "--verbose must be yes or no"
 
         ## Check that GPU is available 
-        assert numba.cuda.is_available(), "Trying to use Cuda device, " \
-                                        "but Cuda device is not available."
+        #assert numba.cuda.is_available(), "Trying to use Cuda device, " \
+        #                                "but Cuda device is not available."
         
         ## If using custom diffusion scheme... make sure that the bval and bvec paths exist
         if all([ast.literal_eval(cfg_file['SIMULATION']['bvals']) != 'N/A', ast.literal_eval(cfg_file['SIMULATION']['bvecs']) != 'N/A']):
@@ -124,7 +129,7 @@ class CLI:
         cli_args['diff_scheme'] = ast.literal_eval(cfg_file['SIMULATION']['diffusion_scheme'])
         assert cli_args['diff_scheme'] in ['DBSI_99', 'ABCD', 'NODDI_145']
 
-        cli_args['output_directory'] = ast.literal_eval("r{}".format(cfg_file['SIMULATION']['output_directory']))
+        cli_args['output_directory'] = ast.literal_eval("{}".format(cfg_file['SIMULATION']['output_directory']))
 
         if cli_args['output_directory'] != 'N/A':
             assert os.path.exists(cli_args['output_directory'])

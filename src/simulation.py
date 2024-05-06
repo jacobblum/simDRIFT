@@ -10,6 +10,8 @@ import src.save as save
 from src.setup import set_voxel_configuration
 import logging
 from typing import Dict
+from . import gradients 
+
 
 class Parameters:
     """Class for simulation parameters and user inputs.
@@ -28,7 +30,7 @@ class Parameters:
 
         :return: Dictionary entry for ``n_walkers``
         """        
-        return self.args_dict['n_walkers']
+        return np.array(self.args_dict['n_walkers']).astype(np.int32)
     
     @property
     def fiber_fractions(self):
@@ -36,7 +38,7 @@ class Parameters:
 
         :return: Dictionary entry for ``fiber_fractions``
         """  
-        return self.args_dict['fiber_fractions']
+        return np.array(self.args_dict['fiber_fractions']).astype(np.float32)
     
     @property
     def fiber_radii(self):
@@ -44,7 +46,7 @@ class Parameters:
 
         :return: Dictionary entry for ``fiber_radii``
         """  
-        return self.args_dict['fiber_radii']
+        return np.array(self.args_dict['fiber_radii']).astype(np.float32)*1e-6 #meters, assumes input of um
     
     @property
     def thetas(self):
@@ -52,15 +54,15 @@ class Parameters:
 
         :return: Dictionary entry for ``thetas``
         """  
-        return self.args_dict['thetas']
+        return np.array(self.args_dict['thetas']).astype(np.float32)
     
     @property
-    def fiber_diffusions(self):
+    def fiber_diffusions(self) -> np.ndarray:
         """Class property containing the intrinsic diffusivities for each fiber bundle
 
         :return: Dictionary entry for ``fiber_diffusions``
         """  
-        return self.args_dict['fiber_diffusions']
+        return np.array(self.args_dict['fiber_diffusions']).astype(np.float32)*1e-9 # m^2/sec. assumes input of um^2 / ms
 
     @property
     def cell_fractions(self):
@@ -68,7 +70,7 @@ class Parameters:
 
         :return: Dictionary entry for ``cell_fractions``
         """  
-        return self.args_dict['cell_fractions']
+        return np.array(self.args_dict['cell_fractions']).astype(np.float32)
     
     @property
     def cell_radii(self):
@@ -76,7 +78,7 @@ class Parameters:
 
         :return: Dictionary entry for ``cell_radii``
         """  
-        return self.args_dict['cell_radii']
+        return np.array(self.args_dict['cell_radii']).astype(np.float32)*1e-6 # meters, assumes input of um
     
     @property
     def fiber_configuration(self):
@@ -92,7 +94,15 @@ class Parameters:
 
         :return: Dictionary entry for ``water_diffusivity``
         """  
-        return self.args_dict['water_diffusivity']
+        return np.array(self.args_dict['water_diffusivity']).astype(np.float32)*1e-9 # m^2 / sec. assumes input of um^2 / ms
+    
+    @property
+    def flow_diffusivity(self):
+        """Class property containing the diffusivity of free water
+
+        :return: Dictionary entry for ``flow_diffusivity``
+        """  
+        return self.args_dict['flow_diffusivity']*1e-9 # m^2 / sec. assumes input of um^2 / ms
     
     @property
     def Delta(self):
@@ -100,15 +110,31 @@ class Parameters:
 
         :return: Dictionary entry for ``Delta``
         """  
-        return self.args_dict['Delta']
+        return np.array(self.args_dict['Delta']).astype(np.float32)*1e-3 #seconds, assumes input of ms  
+    
+    @property
+    def delta(self):
+        """Class property containing the desired pulse width
+
+        :return: Dictionary entry for ``delta``
+        """  
+        return np.array([1.0]).astype(np.float32) * 1e-3                   #seconds, assumes input of ms  
     
     @property
     def dt(self):
-        """Class property containing the desired time-step (and pulse duration, under the narrow pulse approximation)
+        """Class property containing the desired time-step
 
         :return: Dictionary entry for ``dt``
         """  
-        return self.args_dict['dt']
+        return np.array(self.args_dict['dt']).astype(np.float32)*1e-3 #sec.
+    
+    @property
+    def TE(self):
+        """ Class property containing the desired echo time
+        
+        :return: TE
+        """
+        return np.array(float(1.0) + float(self.args_dict['Delta'])).astype(np.float32) * 1e-3
     
     @property
     def voxel_dimensions(self):
@@ -116,7 +142,7 @@ class Parameters:
 
         :return: Dictionary entry for ``voxel_dims``
         """  
-        return self.args_dict['voxel_dims']
+        return np.array(self.args_dict['voxel_dims']).astype(np.float32)*1e-6 #meters, assumes input of um 
     
     @property
     def buffer(self):
@@ -124,7 +150,19 @@ class Parameters:
 
         :return: Dictionary entry for ``buffer``
         """  
-        return self.args_dict['buffer']
+        return np.array(self.args_dict['buffer']).astype(np.float32)*1e-6 #meters, assumes input of um
+    
+    @property
+    def kappa(self):
+        return 1.0
+    
+    @property
+    def A(self):
+        return 10.0
+    
+    @property
+    def P(self):
+        return 1.0
     
     @property 
     def bvecs(self):
@@ -140,7 +178,7 @@ class Parameters:
 
         :return: Dictionary entry for ``input_bvals``
         """  
-        return self.args_dict['input_bvals']
+        return self.args_dict['input_bvals'] # s/m^2, assumes input of s/mm^2
     
     @property
     def void_distance(self):
@@ -148,7 +186,7 @@ class Parameters:
 
         :return: Dictionary entry for ``void_dist``
         """  
-        return self.args_dict['void_dist']
+        return np.array(self.args_dict['void_dist']).astype(np.float32)*1e-6 #meters, assumes input of um^2 / ms
 
     @property
     def diff_scheme(self):
@@ -190,8 +228,6 @@ class Parameters:
         """  
         return self.args_dict['cfg_path']
 
-
-
 class dmri_simulation(Parameters):
     """ Class instance of the forward simulation model of the Pulsed Gradient Spin Echo (PGSE) Experiment.
 
@@ -213,8 +249,16 @@ class dmri_simulation(Parameters):
         """        
         Parameters.__init__(self, args)
         fibers = []
-        spins = []
-        cells = []
+        spins  = []
+        cells  = []
+        self.G = gradients.pgse(
+                                Delta = self.Delta, 
+                                delta = self.delta, 
+                                dt    = self.dt, 
+                                bvals = self.bvals, 
+                                bvecs = self.bvecs
+                                )
+
         return
     
     def run(self,):

@@ -1,3 +1,5 @@
+from typing import Dict, Union
+
 import numpy as np
 
 
@@ -5,7 +7,17 @@ import numpy as np
 class fiber():
     """Class object for fiber attributes
     """  
-    def __init__(self, center: np.ndarray, direction: np.ndarray, bundle: int, diffusivity: float, radius: float) -> None:
+    def __init__(self, 
+                 center: np.ndarray, 
+                 direction: np.ndarray, 
+                 bundle: int, 
+                 diffusivity: float, 
+                 radius: float,
+                 kappa : float,
+                 L     : float,
+                 A     : float,
+                 P     : float
+                 ) -> None:
         """Fiber information and parameters
 
         :param center: (x,y,z) coordinates of the fiber center
@@ -19,13 +31,37 @@ class fiber():
         :param radius: Fiber radius, in micrometers
         :type radius: float
         """ 
-        self.center = center
-        self.bundle = bundle + 1
-        self.direction = direction
+
+        self.center      = center
+        self.bundle      = bundle + 1
+        self.direction   = direction
         self.diffusivity = diffusivity
         self.radius      = radius
-        return
+        
 
+        # ------------------------------------------------------------------------------- #
+        #                                Fiber Bending                                    #
+        # ------------------------------------------------------------------------------- #
+        self.kappa = kappa
+        self.L     = L
+        self.A     = A
+        self.P     = P
+        return
+    
+    def _gamma(self, r: np.ndarray) -> np.ndarray:
+        t = np.einsum('i,i', r, self.direction)
+        return np.array([self.A*np.sin(np.pi * self.kappa / ( (1/self.P) * self.L) * t),0, t])
+    
+    def _d_gamma__d_t(self, r: np.ndarray) -> np.ndarray:
+        t = np.einsum('i,i', r, self.direction)
+        gamma_prime = np.array([self.A *np.pi * self.kappa / ( (1/self.P) * self.L) * np.cos(np.pi * self.kappa / ( (1/self.P) * self.L) * t), 0 ,1])
+        gamma_prime /= np.linalg.norm(gamma_prime, ord = 2)
+        return gamma_prime
+    
+    @property
+    def theta(self):
+        return np.arccos(np.einsum('i,i', np.array([0., 0., 1.0]), self.direction))
+ 
     """ Getters """
         
     def _get_center(self):
@@ -164,8 +200,8 @@ class spin():
         self.position_t1m = spin_position_t1m
         self.position_t2p = np.empty(shape=(3,), dtype=np.float32)
         self.in_fiber_index = None
-        self.fiber_bundle = None
-        self.in_cell_index = None
+        self.fiber_bundle   = None
+        self.in_cell_index  = None
         self.in_water_index = None
         
         return 
