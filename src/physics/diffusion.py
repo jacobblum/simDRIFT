@@ -12,7 +12,11 @@ import sys
 import operator
 import logging
 from src.physics import walk_in_fiber, walk_in_cell, walk_in_water
+from tqdm import tqdm
+from typing import Dict,Type
 
+
+GAMMA = 267.513e6 
 
 def _caclulate_volumes(spins):
     """Calculates empirical volume fraction for each simulated compartment (i.e., fibers, cells, and water)
@@ -23,16 +27,94 @@ def _caclulate_volumes(spins):
     fiber_spins = np.array([-1 if spin._get_bundle_index() is None else spin._get_bundle_index() for spin in spins])
     cells  = np.array([spin._get_cell_index() for spin in spins])
 
+    water_spins = np.array([1 if np.logical_and(spin._get_bundle_index() is None, spin._get_cell_index() == -1) else -1 for spin in spins])
+
     logging.info('------------------------------')  
     logging.info(' Empirical Volume Fractions')
     logging.info('------------------------------')   
     
     for i in range(1, int(np.amax(fiber_spins))+1):
-        logging.info(f" Fiber {i} Volume: {len(fiber_spins[np.where(fiber_spins == i)]) / len(fiber_spins)}")
+        logging.info(" Fiber {} Volume: {:.3f}".format(i, len(fiber_spins[np.where(fiber_spins == i)]) / len(fiber_spins)))
 
-    logging.info('    Cell Volume: {} '.format(
-        len(cells[cells > -1]) / len(spins)))
-        
+    logging.info(' Cell Volume:    {:.3f} '.format(
+        len(cells[cells > -1]) / len(spins))
+        )
+    
+    logging.info(' Water Volume:   {:.3f} '.format(
+        len(water_spins[water_spins > -1]) / len(spins))
+        )
+    
+    v = 0
+
+    for i in range(1, int(np.amax(fiber_spins))+1): v+= len(fiber_spins[np.where(fiber_spins == i)]) / len(fiber_spins)
+    v += len(cells[cells > -1]) / len(spins)
+    v +=  len(water_spins[water_spins > -1]) / len(spins)
+
+    logging.info(' Total Volume:   {:.3f}'.format(v))
+
+    return
+    
+
+def _package_data(self) -> Dict[str, Dict[str, Type[numba.cuda.cudadrv.devicearray.DeviceNDArray]]]:
+    outputArgs = {'fiber_centers'    : {'data' : [], 'dtype' : np.float32},
+                 'fiber_directions'  : {'data' : [], 'dtype' : np.float32},
+                 'fiber_step'        : {'data' : [], 'dtype' : np.float32}, 
+                 'fiber_radii'       : {'data' : [], 'dtype' : np.float32},
+                 'fiber_theta'       : {'data' : [], 'dtype' : np.float32},
+                 'curvature_params'  : {'data' : [], 'dtype' : np.float32},
+                 'spin_positions_t0' : {'data' : [], 'dtype' : np.float32},
+                 'spins_fiber_index' : {'data' : [], 'dtype' : np.int32  },
+                 'cell_centers'      : {'data' : [], 'dtype' : np.float32},
+                 'spins_cell_index'  : {'data' : [], 'dtype' : np.int32  },
+                 'cell_step'         : {'data' : [], 'dtype' : np.float32},
+                 'cell_radii'        : {'data' : [], 'dtype' : np.float32},
+                 'spin_water_index'  : {'data' : [], 'dtype' : np.int32  },
+                 'water_step'        : {'data' : [], 'dtype' : np.float32},
+                 'gradient'          : {
+                                        'data' : self.G, 
+                                        'dtype': np.float32
+                                        },
+                 'phase'             : {
+                                        'data' : np.zeros((len(self.spins), self.G.shape[0])), 
+                                        'dtype': np.float32
+                                        }
+                 }
+    
+    #####################################################################################
+    #                                       Package Data                                #
+    #####################################################################################
+    for fiber in self.fibers:
+        outputArgs['fiber_centers'   ]['data'].append(fiber.center)                           
+        outputArgs['fiber_directions']['data'].append(fiber.direction)     
+        outputArgs['fiber_step'      ]['data'].append(np.sqrt(6.0*fiber.diffusivity*self.dt)) 
+        outputArgs['fiber_radii'     ]['data'].append(fiber.radius)                             
+        outputArgs['fiber_theta'     ]['data'].append(fiber.theta)
+        outputArgs['curvature_params']['data'].append(
+                                                      [fiber.__dict__['kappa'], fiber.__dict__['L'], fiber.__dict__['A'], fiber.__dict__['P']]
+                                                      )
+    for cell in self.cells:
+        outputArgs['cell_centers']['data'].append(cell.center)
+        outputArgs['cell_radii'  ]['data'].append(cell.radius)
+        outputArgs['cell_step'   ]['data'].append(np.sqrt(6.0 * cell.diffusivity*self.dt))
+
+    for spin in self.spins:
+        outputArgs['spin_positions_t0']['data'].append(spin.position_t1m)
+        outputArgs['spins_fiber_index']['data'].append(-1 if spin._get_bundle_index() is None else spin._get_fiber_index())
+        outputArgs['spins_cell_index' ]['data'].append(spin._get_cell_index())
+        outputArgs['spin_water_index' ]['data'].append(1 if np.logical_and(spin._get_bundle_index() is None, spin._get_cell_index() == -1) else -1)
+
+    outputArgs['water_step']['data'].append(math.sqrt(6*self.water_diffusivity*self.dt))
+
+    
+    #####################################################################################
+    #                              Send Data to GPU                                     #
+    #####################################################################################
+    for k, v in outputArgs.items():
+        outputArgs[k]['data'] = cuda.to_device(
+                                               np.array(v['data'], dtype = v['dtype'])
+                                              )
+    return outputArgs
+
 def _simulate_diffusion(self) -> None:
     """Iterates over the range :math:`t \in [0, \Delta ]` with a step size of :math:`\dd{t}`.
 
@@ -57,20 +139,8 @@ def _simulate_diffusion(self) -> None:
     """
 
     _caclulate_volumes(self.spins)
-
-    random_states_cuda            = cuda.to_device(create_xoroshiro128p_states(len(self.spins), seed = 42))    
-    fiber_centers_cuda            = cuda.to_device(np.array([fiber._get_center() for fiber in self.fibers], dtype= np.float32))
-    fiber_directions_cuda         = cuda.to_device(np.array([fiber._get_direction() for fiber in self.fibers], dtype= np.float32))
-    fiber_step_cuda               = cuda.to_device(np.array([math.sqrt(6*fiber._get_diffusivity()*self.dt) for fiber in self.fibers], dtype= np.float32))
-    fiber_radii_cuda              = cuda.to_device(np.array([fiber._get_radius() for fiber in self.fibers], dtype= np.float32))
-    spin_positions_cuda           = cuda.to_device(np.array([spin._get_position_t1m() for spin in self.spins], dtype= np.float32))
-    spin_in_fiber_at_index_cuda  = cuda.to_device(np.array([-1 if spin._get_bundle_index() is None else spin._get_fiber_index() for spin in self.spins]))
-    cell_centers_cuda             = cuda.to_device(np.array([cell._get_center() for cell in self.cells], dtype=np.float32))
-    spin_in_cell_at_index_cuda    = cuda.to_device(np.array([spin._get_cell_index() for spin in self.spins]))
-    cell_step_cuda                = cuda.to_device(np.array([math.sqrt(6*cell._get_diffusivity()*self.dt) for cell in self.cells], dtype= np.float32))
-    cell_radii_cuda               = cuda.to_device(np.array([cell._get_radius() for cell in self.cells], dtype=np.float32)) 
-    water_step                    = cuda.to_device(np.array([math.sqrt(6*self.water_diffusivity*self.dt)])) 
-
+    simulation_data    = _package_data(self)
+    random_states_cuda = cuda.to_device(create_xoroshiro128p_states(len(self.spins), seed = 42))  
 
     Start = time.time()
     threads_per_block = 320
@@ -78,36 +148,89 @@ def _simulate_diffusion(self) -> None:
     logging.info('------------------------------')  
     logging.info(' Beginning Simulation...')
     logging.info('------------------------------')    
-    for i in range(int(self.Delta/self.dt)):
-        sys.stdout.write('\r' + 'simDRIFT:  Step ' +  str(i+1) + '/' + str(int(self.Delta/self.dt)))
+
+
+    for i in range(int(self.TE/self.dt)):
+        sys.stdout.write('\r' + 'simDRIFT:  Step {:05d}'.format(i + 1)
+                         + '/{:5d}'.format(  int(self.TE/self.dt) + 1) 
+                         + ' | t = {:.5f}'.format(  1e3*(i+1)*self.dt)
+                         + ' (ms) | TE = {:5f} (ms)'.format(1e3*self.TE)
+                         )
         sys.stdout.flush()
+        if i == 1:
+            sys.stdout.write('\n')
+            start = time.time()
+            _diffusion_context_manager[blocks_per_grid,threads_per_block](random_states_cuda, 
+                                                                          simulation_data['spin_positions_t0']['data'], 
+                                                                          simulation_data['spins_fiber_index']['data'],
+                                                                          simulation_data['fiber_centers'    ]['data'],
+                                                                          simulation_data['fiber_step'       ]['data'],
+                                                                          simulation_data['fiber_radii'      ]['data'],
+                                                                          simulation_data['fiber_directions' ]['data'],
+                                                                          simulation_data['spins_cell_index' ]['data'],
+                                                                          simulation_data['cell_centers'     ]['data'],
+                                                                          simulation_data['cell_step'        ]['data'],
+                                                                          simulation_data['cell_radii'       ]['data'],
+                                                                          simulation_data['water_step'       ]['data'],
+                                                                          simulation_data['fiber_theta'      ]['data'],
+                                                                          self.fiber_configuration == 'Void', 
+                                                                          simulation_data['curvature_params' ]['data']
+                                                                        )
+            cuda.synchronize()
+          
+            _calculate_phase[blocks_per_grid, threads_per_block](simulation_data['phase'            ]['data'],
+                                                                 simulation_data['spin_positions_t0']['data'],
+                                                                 simulation_data['gradient'         ]['data'],
+                                                                 self.dt,
+                                                                 i
+                                                                 )
+            
+            cuda.synchronize()
+            end = time.time()
+
+            logging.info(' Step 2 elapsed in {:.4f} (sec.) ... projected total simulation time is {:.4f} (sec.)'.format(end - start, (end - start ) * (self.Delta / self.dt) ))
+        else:
+            _diffusion_context_manager[blocks_per_grid,threads_per_block](random_states_cuda, 
+                                                                          simulation_data['spin_positions_t0']['data'], 
+                                                                          simulation_data['spins_fiber_index']['data'],
+                                                                          simulation_data['fiber_centers'    ]['data'],
+                                                                          simulation_data['fiber_step'       ]['data'],
+                                                                          simulation_data['fiber_radii'      ]['data'],
+                                                                          simulation_data['fiber_directions' ]['data'],
+                                                                          simulation_data['spins_cell_index' ]['data'],
+                                                                          simulation_data['cell_centers'     ]['data'],
+                                                                          simulation_data['cell_step'        ]['data'],
+                                                                          simulation_data['cell_radii'       ]['data'],
+                                                                          simulation_data['water_step'       ]['data'],
+                                                                          simulation_data['fiber_theta'      ]['data'],
+                                                                          self.fiber_configuration == 'Void', 
+                                                                          simulation_data['curvature_params' ]['data']
+                                                                        )
+
+
+            cuda.synchronize()
+            
+            _calculate_phase[blocks_per_grid, threads_per_block](simulation_data['phase'            ]['data'],
+                                                                 simulation_data['spin_positions_t0']['data'],
+                                                                 simulation_data['gradient'         ]['data'],
+                                                                 self.dt,
+                                                                 i
+                                                                 )
+            
+            cuda.synchronize()
         
-        _diffusion_context_manager[blocks_per_grid,threads_per_block](random_states_cuda, 
-                                                                      spin_positions_cuda, 
-                                                                      spin_in_fiber_at_index_cuda, 
-                                                                      fiber_centers_cuda,
-                                                                      fiber_step_cuda,
-                                                                      fiber_radii_cuda,
-                                                                      fiber_directions_cuda, 
-                                                                      spin_in_cell_at_index_cuda, 
-                                                                      cell_centers_cuda, 
-                                                                      cell_step_cuda,
-                                                                      cell_radii_cuda,
-                                                                      water_step, 
-                                                                      self.fiber_configuration == 'Void'
-                                                                      )
-        
-        cuda.synchronize()
     End = time.time()
     sys.stdout.write('\n')
     logging.info(' Simulation complete!')
     logging.info(' Elapsed time: {} seconds'.format(round((End-Start)),3))
-    spin_positions_t2p = spin_positions_cuda.copy_to_host()
+
+    self.water_key     = simulation_data['spin_water_index' ]['data'].copy_to_host()
+    spin_positions_t2p = simulation_data['spin_positions_t0']['data'].copy_to_host()
+    self.phase         = simulation_data['phase']['data'].copy_to_host()
+
     for ii, spin in enumerate(self.spins):
         spin._set_position_t2p(spin_positions_t2p[ii,:])
-    
     return 
-
 
 @numba.cuda.jit
 def _diffusion_context_manager(random_states, 
@@ -122,7 +245,9 @@ def _diffusion_context_manager(random_states,
                                cell_step,
                                cell_radii,
                                water_step,  
-                               void):
+                               theta_cuda,
+                               void, 
+                               curvature_params):
     """Helper function to segment each spin into the relevant ``physics`` module for its resident compartment
 
     :param random_states: Randomized states
@@ -142,32 +267,37 @@ def _diffusion_context_manager(random_states,
     i = cuda.grid(1)
     if i > spin_positions.shape[0]:
         return
-    
-    if spin_in_fiber_at_index[i] > -1:
-        walk_in_fiber._diffusion_in_fiber(i, 
-                                          random_states,
-                                          fiber_centers[spin_in_fiber_at_index[i],:],
-                                          fiber_radii[spin_in_fiber_at_index[i]],
-                                          fiber_directions[spin_in_fiber_at_index[i],:],
-                                          fiber_step[spin_in_fiber_at_index[i]], 
-                                          spin_positions)
+       
+    if spin_in_fiber_at_index[i] > -1 or spin_in_cell_at_index[i] > -1:       
+        if spin_in_fiber_at_index[i] > -1:
+            walk_in_fiber._diffusion_in_fiber(i, 
+                                            random_states,
+                                            fiber_centers[spin_in_fiber_at_index[i],:],
+                                            fiber_radii[spin_in_fiber_at_index[i]],
+                                            fiber_directions[spin_in_fiber_at_index[i],:],
+                                            fiber_step[spin_in_fiber_at_index[i]], 
+                                            theta_cuda[spin_in_fiber_at_index[i]],
+                                            spin_positions,
+                                            curvature_params[spin_in_fiber_at_index[i], :]
+                                            )
+            return
         
-        return
-    
-    if spin_in_cell_at_index[i] > -1:
-        walk_in_cell._diffusion_in_cell(i, 
-                                        random_states, 
-                                        cell_centers[spin_in_cell_at_index[i], :], 
-                                        cell_radii[spin_in_cell_at_index[i]],
-                                        cell_step[spin_in_cell_at_index[i]], 
-                                        fiber_centers,
-                                        fiber_radii,
-                                        fiber_directions, 
-                                        spin_positions,  
-                                        void)
-        
-        return
-        
+        if spin_in_cell_at_index[i] > -1: 
+            walk_in_cell._diffusion_in_cell(i, 
+                                            random_states, 
+                                            cell_centers[spin_in_cell_at_index[i], :], 
+                                            cell_radii[spin_in_cell_at_index[i]],
+                                            cell_step[spin_in_cell_at_index[i]], 
+                                            fiber_centers,
+                                            fiber_radii,
+                                            fiber_directions, 
+                                            spin_positions, 
+                                            theta_cuda, 
+                                            void,
+                                            curvature_params
+                                        )
+            return
+
     else:
         walk_in_water._diffusion_in_water(i,
                                           random_states,
@@ -177,8 +307,33 @@ def _diffusion_context_manager(random_states,
                                           cell_centers,
                                           cell_radii, 
                                           spin_positions, 
-                                          water_step[0])
+                                          water_step[0],
+                                          theta_cuda,
+                                          curvature_params
+                                          )
+        return
+            
+
+@numba.cuda.jit
+def _calculate_phase(phases,
+                     positions,
+                     G,
+                     dt,
+                     t
+                     ):
+    
+    i = cuda.grid(1)
+    if i > positions.shape[0]:
+        return
+    
+    for m in range(G.shape[0]):
+        phases[i, m] += ( 
+                        GAMMA 
+                        * dt
+                        * (
+                            (G[m, t, 0]   * positions[i, 0])
+                            + (G[m, t, 1] * positions[i, 1])
+                            + (G[m, t, 2] * positions[i, 2]) 
+                        )
+                    ) 
     return
-
-
-

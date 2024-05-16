@@ -10,8 +10,8 @@ def normalize_bvecs(bvecs):
     :return: Normalized b-vectors
     :rtype: np.ndarray
     """    
-    div_safe = [not np.all(bvecs[i,:] == 0) for i in range(bvecs.shape[0])]
-    bvecs[div_safe] = bvecs[div_safe] / np.linalg.norm(bvecs[div_safe], ord = 2, axis = 1)[:, None]
+    bvecs[(bvecs == 0).all(axis = 1)] = 1e-5
+    bvecs /= np.linalg.norm(bvecs, ord = 2, axis = 1)[:, None]
     return bvecs
 
 def get_from_default(fname): 
@@ -45,9 +45,8 @@ def _DBSI_99():
     :return: b-values and (normalized) b-vectors
     :rtype: np.ndarray
     """    
-
     DATA_DIR = os.path.dirname(os.path.relpath(__file__)) 
-    bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval99'))
+    bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval99'))*1e6
     bvecs = np.loadtxt(os.path.join(DATA_DIR, 'bvec99')).T
     return bvals, normalize_bvecs(bvecs)
 
@@ -59,7 +58,7 @@ def _ABCD():
     :rtype: np.ndarray
     """    
     DATA_DIR = os.path.dirname(os.path.relpath(__file__)) 
-    bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval_ABCD'))
+    bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval_ABCD'))*1e6
     bvecs = np.loadtxt(os.path.join(DATA_DIR, 'bvec_ABCD')).T
     return bvals, normalize_bvecs(bvecs)
 
@@ -70,12 +69,12 @@ def _NODDI():
     :rtype: np.ndarray
     """
     DATA_DIR = os.path.dirname(os.path.relpath(__file__)) 
-    bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval_NODDI'))
+    bvals = np.loadtxt(os.path.join(DATA_DIR, 'bval_NODDI'))*1e6
     bvecs = np.loadtxt(os.path.join(DATA_DIR, 'bvec_NODDI')).T
     return bvals, normalize_bvecs(bvecs)
 
-diff_scheme_opts = {'DBSI_99': _DBSI_99,
-                    'ABCD': _ABCD,
+diff_scheme_opts = {'DBSI_99'  : _DBSI_99,
+                    'ABCD'     : _ABCD,
                     'NODDI_145': _NODDI}
 
 

@@ -6,7 +6,19 @@ import operator
 
 
 @numba.cuda.jit(nopython=True)
-def _diffusion_in_cell(i, random_states, cell_center, cell_radii, cell_step, fiber_centers, fiber_radii, fiber_directions, spin_positions, void):
+def _diffusion_in_cell(i, 
+                       random_states, 
+                       cell_center, 
+                       cell_radii, 
+                       cell_step, 
+                       fiber_centers, 
+                       fiber_radii, 
+                       fiber_directions, 
+                       spin_positions, 
+                       thetas, 
+                       void,
+                       A
+                       ):
     """Simulated Brownian motion of a spin confined to within in a cell, implemented via random walk with rejection sampling for proposed steps beyond the cell membrane. Note that this implementation assumes zero exchange between compartments and is therefore only pysically-accurate for :math:`\Delta < {\\tau_{i}}` [1]_. 
 
     :param i: Absolute index of the current thread within the block grid
@@ -48,6 +60,8 @@ def _diffusion_in_cell(i, random_states, cell_center, cell_radii, cell_step, fib
     previous_position = cuda.local.array(shape = 3, dtype = numba.float32)
     proposed_new_position = cuda.local.array(shape = 3, dtype = numba.float32)
     u3 = cuda.local.array(shape = 3, dtype= numba.float32)
+    dynamic_fiber_center    = cuda.local.array(shape = 3, dtype = numba.float32)
+    dynamic_fiber_direction = cuda.local.array(shape = 3, dtype = numba.float32)
 
     for j in range(u3.shape[0]):
         u3[j] = 1/math.sqrt(3) * 1.
@@ -69,7 +83,29 @@ def _diffusion_in_cell(i, random_states, cell_center, cell_radii, cell_step, fib
         
         if operator.and_(not(is_not_in_cell), not(void)):
             for k in range(fiber_centers.shape[0]):
-                dFv = linalg.dL2(proposed_new_position, fiber_centers[k,:], fiber_directions[k,:], True)
+                dynamic_fiber_center    = linalg.gamma(proposed_new_position, 
+                                               fiber_directions[k,:], 
+                                               thetas[k],
+                                               dynamic_fiber_center,
+                                               A[k]
+                                               )
+        
+                dynamic_fiber_direction = linalg.d_gamma__d_t(proposed_new_position,
+                                                      fiber_directions[k,:], 
+                                                      thetas[k],
+                                                      dynamic_fiber_direction,
+                                                      A[k]
+                                                      )
+        
+                for kk in range(dynamic_fiber_center.shape[0]): 
+                    dynamic_fiber_center[kk] = dynamic_fiber_center[kk] + fiber_centers[k, kk]
+
+                dFv = linalg.dL2(proposed_new_position, 
+                                 dynamic_fiber_center, 
+                                 dynamic_fiber_direction, 
+                                 True
+                                )
+
                 if dFv < fiber_radii[k]:
                     is_in_fiber = True
                     break
