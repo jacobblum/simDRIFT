@@ -21,12 +21,15 @@ def test_custom_diffusion_scheme(input, expected):
     """
     Make Configuration File
     """
+    
     cwd = os.path.dirname(os.path.abspath(__file__))
     cfg_file = configparser.ConfigParser()
+    cfg_file.optionxform = str
     cfg_file.read(os.path.join(cwd, 'config.ini'))
 
     cfg_file['SIMULATION']['n_walkers'] = '256000'
-    cfg_file['SIMULATION']['DELTA'] = '.001'
+    cfg_file['SIMULATION']['Delta'] = '.1'
+    cfg_file['SIMULATION']['delta'] = '.010'
     cfg_file['SIMULATION']['dt'] = '.001'
     cfg_file['SIMULATION']['voxel_dims'] = '10'
     cfg_file['SIMULATION']['buffer'] = '0'
@@ -36,13 +39,17 @@ def test_custom_diffusion_scheme(input, expected):
     cfg_file['SIMULATION']['diffusion_scheme'] = "'DBSI_99'"
     cfg_file['SIMULATION']['output_directory'] = "'N/A'"
     cfg_file['SIMULATION']['verbose'] = "'no'"
-
+    cfg_file['SIMULATION']['draw_voxel'] = "'no'"
 
     cfg_file['FIBERS']['fiber_fractions'] = '0,0'
     cfg_file['FIBERS']['fiber_radii']= '1.0,1.0'
     cfg_file['FIBERS']['thetas'] = '0,0'
     cfg_file['FIBERS']['fiber_diffusions'] = '1.0,2.0'
+    cfg_file['FIBERS']['configuration'] = "'Penetrating'"
     
+    cfg_file['CURVATURE']['kappa'] = '1.0,1.0'
+    cfg_file['CURVATURE']['Amplitude'] = '0.0,0.0'
+    cfg_file['CURVATURE']['Periodicity'] = '1.0,1.0'
     
     cfg_file['CELLS']['cell_fractions'] = '0,0'
     cfg_file['CELLS']['cell_radii'] = '1.0,1.0'
@@ -52,17 +59,17 @@ def test_custom_diffusion_scheme(input, expected):
     with open(os.path.join(cwd, 'config.ini'), 'w') as configfile:
         cfg_file.write(configfile)
 
-    cmd = r"simDRIFT"
+    cmd =  f"python "
+    cmd += f"{os.path.join( Path(__file__).parents[2], 'master_cli.py')}"
     cmd += f" simulate --configuration {os.path.join(cwd, 'config.ini')}"
+
     os.system(cmd)
-    signal = nb.load(glob.glob(os.getcwd() + os.sep + '*' + os.sep + 'signals' + os.sep + 'water_signal.nii')[0]).get_fdata()  
+    signal = nb.load(glob.glob(os.getcwd() + os.sep + '*' + os.sep + 'signals' + os.sep + 'total_signal.nii')[0]).get_fdata()  
     assert signal.shape == (expected,)
-
-
 
 def run(save_dir):
    logging.info(f' (7/20) Test Custom bval/bvec files: assert that the forward simulated signal induced by a custom, input-supplied bvec and bval file matches the shapes from the specified custom diffusion scheme')
-   results_dir = os.path.join(save_dir, 'test_custom_d_scheme_results')
+   results_dir = os.path.join(save_dir, 'test_custom_diffusion_scheme')
    if not os.path.exists(results_dir): os.mkdir(results_dir)
    os.chdir(results_dir)
    cmd = f"pytest {__file__}"

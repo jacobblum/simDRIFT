@@ -13,7 +13,7 @@ from src.data import diffusion_schemes
 import configparser
 
 
-@pytest.mark.parametrize("input, expected", [(100, 100), (256 * 1e3, 256 * 1e3), (1e6,1e6,)])
+@pytest.mark.parametrize("input, expected", [(100, 100), (256*1e3, 256*1e3), (1e6,1e6,)])
 def test_trajectory_shapes(input, expected):
     """1. Check that the forward simulated trajectories match the number of simulated spins
     """
@@ -22,10 +22,12 @@ def test_trajectory_shapes(input, expected):
     """
     cwd = os.path.dirname(os.path.abspath(__file__))
     cfg_file = configparser.ConfigParser()
+    cfg_file.optionxform = str
     cfg_file.read(os.path.join(cwd, 'config.ini'))
 
     cfg_file['SIMULATION']['n_walkers'] = f'{int(input)}'
-    cfg_file['SIMULATION']['DELTA'] = '.001'
+    cfg_file['SIMULATION']['Delta'] = '0.20'
+    cfg_file['SIMULATION']['delta'] = '.010'
     cfg_file['SIMULATION']['dt'] = '.001'
     cfg_file['SIMULATION']['voxel_dims'] = '10'
     cfg_file['SIMULATION']['buffer'] = '0'
@@ -35,13 +37,17 @@ def test_trajectory_shapes(input, expected):
     cfg_file['SIMULATION']['diffusion_scheme'] = "'DBSI_99'"
     cfg_file['SIMULATION']['output_directory'] = "'N/A'"
     cfg_file['SIMULATION']['verbose'] = "'no'"
-
+    cfg_file['SIMULATION']['draw_voxel'] = "'no'"
 
     cfg_file['FIBERS']['fiber_fractions'] = '0,0'
     cfg_file['FIBERS']['fiber_radii']= '1.0,1.0'
     cfg_file['FIBERS']['thetas'] = '0,0'
     cfg_file['FIBERS']['fiber_diffusions'] = '1.0,2.0'
-    
+    cfg_file['FIBERS']['configuration'] = "'Penetrating'"
+
+    cfg_file['CURVATURE']['kappa'] = '1.0,1.0'
+    cfg_file['CURVATURE']['Amplitude'] = '0.0,0.0'
+    cfg_file['CURVATURE']['Periodicity'] = '1.0,1.0'
     
     cfg_file['CELLS']['cell_fractions'] = '0,0'
     cfg_file['CELLS']['cell_radii'] = '1.0,1.0'
@@ -51,14 +57,16 @@ def test_trajectory_shapes(input, expected):
     with open(os.path.join(cwd, 'config.ini'), 'w') as configfile:
         cfg_file.write(configfile)
 
-
     """
     Run the test
     """
-    cmd = r"simDRIFT"
+    cmd =  f"python "
+    cmd += f"{os.path.join( Path(__file__).parents[2], 'master_cli.py')}"
     cmd += f" simulate --configuration {os.path.join(cwd, 'config.ini')}"
+
     os.system(cmd)
-    trajectories = sorted(glob.glob(os.getcwd() + os.sep + '*' + os.sep + 'trajectories' + os.sep + 'total_trajectories_t1m.npy'), key =os.path.getmtime)    
+    trajectories = sorted(glob.glob(os.getcwd() + os.sep + '*' + os.sep + 'trajectories' + os.sep + 'total_trajectories_t1m.npy'), key = os.path.getmtime)
+  
     assert np.load(trajectories[-1]).shape[0] == expected
 
 def run(save_dir):

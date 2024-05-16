@@ -26,10 +26,12 @@ def test_cell_physics_multi(input):
     """
     cwd = os.path.dirname(os.path.abspath(__file__))
     cfg_file = configparser.ConfigParser()
+    cfg_file.optionxform = str
     cfg_file.read(os.path.join(cwd, 'config.ini'))
 
     cfg_file['SIMULATION']['n_walkers'] = '256000'
-    cfg_file['SIMULATION']['DELTA'] = '.1'
+    cfg_file['SIMULATION']['Delta'] = '1.0'
+    cfg_file['SIMULATION']['delta'] = '.10'
     cfg_file['SIMULATION']['dt'] = '.001'
     cfg_file['SIMULATION']['voxel_dims'] = '10'
     cfg_file['SIMULATION']['buffer'] = '0'
@@ -39,12 +41,17 @@ def test_cell_physics_multi(input):
     cfg_file['SIMULATION']['diffusion_scheme'] = "'DBSI_99'"
     cfg_file['SIMULATION']['output_directory'] = "'N/A'"
     cfg_file['SIMULATION']['verbose'] = "'no'"
+    cfg_file['SIMULATION']['draw_voxel'] = "'no'"
 
-    cfg_file['FIBERS']['fiber_fractions'] = '0,0'
+    cfg_file['FIBERS']['fiber_fractions'] = '0.0,0'
     cfg_file['FIBERS']['fiber_radii']= '1.0,1.0'
     cfg_file['FIBERS']['thetas'] = '0,0'
     cfg_file['FIBERS']['fiber_diffusions'] = '1.0,2.0'
+    cfg_file['FIBERS']['configuration'] = "'Penetrating'"
 
+    cfg_file['CURVATURE']['kappa'] = '1.0,1.0'
+    cfg_file['CURVATURE']['Amplitude'] = '0.0,0.0'
+    cfg_file['CURVATURE']['Periodicity'] = '1.0,1.0'
 
     cfg_file['CELLS']['cell_fractions'] = '.1,.1'
     cfg_file['CELLS']['cell_radii'] = f'{input[0]},{input[1]}'
@@ -57,17 +64,19 @@ def test_cell_physics_multi(input):
     """
     Run the test
     """
-    cmd = r"simDRIFT"
+    cmd =  f"python "
+    cmd += f"{os.path.join( Path(__file__).parents[2], 'master_cli.py')}"
     cmd += f" simulate --configuration {os.path.join(cwd, 'config.ini')}"
+
     os.system(cmd)
     signals = sorted(glob.glob(os.getcwd() + os.sep + '*' + os.sep + 'signals' + os.sep + 'cell_signal.nii'), key =os.path.getmtime)
     tenfit = tenmodel.fit(nb.load(signals[-1]).get_fdata())
-    assert np.isclose(1e3 * tenfit.ad, 1e3 * tenfit.rd, atol=.1)
+    assert np.isclose(1e9 * tenfit.ad, 1e9 * tenfit.rd, atol=.1)
 
 
 def run(save_dir):
    logging.info(f'Test Cell Physics: verify that the forward simulated cell-only signal, at various cell radii, corresponds to an isotropic diffusion tensor \n\t  (17/20)-r = [1.0 um, 1.0 um] <-> AD = RD \n\t  (18/20)-r = [1.5 um, 1.5 um] <-> AD = RD \n\t  (19/20)-r = [2.0 um, 2.0 um] <-> AD = RD')
-   results_dir = os.path.join(save_dir, 'test_signal_shapes_results')
+   results_dir = os.path.join(save_dir, 'test_cell_physics')
    
    if not os.path.exists(results_dir): os.mkdir(results_dir)
    os.chdir(results_dir)

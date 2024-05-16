@@ -34,7 +34,6 @@ from _tests import (
 def run_tests():
 
     log_file = os.path.join(os.getcwd() + os.sep + 'test_suite_log')
-    
     logging.getLogger('numba').setLevel(logging.WARNING)
     logging.getLogger('numpy').setLevel(logging.WARNING)
     logging.basicConfig(level = logging.INFO,
@@ -48,15 +47,14 @@ def run_tests():
     logging.info(' ... running the simDRIFT test suite ... ')
     logging.info(' The test suite will run 20 dMRI forward simulations to verify the simDRIFTs physics, output types, and shapes. On an RTX3090, the test suite takes about 8 minutes to complete; however, this time will depend on your hardware.')
     
-    time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    current_time = datetime.now().strftime('%m%d%Y_%H%M%S')
 
-    test_suite_results_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), f'{time}_test_suite_results')
-    
+    test_suite_results_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), f'{current_time}_test_results')
     
     logging.info(f' All results will be saved under the path: {test_suite_results_directory}')
 
     if not os.path.exists(test_suite_results_directory): os.mkdir(test_suite_results_directory)
-    
+
     signal_types.run(test_suite_results_directory)
     trajectory_types.run(test_suite_results_directory)
     signal_shapes.run(test_suite_results_directory)
@@ -66,7 +64,3 @@ def run_tests():
     fiber_physics.run(test_suite_results_directory)
     cell_physics.run(test_suite_results_directory)
     single_cell_physics.run(test_suite_results_directory)
-
-
-    
-

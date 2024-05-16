@@ -27,10 +27,12 @@ def test_cell_physics_single(input):
     """
     cwd = os.path.dirname(os.path.abspath(__file__))
     cfg_file = configparser.ConfigParser()
+    cfg_file.optionxform = str
     cfg_file.read(os.path.join(cwd, 'config.ini'))
 
     cfg_file['SIMULATION']['n_walkers'] = '256000'
-    cfg_file['SIMULATION']['DELTA'] = '.1'
+    cfg_file['SIMULATION']['Delta'] = '1.0'
+    cfg_file['SIMULATION']['delta'] = '.10'
     cfg_file['SIMULATION']['dt'] = '.001'
     cfg_file['SIMULATION']['voxel_dims'] = '10'
     cfg_file['SIMULATION']['buffer'] = '0'
@@ -40,13 +42,18 @@ def test_cell_physics_single(input):
     cfg_file['SIMULATION']['diffusion_scheme'] = "'DBSI_99'"
     cfg_file['SIMULATION']['output_directory'] = "'N/A'"
     cfg_file['SIMULATION']['verbose'] = "'no'"
+    cfg_file['SIMULATION']['draw_voxel'] = "'no'"
 
     cfg_file['FIBERS']['fiber_fractions'] = '0,0'
     cfg_file['FIBERS']['fiber_radii']= '1.0,1.0'
     cfg_file['FIBERS']['thetas'] = '0,0'
     cfg_file['FIBERS']['fiber_diffusions'] = '1.0,2.0'
+    cfg_file['FIBERS']['configuration'] = "'Penetrating'"
 
-
+    cfg_file['CURVATURE']['kappa'] = '1.0,1.0'
+    cfg_file['CURVATURE']['Amplitude'] = '0.0,0.0'
+    cfg_file['CURVATURE']['Periodicity'] = '1.0,1.0'
+    
     cfg_file['CELLS']['cell_fractions'] = '.1'
     cfg_file['CELLS']['cell_radii'] = f'{input}'
 
@@ -58,14 +65,16 @@ def test_cell_physics_single(input):
     """
     Run the test
     """
-    cmd = r"simDRIFT"
+    cmd =  f"python "
+    cmd += f"{os.path.join( Path(__file__).parents[2], 'master_cli.py')}"
     cmd += f" simulate --configuration {os.path.join(cwd, 'config.ini')}"
+    
     os.system(cmd)
+
     signals = sorted(glob.glob(os.getcwd() + os.sep + '*' + os.sep + 'signals' + os.sep + 'cell_signal.nii'), key =os.path.getmtime)
     tenfit = tenmodel.fit(nb.load(signals[-1]).get_fdata())
-    assert np.isclose(1e3 * tenfit.ad, 1e3 * tenfit.rd, atol=.1)
-
-
+    assert np.isclose(1e9 * tenfit.ad, 1e9 * tenfit.rd, atol=.1)
+    
 def run(save_dir):
    logging.info(f' (20/20) Test Single Cell Physics: verify that the forward simulated cell-only signal, at various cell radii, corresponds to an isotropic diffusion tensor, r = [1.0 um] <-> AD = RD')
    results_dir = os.path.join(save_dir, 'test_signal_shapes_results')

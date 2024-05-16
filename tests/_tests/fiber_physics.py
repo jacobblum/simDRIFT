@@ -19,21 +19,22 @@ def test_fiber_physics_multi(input, expected):
     """1. Check that the forward simulated fiber-only signal corresponds to a diffusion tensor matching the input fiber diffusivities (with multiple fibers)
     2. Check that the forward simulated fiber-only signal corresponds to an anisotropic diffusion tensor (with multiple fibers)
     """
+  
     bvals, bvecs = diffusion_schemes.get_from_default('DBSI_99')
     gtab = gradient_table(bvals, bvecs)
     tenmodel = dti.TensorModel(gtab)
-    bvals, bvecs = diffusion_schemes.get_from_default('DBSI_99')
-    gtab = gradient_table(bvals, bvecs)
-    tenmodel = dti.TensorModel(gtab)
+
     """
     Make Configuration File
     """
     cwd = os.path.dirname(os.path.abspath(__file__))
     cfg_file = configparser.ConfigParser()
+    cfg_file.optionxform = str
     cfg_file.read(os.path.join(cwd, 'config.ini'))
 
     cfg_file['SIMULATION']['n_walkers'] = '256000'
-    cfg_file['SIMULATION']['DELTA'] = '1'
+    cfg_file['SIMULATION']['Delta'] = '1.0'
+    cfg_file['SIMULATION']['delta'] = '.10'
     cfg_file['SIMULATION']['dt'] = '.001'
     cfg_file['SIMULATION']['voxel_dims'] = '20'
     cfg_file['SIMULATION']['buffer'] = '0'
@@ -43,11 +44,17 @@ def test_fiber_physics_multi(input, expected):
     cfg_file['SIMULATION']['diffusion_scheme'] = "'DBSI_99'"
     cfg_file['SIMULATION']['output_directory'] = "'N/A'"
     cfg_file['SIMULATION']['verbose'] = "'no'"
+    cfg_file['SIMULATION']['draw_voxel'] = "'no'"
 
-    cfg_file['FIBERS']['fiber_fractions'] = '.3,.3,.3'
+    cfg_file['FIBERS']['fiber_fractions'] = '.15,.15,.15'
     cfg_file['FIBERS']['fiber_radii']= '1.0,1.0,1.0'
     cfg_file['FIBERS']['thetas'] = '0,0,0'
     cfg_file['FIBERS']['fiber_diffusions'] = f'{input[0]},{input[1]},{input[2]}'
+    cfg_file['FIBERS']['configuration'] = "'Penetrating'"
+
+    cfg_file['CURVATURE']['kappa'] = '1.0,1.0,1.0'
+    cfg_file['CURVATURE']['Amplitude'] = '0.0,0.0,0.0'
+    cfg_file['CURVATURE']['Periodicity'] = '1.0,1.0,1.0'
 
     cfg_file['CELLS']['cell_fractions'] = '0.,0.'
     cfg_file['CELLS']['cell_radii'] = '1.0,1.0'
@@ -62,9 +69,12 @@ def test_fiber_physics_multi(input, expected):
     Run the test
     """
 
-    cmd = r"simDRIFT"
+    cmd =  f"python "
+    cmd += f"{os.path.join( Path(__file__).parents[2], 'master_cli.py')}"
     cmd += f" simulate --configuration {os.path.join(cwd, 'config.ini')}"
+    
     os.system(cmd)
+    
     fiber_1_signals = sorted(glob.glob(os.getcwd() + os.sep + '*' + os.sep + 'signals' + os.sep + 'fiber_1_signal.nii'), key =os.path.getmtime)
     fiber_2_signals = sorted(glob.glob(os.getcwd() + os.sep + '*' + os.sep + 'signals' + os.sep + 'fiber_2_signal.nii'), key =os.path.getmtime)
     fiber_3_signals = sorted(glob.glob(os.getcwd() + os.sep + '*' + os.sep + 'signals' + os.sep + 'fiber_3_signal.nii'), key =os.path.getmtime)
@@ -77,10 +87,8 @@ def test_fiber_physics_multi(input, expected):
     tenfit_2 = tenmodel.fit(fiber_2_signal)
     tenfit_3 = tenmodel.fit(fiber_3_signal)
 
-    assert (np.isclose(1e3 * np.array([tenfit_1.ad, tenfit_2.ad, tenfit_3.ad]), np.array(expected), atol = 0.1).all())
+    assert (np.isclose(1e9 * np.array([tenfit_1.ad, tenfit_2.ad, tenfit_3.ad]), np.array(expected), atol = 0.1).all())
     assert (np.array([tenfit_1.fa, tenfit_2.fa, tenfit_3.fa]) > .20).all()
-
-
 
 def run(save_dir):
     logging.info(f'Test Fiber Physics: verify that the forward simulated respective fiber-only signals corresponds to a diffusion tensor matching the input fiber diffusivity parameter, and verify that this diffusion tensor is anisotropic \n\t  (14/20)- [D_fiber_1, D_fiber_2, D_fiber_3] = [1.0, 2.0, 2.0] (um^2 /ms) <-> AD >> RD \
