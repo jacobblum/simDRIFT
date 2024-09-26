@@ -7,9 +7,19 @@ import time
 from src.setup.objects import fiber, spin, cell
 import os 
 import logging
+from numba import jit, njit, cuda
+from src.jp import linalg
+import numba 
+from collections import Counter
+from itertools import product
+
+
+x = 0
+y = 1
+z = 2
 
 Npts   = 128 + 1
-Ntheta = 64
+Ntheta = 16
 def vec_2_frame(n : np.ndarray) -> np.ndarray:
     if np.ndim(n) < 3:
         n = n.reshape(1, n.shape[0], n.shape[1])
@@ -35,6 +45,50 @@ def Ru(u : np.ndarray, theta : float) -> np.ndarray:
     u /= np.linalg.norm(u, ord = 2, axis=1)[:, None]
     Ru = np.stack([np.einsum('n, ij -> nij', np.cos(theta), np.eye(3)) + np.einsum('n, ij -> nij', np.sin(theta), np.cross(np.eye(3), u[ii, :])) + np.einsum('n, ij -> nij', (1.0 - np.cos(theta)), np.outer(u[ii, :], u[ii, :])) for ii in range(u.shape[0])], axis = 0)
     return Ru # Ru [NFrames, Nthetas, 3, 3]
+
+class cube:
+    def __init__(self, center : np.ndarray, dx : float, dy : float, dz : float) -> None:
+        self.center    = center
+        self.dx        = dx
+        self.dy        = dy
+        self.dz        = dz
+        self.verticies = np.array(
+                                    [
+                                    [self.center[x] + dx, self.center[y] + dy, self.center[z] + dz],    
+                                    [self.center[x] + dx, self.center[y] + dy, self.center[z] - dz], 
+                                    [self.center[x] + dx, self.center[y] - dy, self.center[z] + dz],
+                                    [self.center[x] + dx, self.center[y] - dy, self.center[z] - dz],
+                                    [self.center[x] - dx, self.center[y] - dy, self.center[z] + dz],
+                                    [self.center[x] - dx, self.center[y] - dy, self.center[z] - dz],
+                                    [self.center[x] - dx, self.center[y] + dy, self.center[z] + dz],
+                                    [self.center[x] - dx, self.center[y] + dy, self.center[z] - dz],
+                                    ]
+                                    )
+        self.faces    = np.array(
+                                    [
+                                    [0, 1, 2],
+                                    [2, 3, 1],
+                                    [1, 3, 5],
+                                    [5, 7, 1],
+                                    [5, 7, 6],
+                                    [6, 4, 5],
+                                    [6, 0, 1],
+                                    [6, 7, 1],
+                                    [4, 2, 3],
+                                    [5, 4, 2],
+                                    [4, 6, 0],
+                                    [4, 2, 0]
+                                    ]
+                                    )
+        self.normal = np.array(
+                                [
+                                    [ 2*dx, 0, 0],
+                                    [ 0, 2*dy, 0],
+                                    [ 0, 0, 2*dz]
+                                ]
+                                )
+        self.normal /= np.linalg.norm(self.normal, ord = 2, axis = 1)
+        pass 
 
 class VoxelSurfaceMesh:
     def __init__(self, fibers_list: Type[fiber], cell_list: Type[cell], results_directory : str ) -> None:
@@ -71,7 +125,9 @@ class VoxelSurfaceMesh:
         return Output_Args
     
     def _calculate_discretized_voxel_geometry(self) -> List[Dict[str, np.ndarray]]:
-
+        Output_Args = []
+       
+      
         logging.info('------------------------------')
         logging.info(' Plotting Voxel Surface Mesh  ')
         logging.info('------------------------------')    
@@ -92,14 +148,17 @@ class VoxelSurfaceMesh:
         bdyZmin = []
         bdyZmax = []
 
+        total_surface_verticies = []
+
         for bundle_index, bundle_params in enumerate(self._bundle_props_list):
             Bundle_VF_Dict = {}
             ctrs        = bundle_params['centers']
             L           = bundle_params['object'].L  
+
             radius      = bundle_params['radius']      
             theta       = bundle_params['object'].theta
             Gr0         = Ru(np.array([.0, 1., 0.]), theta = theta).squeeze()
-            S           = np.linspace(-L, L, Npts)
+            S           = np.linspace(0, L, Npts)
             r           = np.stack([np.zeros(S.shape[0]), np.zeros(S.shape[0]), S], axis = 1)
             
 
@@ -118,6 +177,8 @@ class VoxelSurfaceMesh:
             Gr2                     = Ru(local_orthogonal_frames[:, :, 0], theta = thetas)    # Nframes, Nthetas, 3,3 
             surface_binormals       = np.einsum('FTij, Fj -> FTi', Gr2, surface_tangents) 
             surface_verticies       = fiber_traces[:, :, None] + (radius *surface_binormals)
+
+            total_surface_verticies.append(surface_verticies)
 
             assert all([np.isclose(np.einsum('FTi, Fi -> F', surface_binormals,  surface_normals ), 0).all(),np.isclose(np.einsum('ni, ni -> n',  surface_tangents, surface_normals), 0).all() ]), "something's gone wrong. \
                 The calculated surface tangent, normal, and binormal vectors are not orthogonal (or within 1e-08 of orthogonality). "
@@ -170,8 +231,8 @@ class VoxelSurfaceMesh:
           
                 
                     neg_tris = np.stack([ii + np.arange(1, surface_verticies.shape[1])*surface_verticies.shape[2] - surface_verticies.shape[2] + 1,
-                                        ii + np.arange(1, surface_verticies.shape[1])*surface_verticies.shape[2] + 1,
-                                        ii + np.arange(1, surface_verticies.shape[1])*surface_verticies.shape[2]
+                                         ii + np.arange(1, surface_verticies.shape[1])*surface_verticies.shape[2] + 1,
+                                         ii + np.arange(1, surface_verticies.shape[1])*surface_verticies.shape[2]
                                         ], axis = 1)
 
                     Triangles[:, ii*N_Triangulations,    :] = pos_tris
@@ -191,6 +252,8 @@ class VoxelSurfaceMesh:
                 VERTICIES.append(surf_verticies_reshaped[Nfiber, :])
                 FACES.append(Triangles_Linear)
         
+
+        self._tsv = np.stack(total_surface_verticies)
 
         VERTICIES_npy, FACES_npy = np.concatenate(VERTICIES, axis = 0), np.concatenate(FACES, axis = 0)
         
@@ -253,7 +316,8 @@ class VoxelSurfaceMesh:
                    spin_positions_t1m[2, :], 
                    color = 'blue', 
                    s = 5, 
-                   alpha = .20)
+                   alpha = .20
+                   )
 
 
         def plt_sphere(list_center, list_radius):
@@ -265,9 +329,7 @@ class VoxelSurfaceMesh:
                 z = r*np.cos(v)
                 ax.plot_surface(x+c[0], y+c[1], z+c[2], color='orange', alpha=0.5)
         
-        for cell in self._cell_list:
-            plt_sphere([cell.center], [cell.radius])
-
+    
         # Format Plot
         ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
         ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.0))
@@ -294,23 +356,16 @@ class VoxelSurfaceMesh:
         ax.set_ylabel(r'$y \; [\mu m]$')
         ax.set_zlabel(r'$z \; [\mu m]$')
 
+      
+
         plt.savefig(os.path.join(self.geom_dir, 'meshed_voxel_geometry.png'))
 
         logging.info(' Plotting complete!')
-        logging.info('------------------------------')    
+        logging.info('------------------------------')   
 
-        return Output_Args
 
-    def _plot_with_spins(self, spins : List[Type[spin]]):
+        exit() 
+
+    
         return
-
-
-
-
-
-
-
-
-
-
-
+    

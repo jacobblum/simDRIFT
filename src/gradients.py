@@ -1,8 +1,67 @@
 import numpy as np 
 import matplotlib.pyplot as plt 
-from typing import Union, Tuple
+from typing import Union, Tuple, Type, Dict
 import os 
-from src.data import diffusion_schemes
+import argparse
+import importlib
+import logging
+import sys
+
+DEFAULT_DIFFUSION_SCHEME_LIST = ['ABCD', 'NODDI', '99']
+
+
+logger = logging.getLogger('simDRIFT')
+
+def generate_diffusion_scheme_dictionary() -> Dict[str, Dict[str, np.ndarray]]:
+
+    base_diffusion_scheme_dir = os.path.join(
+                                    os.path.dirname(os.path.realpath(__file__)),
+                                    f"data{os.sep}diffusion_schemes"
+                                    )
+    
+
+    scheme_dicts = dict(keys = DEFAULT_DIFFUSION_SCHEME_LIST)
+
+    for scheme_name in DEFAULT_DIFFUSION_SCHEME_LIST:
+
+        scheme_dict = {}
+
+        try:
+            # Load bval file
+            bvals = np.loadtxt(os.path.join(
+                                            base_diffusion_scheme_dir, 
+                                            f"bval{scheme_name}"
+                                            )
+                                )
+
+            # Load bvec file                                
+            bvecs = np.loadtxt(os.path.join(
+                                            base_diffusion_scheme_dir, 
+                                            f"bvec{scheme_name}"
+                                            ), 
+                                ndmin=2
+                                )
+        
+         
+        
+        except (ValueError, FileNotFoundError):
+            logger.info(f"Failed to load file: [bval/bvec]{scheme_name}!" + 
+                           "\nPlease ensure the file exists and is correctly formatted")
+            sys.exit(1)
+     
+        # Reshape bvec file if axis = -1 is not aligned with the bval file
+        if bvecs.shape[0] != bvals.shape[0]:
+            bvecs = bvecs.T
+
+        
+        scheme_dict['bvals'] = bvals
+        scheme_dict['bvecs'] = bvecs
+        
+        # Write to output scheme
+        scheme_dicts[scheme_name] = scheme_dict
+
+    return scheme_dicts
+
 
 GAMMA = 267.513e6 # (sT)^-1
 
@@ -165,74 +224,124 @@ def interpolate_gradient(waveforms: np.ndarray, TE : float, dt : float) -> np.nd
 
     return interp_g
 
-def pgse(sim_class) -> np.ndarray:
-    """Generate a pulsed gradient spin echo gradient array.
 
-    Parameters
-    ----------
-    delta (ms) : float 
-        Diffusion encoding time.
-    DELTA (ms) : float
-        Diffusion time.
-    dt (ms) : float
-        Duration of a timestep in the simulation
-    bvals ( s / mm^{2} ) : float or numpy.ndarray
-        b-value or an array of b-values.
-    bvecs : numpy.ndarray
-        b-vector or array of b-vectors.
 
-    Returns
-    -------
-    gradient : numpy.ndarray
-        Gradient array.
 
+class PuledGradientSpinEchoDataset:
+    """ Object for storing the PGSE sequence and basic manipulations
+    and pre-processing (e.g., interpolating the bvals/bvecs to a gradient waveform) 
+    
+    Args:
+        bval_path : Input bval data file
+        bvec_path : Input bvec data file
+        TE : Duration of the experiment [sec.]
+        Delta : The Diffusion Time [sec.]
+        delta : the pulse width [sec.]
+        dt : the timestep parameter [sec.]
+        USE_DEFAULT_DSCHEME : A flag to determine if custom diffusion data is to be used
+        
     References
     ----------
     .. [1] Kerkelä et al., (2020).
         Disimpy: A massively parallel Monte Carlo simulator for generating diffusion-weighted MRI data in Python. 
         Journal of Open Source Software, 5(52), 2527. https://doi.org/10.21105/joss.02527
-    
+        
     """
 
-    Delta = sim_class.Delta 
-    delta = sim_class.delta  
-    dt    = sim_class.dt    
-    TE    = sim_class.TE
-
-    if sim_class.custom_diff_scheme_flag:
-        if all([type(sim_class.bvals) is str, type(sim_class.bvecs) is str]):
-            bvals, bvecs = load_diffusion_scheme_from_txt_file(sim_class.bvals, sim_class.bvecs)
-
-    else:
-        bvals, bvecs = diffusion_schemes.get_from_default(sim_class.diff_scheme)
+    def __init__(self,
+                 input_bval_file : str,
+                 input_bvec_file : str,
+                 input_base_diffusion_scheme : str,
+                 TE : float,
+                 Delta : float,
+                 delta : float,
+                 dt : float,
+                 USE_DEFAULT_DSCHEME : bool = False
+                ) -> None:
         
-    gradient = np.zeros((bvals.shape[0], int( TE / dt ), 3)) 
-    gradient[:,  1:int(delta / dt),    0] =  1
-    gradient[:, -1*int(delta / dt):-1, 0] = -1
-    gradient = set_b(gradient, dt, bvals)
-
-    Rs = np.zeros((len(bvals), 3, 3))
-    for i, bvecs in enumerate(bvecs):
-        Rs[i] = vec2vec_rotmat(np.array([1.0, 0.0, 0.0]), bvecs) 
-    gradient = rotate_gradient(gradient, Rs)
-    return gradient
-
-def load_diffusion_scheme_from_txt_file(bvals : str, bvecs : str) -> Tuple[np.ndarray, np.ndarray]:
-    if all([os.path.exists(path) for path in [bvals, bvecs]]):
-        bvals_np = np.loadtxt(bvals).astype(np.float32)
-        bvecs_np = np.loadtxt(bvecs).astype(np.float32)
-
-        if bvecs_np.shape[-1] != 3:
-            bvecs_np = bvecs_np.T
+        self.input_bval_file = input_bval_file
+        self.input_bvec_file = input_bvec_file
+        self.input_base_diffusion_scheme = input_base_diffusion_scheme
+        self.TE = TE
+        self.Delta = Delta
+        self.delta = delta
+        self.dt = dt
+        self.USE_DEFAULT_DSCHEME = USE_DEFAULT_DSCHEME
         
-        bvecs_np[(bvecs_np == 0).all(axis = 1)] = 1e-5
-        bvecs_np /= np.linalg.norm(bvecs_np, ord = 2, axis = 1)[:, None]
-        bvals_np = bvals_np * 1e6 # convert to s / m^2 
+        if not (self.USE_DEFAULT_DSCHEME):
+            self.bvals, self.bvecs = self._load_custom_diffusion_scheme()
+
+        else:
+            d_scheme_dict = generate_diffusion_scheme_dictionary()      
+            self.bvals = d_scheme_dict[self.input_base_diffusion_scheme]['bvals']
+            self.bvecs = d_scheme_dict[self.input_base_diffusion_scheme]['bvecs']
+
+          
+
+        self.bvals, self.bvecs = self._normalize_diffusion_scheme()
         
-        return bvals_np, bvecs_np
-    else:
-        raise Exception(
-            "One of the bval/bvec paths do not exist!" \
-            "Please make sure that the bval / bvec paths are correct!"
-        )
+        self.G = np.zeros( (self.bvals.shape[0], int( self.TE / self.dt ), 3)) 
         
+        # Positive Pulse
+        self.G[:,  1:int(delta / dt),    0] =  1
+        
+        # Negative Pulse
+        self.G[:, -1*int(delta / dt):-1, 0] = -1
+        
+        self.G = set_b(self.G, dt, self.bvals)
+
+        Rs = np.zeros((self.bvals.shape[0], 3, 3))
+        for i, bvec in enumerate(self.bvecs):
+            Rs[i] = vec2vec_rotmat(np.array([1.0, 0.0, 0.0]), bvec) 
+        
+        self.G = rotate_gradient(self.G, Rs)
+
+        return 
+    
+
+    def _load_custom_diffusion_scheme(self) -> None:
+        """Try to load the custom provided diffusion schemes. 
+        Note that FileNotFoundError is not possible here because of the existence
+        of the file is garunteed while parsing the configuration.ini file. 
+        """
+        try: 
+            # load bvals first. Having access to the expected shape should help with loading
+            # the bvec file.
+            bvals = np.loadtxt(self.input_bval_file)
+
+            # load bvecs.
+            bvecs = np.loadtxt(self.input_bvec_file, ndmin=2)
+
+        except (ValueError):
+            logger.info(f"unable to load one of {self.input_bval_file} or {self.input_bvec_file}" + "\n"
+                        f"Please make sure the input files are readable to np.loadtxt"
+                        )
+            sys.exit(1)
+        
+        if bvecs.shape[0] != bvals.shape[0]:
+            bvecs = bvecs.T
+        
+        return bvals, bvecs
+
+    def _normalize_diffusion_scheme(self):
+        """Normalize the bvecs so that each row is unit normal
+        """
+        # normalize the bvectors
+        self.bvecs[~(self.bvals == 0), :] /= np.linalg.norm(self.bvecs[~(self.bvals == 0), :], ord = 2, axis = -1 )[:, None]        
+        
+        # make bvecs rowwise operations divison safe
+        self.bvecs[(self.bvecs == 0).all(axis = -1)] = 1e-7
+        
+        return self.bvals, self.bvecs
+        
+def get_gradient_obj(args : argparse.Namespace) -> PuledGradientSpinEchoDataset:
+    return PuledGradientSpinEchoDataset(
+        input_bval_file=args.bvals,
+        input_bvec_file=args.bvecs,
+        input_base_diffusion_scheme=args.dscheme,
+        TE=args.TE,
+        Delta=args.Delta,
+        delta=args.delta,
+        dt=args.dt,
+        USE_DEFAULT_DSCHEME=args.custom_diff_scheme_flag
+    )

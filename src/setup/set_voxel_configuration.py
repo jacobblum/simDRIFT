@@ -1,346 +1,312 @@
 import numpy as np
 import sys
-import random
 import logging
-import src.setup.spin_init_positions as spin_init_positions
-import src.setup.objects as objects
-from src.jp import linalg
-from src.setup.mesh import VoxelSurfaceMesh
+from scipy.spatial.transform import Rotation
+from typing import Union, Type, Dict, List, Tuple
+from src.setup.objects import fiber, spin, cell
 
-def _set_num_fibers(fiber_fractions, fiber_radii, voxel_dimensions, buffer, fiber_configuration):
-    """Calculates the requisite number of fibers for the supplied fiber densities (volume fractions).
 
-    :param fiber_fractions: User-supplied fiber densities (volume fractions)
-    :type fiber_fractions: float, tuple
-    :param fiber_radii: User-supplied fiber radii, in units of :math:`{\mathrm{μm}}`.
-    :type fiber_radii: float, tuple
-    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`.
-    :type voxel_dimensions: float
-    :param buffer: User-supplied additional length to be added to the voxel size for placement routines, in units of :math:`{\mathrm{μm}}`.
-    :type buffer: float
-    :param fiber_configuration: Desired fiber geometry class name.
-    :type fiber_configuration: str
-    :return: List of grid sizes, float 
-    :rtype: int, tuple
-    """ 
-    logging.info('------------------------------')
-    logging.info(' Fiber Setup')
-    logging.info('------------------------------') 
 
-    num_fibers = []
-    for i in range(len(fiber_fractions)):
+logger = logging.getLogger('simDRIFT')
 
-        vl = (voxel_dimensions + buffer) ** 2
-        num_fiber = int(np.sqrt( len(fiber_fractions) * ( vl * fiber_fractions[i])/(np.pi*fiber_radii[i]**2)))  
-        num_fibers.append(num_fiber)
+x,y,z = 0,1,2
+
+class VoxelGeometry:
+    def __init__(self,
+                 n_walkers        : int ,
+                 fiber_fractions  : np.ndarray,
+                 fiber_radii      : np.ndarray, 
+                 fiber_thetas     : np.ndarray,
+                 fiber_diffusions : np.ndarray,
+                 kappa            : np.ndarray,
+                 amplitude        : np.ndarray,
+                 periodicity      : np.ndarray,
+                 cell_fractions   : np.ndarray,
+                 cell_radii       : np.ndarray,
+                 voxel_dimensions : float,
+                 buffer           : float,
+                 void_distance    : float,
+                 dt               : float,
+                 fiber_configuration : str = 'Interwoven'
+                 ) -> None:
         
-        logging.info(' {} fibers of type {} (R{} = {} (um))'.format(int(num_fibers[i]**2),int(i),int(i), round(1e6 * fiber_radii[i],3)))
-    logging.info(' Fiber geometry: {}'.format(fiber_configuration))
+        self.n_walkers = n_walkers
+        self.fiber_fractions = fiber_fractions
+        self.fiber_radii = fiber_radii
+        self.thetas = fiber_thetas
+        self.fiber_diffusions = fiber_diffusions
+        self.kappa = kappa
+        self.Amplitude = amplitude
+        self.Periodicity = periodicity
+        self.cell_fractions = cell_fractions
+        self.cell_radii = cell_radii
+        self.voxel_dimensions = voxel_dimensions
+        self.buffer = buffer 
+        self.void_distance = void_distance
+        self.dt = dt
+        self.fiber_configuration = fiber_configuration
 
-    return np.array(num_fibers)
 
-def _set_num_cells(cell_fraction, cell_radii, voxel_dimensions, buffer):
-    """Calculates the requisite number of cells for the supplied cell densities (volume fractions).
+        # Calculate The Number of Fibers 
+        self.n_fibers = self._calc_n_fibers()
+        self.n_cells = self._calc_n_cells()
 
-    :param cell_fraction: User-supplied cell densities (volume fractions).
-    :type cell_fraction: float, tuple
-    :param cell_radii: User-supplied cell radii, in units of :math:`{\mathrm{μm}}`.
-    :type cell_radii: float, tuple
-    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`.
-    :type voxel_dimensions: float
-    :param buffer: User-supplied additional length to be added to the voxel size for placement routines.
-    :type buffer: float
-    :return: List containing the number of each cell type.
-    :rtype: float, tuple
-    """
+        # Place the fiber grid
+        self.fibers = self._place_fiber_grid()
 
-    logging.info('------------------------------')
-    logging.info(' Cells Setup')
-    logging.info('------------------------------')    
-    num_cells = []
-    for i in range(len(cell_fraction)):
-        if cell_fraction[i] > 0:
-            num_cells.append(int(
-                (0.5*cell_fraction[i]*(voxel_dimensions**3)/((4.0/3.0)*np.pi*cell_radii[i]**3))))
-        else:
-            num_cells.append(int(0))
-        logging.info(' {} cells with radius = {} um'.format(num_cells[i], round(1e6 * cell_radii[i], 3 )))
-    return num_cells
+        # Place the cell grid
+        self.cells = self._place_cell_lattice()
 
-def _place_fiber_grid(self):
+        # Place the spins in the image voxel
+        self.spins = self._place_spins()
 
-    """Routine for populating fiber grid within the simulated imaging voxel
-    
-    :param fiber_fractions: User-supplied fiber densities (volume fractions)
-    :type fiber_fractions: float, tuple
-    :param fiber_radii: Radii of each fiber type
-    :type fiber_radii: float, tuple
-    :param fiber_diffusions: User-supplied diffusivities for each fiber type
-    :type fiber_diffusions: float, tuple
-    :param thetas: Desired alignment angle for each fiber type, relative to :math:`{\\vu{z}}`
-    :type thetas: float, tuple
-    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`
-    :type voxel_dimensions: float
-    :param buffer: User-supplied additional length to be added to the voxel size for placement routines, in units of :math:`{\mathrm{μm}}`
-    :type buffer: float
-    :param void_distance: Length of region for excluding fiber population, in units of :math:`{\mathrm{μm}}`
-    :type void_distance: float
-    :param fiber_configuration: Desired fiber geometry class. See `Class Objects`_ for further information.
-    :type fiber_configuration: str
-    :return: Class object containing fiber attributes. See `Class Objects`_ for further information.
-    :rtype: object
-    """
-    num_fibers = _set_num_fibers(self.fiber_fractions, 
-                                 self.fiber_radii, 
-                                 self.voxel_dimensions, 
-                                 self.buffer,
-                                 self.fiber_configuration)
+        pass
 
-    rotation_matrices = linalg.Ry(self.thetas)
-    fibers = []
-    ymin   = -0.5 * self.buffer
-    stride = (self.buffer + self.voxel_dimensions) / len(self.fiber_fractions)  
-    
-    if (num_fibers == 0).all():
-        # If no fibers, instantiate a null fiber object with negative radius. 
-        fibers.append(objects.fiber(center      = np.zeros(3),
-                                    direction   = np.zeros(3),
-                                    bundle      = 0,
-                                    diffusivity = 0,
-                                    radius      = -1.0,
-                                    kappa       = 0.,
-                                    L           = self.voxel_dimensions,
-                                    A           = 0.,
-                                    P           = 1.0
+    def _calc_n_fibers(self) -> List[Type[fiber]]:
+       
+        logger.info('------------------------------')
+        logger.info(' Fiber Setup')
+        logger.info('------------------------------') 
+
+        n_fibers = np.zeros(self.fiber_fractions.shape[0], dtype=int)
+        
+        bundle_idx = 0
+        for f_i_frac, f_i_rad in zip(self.fiber_fractions, self.fiber_radii):
+
+            vl = (self.voxel_dimensions + self.buffer) ** 2
+            n_fiber_i = int(
+                            np.sqrt( 
+                                    n_fibers.shape[0] * ( vl * f_i_frac)/(np.pi*f_i_rad**2)
                                     )
-        )
-
-    elif (num_fibers > 0).any():
-        total_ctrs = []
-        for i in range(len(self.fiber_fractions)):
-            ith_bundle_ctrs = []
-            yv, xv = np.meshgrid(np.linspace((-0.5*self.buffer)+max(self.fiber_radii), self.voxel_dimensions+(0.5*self.buffer)-max(self.fiber_radii), num_fibers[i]),
-                                np.linspace((-0.5*self.buffer)+max(self.fiber_radii), self.voxel_dimensions+(0.5*self.buffer)-max(self.fiber_radii), num_fibers[i]))
-            
-            for ii in range(yv.shape[0]):
-                for jj in range(yv.shape[1]):
-                    fiber_cfg_bools = {'Penetrating': True,
-                                    'Interwoven' : True,
-                                    'Void'       : np.logical_or(xv[ii, jj] <= np.median(yv[0,:]) - 0.5 * self.void_distance, xv[ii, jj] > np.median(yv[0,:]) + 0.5 * self.void_distance)} 
-                    if np.logical_and( ymin <= yv[ii,jj], yv[ii,jj] <= ymin + stride ):         
-                        if fiber_cfg_bools[self.fiber_configuration]:        
-                            ith_bundle_ctrs.append(np.array([xv[ii,jj], yv[ii, jj], 0]))       
-        
-            total_ctrs.append(np.array(ith_bundle_ctrs))       
-            ymin += stride 
-
-        if self.fiber_configuration == 'Interwoven':
-        # Select Fibers for Rotation if the Inter-Woven configuration is selected
-            fiber_ctrs_regrouped = [[] for ii in range(len(self.fiber_fractions))]
-            fiber_centers_linear = np.stack([center for Nfiber in range(len(self.fiber_fractions)) for center in total_ctrs[Nfiber]], axis = 0)
-            for Y_index, Y in enumerate(np.unique(fiber_centers_linear[:, 1])):
-                for fiber_index in [idx for idx in np.where(fiber_centers_linear[:, 1] == Y)[0]]:
-                    fiber_ctrs_regrouped[Y_index % len(self.fiber_fractions)].append(fiber_centers_linear[fiber_index])
-            total_ctrs[:] = fiber_ctrs_regrouped[:]
-
-        total_ctrs_prime = [np.einsum('ij, Fj -> Fi', rotation_matrices[Nfiber, :, :], total_ctrs[Nfiber]) for Nfiber in range(len(self.fiber_fractions))]
-
-        mXp = []
-        mZp = []
-        
-        # Align the Fibers
-        for Nfiber in range(len(total_ctrs_prime)):
-            
-            mXp.append(np.median(total_ctrs_prime[Nfiber][:,  0]))
-            mZp.append(np.median(total_ctrs_prime[Nfiber][:, -1]))
-
-            if Nfiber > 0:
-                Delta_mXp = mXp[Nfiber - 1] - mXp[Nfiber]
-                Delta_mZp = mZp[Nfiber - 1] - mZp[Nfiber] 
-
-                total_ctrs_prime[Nfiber][:,  0] += Delta_mXp
-                total_ctrs_prime[Nfiber][:, -1] += Delta_mZp
-                
-            mXp[Nfiber] = np.median(total_ctrs_prime[Nfiber][:,  0])
-            mZp[Nfiber] = np.median(total_ctrs_prime[Nfiber][:, -1])
-
-        # Instantiate the Fiber Objects 
-        for Nfiber in range(len(total_ctrs_prime)):
-            for fiber in range(total_ctrs_prime[Nfiber].shape[0]):
-                fibers.append(objects.fiber(center      = total_ctrs_prime[Nfiber][fiber, :],
-                                            direction   = rotation_matrices[Nfiber, :, :].dot(np.array([0., 0., 1.])),
-                                            bundle      = Nfiber,
-                                            diffusivity = self.fiber_diffusions[Nfiber],
-                                            radius      = self.fiber_radii[Nfiber],
-                                            kappa       = self.kappa[Nfiber],
-                                            L           = self.voxel_dimensions,
-                                            A           = self.A[Nfiber],
-                                            P           = self.P[Nfiber]
-                                            )
                             )
-    return fibers
+              
+            n_fibers[bundle_idx] = n_fiber_i
+            bundle_idx += 1
+            logger.info(f"{n_fiber_i**2 // 1} fibers of radius {round(1e6 * f_i_rad,3)} [um] in bundle {bundle_idx} will be placed in the voxel")
+        
+        return n_fibers
 
-def _place_cells(self):
-    """Routine for populating cells within the simulated imaging voxel
-    
-    :param fibers: Class object containing fiber attributes. See `Class Objects`_ for further information.
-    :type fibers: object
-    :param cell_radii: Radii of each cell type, in units of :math:`{\mathrm{μm}}`
-    :type cell_radii: float, tuple
-    :param cell_fractions: User-supplied densities (volume fractions) for each cell type
-    :type cell_fractions: float, tuple
-    :param fiber_configuration: Desired fiber geometry class. See `Class Objects`_ for further information.
-    :type fiber_configuration: str
-    :param voxel_dimensions: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`
-    :type voxel_dimensions: float
-    :param buffer: User-supplied additional length to be added to the voxel size for placement routines, in units of :math:`{\mathrm{μm}}`
-    :type buffer: float
-    :param void_distance: Length of region for excluding fiber population, in units of :math:`{\mathrm{μm}}`
-    :type void_distance: float
-    :param water_diffusivity: The user-supplied diffusivity for free water, in units of :math:`{\mathrm{μm}^2}\\, \mathrm{ms}^{-1}`.
-    :type water_diffusivity: float
-    :return: Class object containing cell attributes. See `Class Objects`_ for further information.
-    :rtype: object
-    """
-    logging.info('------------------------------')
-    logging.info(' Placing Cells...')
-    logging.info('------------------------------')
+    def _calc_n_cells(self):
+        logger.info('------------------------------')
+        logger.info(' Cells Setup')
+        logger.info('------------------------------')    
+        
+        n_cells = np.zeros(self.cell_fractions.shape[0], dtype=int)
+        bundle_idx = 0
+        for c_i_frac, c_i_rad in zip(self.cell_fractions, self.cell_radii):
+            n_cell_i = int(
+                          (c_i_frac*(self.voxel_dimensions**3)/((4.0/3.0)*np.pi*c_i_rad**3))
+                         )
+             
+            n_cells[bundle_idx] = n_cell_i
+            bundle_idx += 1
+            logger.info(f"{int(n_cell_i)} cells of radius {round(1e6 * c_i_rad,3)} [um] will be placed in the voxel")
+        return n_cells
 
-    cell_centers_total = []
-    num_cells = _set_num_cells(self.cell_fractions, self.cell_radii, self.voxel_dimensions, self.buffer)
+    def _place_fiber_grid(self):
+        R = Rotation.from_euler('Y', self.thetas, degrees = True)
+        ymin   = -0.5 * self.buffer
+        stride = (self.buffer + self.voxel_dimensions) / len(self.fiber_fractions)  
+        if (self.n_fibers > 0).any():
+            ctrs = [None] * self.n_fibers.shape[0]
+            for i, n_fiber_i in enumerate(self.n_fibers):
 
-    zmin = min([fiber.center[2] for fiber in self.fibers])
-    zmax = zmin + self.voxel_dimensions
+                xs = np.linspace((-0.5*self.buffer)+max(self.fiber_radii), self.voxel_dimensions+(0.5*self.buffer)-max(self.fiber_radii), n_fiber_i)
+                ys = xs[:]
 
-    if self.fiber_configuration == 'Void':
-        ## Note[KLU]: Adjusted the regions below to be symmetric about the middle of the voxel 
-        regions = np.array([[0-(self.buffer/2), self.voxel_dimensions+(self.buffer/2), 0.5*(self.voxel_dimensions - self.void_distance), 0.5*(self.voxel_dimensions + self.void_distance), zmin, zmax],
-                            [0-(self.buffer/2), self.voxel_dimensions+(self.buffer/2), 0.5*(self.voxel_dimensions - self.void_distance), 0.5*(self.voxel_dimensions + self.void_distance), zmin, zmax]])
-    else:
-        regions = np.array([[0-(self.buffer/2), self.voxel_dimensions+(self.buffer/2), 0-(self.buffer/2), 0.5*self.voxel_dimensions, zmin, zmax],
-                            [0-(self.buffer/2), self.voxel_dimensions+(self.buffer/2), 0.5*self.voxel_dimensions, self.voxel_dimensions+(self.buffer/2), zmin, zmax]])
+                yv, xv = np.meshgrid(xs, ys)
 
-    for i in (range(len(num_cells))):
-        cellCenters = np.zeros((num_cells[i], 4))
-        for j in range(cellCenters.shape[0]):
-            if i == 0:
-                sys.stdout.write('\r' + 'simDRIFT:  ' + str(j+1) + '/' + str(sum(num_cells)) + ' cells placed')
-                sys.stdout.flush()
+                # Split the voxel into n_fiber_bundle parts along the y-axis
+                yv_i = yv[np.logical_and( ymin <= yv, yv <= ymin + stride )]
+                xv_i = xv[np.logical_and( ymin <= yv, yv <= ymin + stride )]
+                
+                # ith_bundle_fiber_centers
+                ctrs_i = np.stack([xv_i, yv_i, np.zeros(xv_i.shape[0])], axis = -1)
+               
+                # Append to the array of total fiber centers
+                ctrs[i] = ctrs_i  
+                ymin += stride 
+
+            # Rotate The Fiber Bundles
+            ctrs_r = [np.einsum('ij, Fj -> Fi', 
+                                 R.as_matrix()[n_fiber, :, :], 
+                                 ctrs[n_fiber]
+                                ) for n_fiber in range(self.n_fibers.shape[0])]
+
+           
+            # Calc Affine that aligns the middle point of each fiber bundle and
+            # apply to the subsequent fiber bundle
+            for i, ctrs_r_i_p1 in enumerate(ctrs_r[1:]):
+                
+                ctrs_r_i_p1_mid = np.median(ctrs_r_i_p1, axis= 0)
+                ctrs_r_i_m1_mid = np.median(ctrs_r[i], axis = 0) 
+
+                b = ctrs_r_i_p1_mid - ctrs_r_i_m1_mid
+                b[1] = 0
+
+                ctrs_r[i+1] -= b 
+                
+            # Instantiate the Fiber Objects    
+            fibers = []
+            for i, ctr_i in enumerate(ctrs_r):
+                for f_i in range(ctr_i.shape[0]): 
+                    fibers.append(
+                        fiber(
+                        center = ctr_i[f_i, :].astype(np.float32),
+                        direction=R.as_matrix()[i, :, :].dot(np.array([0., 0., 1.])).astype(np.float32),
+                        bundle=np.array(i),
+                        step= np.sqrt(6.0 * self.fiber_diffusions[i] * self.dt).astype(np.float32),
+                        radius=self.fiber_radii[i],
+                        kappa=self.kappa[i],
+                        L=np.array(self.voxel_dimensions, dtype=np.float32),
+                        A=self.Amplitude[i],
+                        P=self.Periodicity[i],
+                        theta = np.array(self.thetas[i], dtype=np.float32)
+                        )
+                    )
+            # get fiber boundary
+            self.z_min = np.amin(np.concatenate(ctrs_r)[:, z])
+
+        else:
+            # If no fibers, instantiate a null fiber object with negative radius. 
+            fibers = [fiber(
+                        center  = np.zeros(3, dtype=np.float32),
+                        direction   = np.zeros(3, dtype=np.float32),
+                        bundle      = -1,
+                        step        = np.array(0),
+                        radius      = -1 * np.ones(1, dtype=np.float32),
+                        kappa       = np.zeros(1, dtype=np.float32),
+                        L           = np.array(self.voxel_dimensions, dtype=np.float32),
+                        A           = np.zeros(1, dtype=np.float32),
+                        P           = np.ones(1, dtype=np.float32),
+                        theta = np.array(0., dtype=np.float32)
+                        )]
+        return fibers
+
+    def _place_cell_lattice(self) -> List[Type[cell]] :
+        if (self.n_cells > 0).any(): 
+            k = 0   
+            # Find the Boundary of the Voxel's resident microstructure
+            
+            if (self.n_fibers > 0).any():
+                bdy_mins = np.concatenate([np.full(2, np.amin(self.fiber_radii)), np.full(1, np.amin(self.z_min))])
+                bdy_maxs = np.concatenate([np.full(2, self.voxel_dimensions - bdy_mins[0]), np.full(1, bdy_mins[-1] + self.voxel_dimensions)])
             else:
-                sys.stdout.write('\r' + 'simDRIFT:  ' + str(num_cells[0]+(j+1)) + '/' + str(sum(num_cells)) + ' cells placed')
-                sys.stdout.flush()
-            if j == 0:
-                invalid = True
-                while (invalid):
-                    radius = self.cell_radii[i]
-                    xllim, xulim = regions[i, 0], regions[i, 1]
-                    yllim, yulim = regions[i, 2], regions[i, 3]
-                    zllim, zulim = regions[i, 4], regions[i, 5]
-                    cell_x = np.random.uniform(xllim + radius, xulim - radius)
-                    cell_y = np.random.uniform(yllim + radius, yulim - radius)
-                    cell_z = np.random.uniform(zllim + radius, zulim - radius)
-                    cell_0 = np.array([cell_x, cell_y, cell_z, radius])
-                    proposedCell = cell_0
-                    ctr = 0
-                    if i == 0:
-                        cellCenters[j, :] = proposedCell
-                        invalid = False
-                    elif i > 0:
-                        for k in range(cell_centers_total[0].shape[0]):
-                            distance = np.linalg.norm(
-                                proposedCell-cell_centers_total[0][k, :], ord=2)
-                            if distance < (radius + cell_centers_total[0][k, 3]):
-                                ctr += 1
-                                break
-                    if ctr == 0:
-                        cellCenters[j, :] = proposedCell
-                        invalid = False
-            elif (j > 0):
-                invalid = True
-                while (invalid):
-                    xllim, xulim = regions[i, 0], regions[i, 1]
-                    yllim, yulim = regions[i, 2], regions[i, 3]
-                    zllim, zulim = regions[i, 4], regions[i, 5]
-                    radius = self.cell_radii[i]
-                    cell_x = np.random.uniform(xllim + radius, xulim - radius)
-                    cell_y = np.random.uniform(yllim + radius, yulim - radius)
-                    cell_z = np.random.uniform(zllim + radius, zulim - radius)
-                    proposedCell = np.array([cell_x, cell_y, cell_z, radius])
-                    ctr = 0
-                    for k in range(j):
-                        distance = np.linalg.norm(
-                            proposedCell-cellCenters[k, :], ord=2)
-                        if distance < 2*radius:
-                            ctr += 1
-                            break
-                        if i > 0:
-                            for l in range(cell_centers_total[0].shape[0]):
-                                distance = np.linalg.norm(
-                                    proposedCell-cell_centers_total[0][l, :], ord=2)
-                                if distance < (radius + cell_centers_total[0][l, 3]):
-                                    ctr += 1
-                                    break
-                    if ctr == 0:
-                        cellCenters[j, :] = proposedCell
-                        invalid = False
-        cell_centers_total.append(cellCenters)
-    output_arg = np.vstack([cell_centers_total[i] for i in range(len(cell_centers_total))])
+                bdy_mins = np.zeros(3)
+                bdy_maxs = np.full(3, self.voxel_dimensions)
+
+            # initiate cell centers
+            c_ctr = np.zeros(
+                             (self.n_cells.sum(), 3),    
+                             dtype= np.float32
+                            )
+            # collect cell radii
+            r_i = np.concatenate([
+                                  np.full(shape = (n_cell_i, ), fill_value=rad_i) 
+                                  for n_cell_i, rad_i in zip(self.n_cells, self.cell_radii)
+                                 ])
+            c_k = 0
+            MAX_ITER = 1000000
+            while c_k < c_ctr.shape[0]:
+                k += 1
+                # Place the cell
+                for dim, dim_min, dim_max in zip([x,y,z], bdy_mins, bdy_maxs):
+                    c_ctr[c_k, dim] = np.random.uniform(low = dim_min + r_i[c_k], high = dim_max - r_i[c_k])
+
+                # Calculate the distance between cell c_k and cell 0...c_k-1
+                d_c_k_m_c_i_leq_k = np.linalg.norm(c_ctr[c_k, :] - c_ctr[0:c_k,:], ord = 2, axis = -1)
+
+                # if cell c_k doesn't overlap with any of cells 0...c_k-1, place the cell by incrementing c_k
+                if (d_c_k_m_c_i_leq_k > (r_i[c_k] + r_i[0:c_k])).all():
+                    c_k += 1
+                    k = 0 # reset the number of iterations per cell
+                    sys.stdout.write('\r' + f"simDRIFT:simulate: Placed Cell [{c_k}/{c_ctr.shape[0]}]")
+                    sys.stdout.flush()
+        
+                if k == MAX_ITER:
+                    # Increment c_k one more. The first 0,...,c_k elements are non-zero
+                    # so need to iterate over range(0, c_k + 1)
+                    c_k += 1
+                    sys.stdout.write('\n')
+                    logger.info(
+                        f"Tried to place cell {c_k} for {k} iterations! [{c_ctr.shape[0] - c_k}/{c_ctr.shape[0]}] Cells could not be placed.\n" \
+                        f"The effective density is: {self._calc_effective_cell_density(c_ctr):.5f}%"
+                        )
+                    break
+        
+            cells = [None]*c_k
+            # Instantiate Cell Objects
+            current = 0
+            for i, c_n_i in enumerate(self.n_cells):
+                start, stop = current, current + c_n_i
+                
+                for j in range(start, min(stop, c_k)):        
+                    cells[j] = cell(
+                        cell_center=c_ctr[j, :],
+                        cell_radius=self.cell_radii[i],
+                        cell_bundle=i
+                    )
+                current = stop
+            sys.stdout.write('\n')
+        else:
+            cells = [cell(
+                cell_center=np.zeros(3, dtype=np.float32),
+                cell_radius= -1*np.ones(1, dtype=np.float32),
+                cell_bundle=-1
+            )]
+        
+        return cells
     
-    cells = []
-    
-    if not (output_arg).any():
-        cells.append(objects.cell(cell_center=np.array([0., 0., 0.]), cell_radius=-1, cell_diffusivity=0.))
-    else:
-        for i in range(output_arg.shape[0]):
-            cells.append(objects.cell(cell_center = output_arg[i,0:3], cell_radius=self.cell_radii[0], cell_diffusivity = self.water_diffusivity))
-        sys.stdout.write('\n')
-    return cells
+    def _calc_effective_cell_density(self, c_ctr) -> float:
+        v_cells = 0.
+        v_voxel = self.voxel_dimensions**3
+        
+        current = 0
+        for c_i_rad, c_i_n in zip(self.cell_radii, self.n_cells):
+            start, stop = current, current + c_i_n
+            n_c_i_eff = ( ~((c_ctr[start:stop, :] == 0).all(axis = -1))).sum()
+            v_cells += n_c_i_eff*(4/3)*np.pi*c_i_rad**3 
+            current = stop
+        return v_cells / v_voxel
 
-def _place_spins(self):
-    """Routine for randomly populating spins in the imaging voxel following a uniform probability distribution
+    def _place_spins(self):
+        # Determine the voxel bdy. If there exist fibers, because of the rotations 
+        # the voxel is bound by [0, voxel_dimensions]^{2} x [f_z_min, f_z_min + voxel_dimensions].
+        # Without rotation the voxel is bound by [0, voxel_dimensions]^{3}.
+        if (self.n_fibers > 0).any():
+            bdy_mins = np.concatenate([np.full(2, np.amin(self.fiber_radii)), np.full(1, np.amin(self.z_min))])
+            bdy_maxs = np.concatenate([np.full(2, self.voxel_dimensions - bdy_mins[0]), np.full(1, bdy_mins[-1] + self.voxel_dimensions)])
+        else:
+            bdy_mins = np.zeros(3)
+            bdy_maxs = np.full(3, self.voxel_dimensions)
 
-    :param n_walkers: User-specified number of spins to simulate
-    :type n_walkers: int
-    :param voxel_dims: User-supplied voxel side length, in units of :math:`{\mathrm{μm}}`
-    :type voxel_dims: float
-    :param fibers: Class object ``objects.fibers`` containing fiber attributes. See `Class Objects`_ for further information.
-    :type fibers: object
-    :return: Class object ``objects.spins`` containing spin attributes. See `Class Objects`_ for further information.
-    :rtype: object
-    """
+        # Place The Spins
+        r0 = np.zeros((self.n_walkers, 3))
+        for d, d_min, d_max in zip([x,y,z], bdy_mins, bdy_maxs):
+            r0[:, d] = np.random.uniform(low = d_min - self.buffer, high = d_max - self.buffer, size = (self.n_walkers))
 
+        # Intantiate The Spin Object
+        spins = [spin( r0[ii, :].astype(np.float32)) for ii in range(r0.shape[0])] 
+        return spins
 
-    object_ctrs = np.concatenate([[fiber.center for fiber in self.fibers], [cell.center for cell in self.cells]])
-    
-    bdyXmin = np.amin(object_ctrs[:,0])
-    bdyXmax = np.amax(object_ctrs[:,0])
-    bdyYmin = np.amin(object_ctrs[:,1])
-    bdyYmax = np.amax(object_ctrs[:,1])
-    bdyZmin = np.amin(object_ctrs[:,2])
-    bdyZmax = np.amax(object_ctrs[:,2])
-
-    spin_positions_t1m = np.vstack([np.random.uniform(low = bdyXmin,   high = bdyXmax, size = self.n_walkers),
-                                    np.random.uniform(low = bdyYmin,   high = bdyYmax, size = self.n_walkers),
-                                    np.random.uniform(low = bdyZmin,   high = bdyZmin + self.voxel_dimensions, size = self.n_walkers)]
-                                    )
-
-    spins = [objects.spin(spin_positions_t1m[:,ii]) for ii in range(spin_positions_t1m.shape[1])] 
-    return spins
-
-def setup(self):
+def instantiate_geometry_obj(args):
     """Helper function to initiate relevant placement routines.
     """
-    self.fibers = _place_fiber_grid(self)
-    self.cells = _place_cells(self)
-    
-    if self.draw_voxel:
-        VoxelSurfaceMesh(self.fibers, 
-                        self.cells,
-                        self.results_directory
-                        )
-        
-    self.spins = _place_spins(self)
-    spin_init_positions._find_spin_locations(self)
-    
-    return
+    return VoxelGeometry(
+        n_walkers = args.n_walkers,
+        fiber_fractions=args.fiber_fractions,
+        fiber_radii=args.fiber_radii,
+        fiber_thetas=args.thetas,
+        fiber_diffusions=args.fiber_diffusions,
+        kappa=args.kappa,
+        amplitude=args.Amplitude,
+        periodicity=args.Periodicity,
+        cell_fractions=args.cell_fractions,
+        cell_radii=args.cell_radii,
+        voxel_dimensions=args.voxel_dimensions,
+        dt=args.dt,
+        buffer=args.buffer,
+        void_distance=args.void_distance
+    )
+
 
